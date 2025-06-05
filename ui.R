@@ -12,16 +12,20 @@ ui <-  tagList(
   tags$head(
     tags$style(HTML(readChar("www/odmap.css", file.info("www/odmap.css")$size))),
     tags$style(HTML("...tooltip CSS here...")),
-    tags$script(HTML("
-    document.addEventListener('DOMContentLoaded', function () {
-      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]'));
-      tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-      });
-    });
-  ")),
+    tags$script(HTML("$(document).ready(function () {
+    $('[data-toggle=\"tooltip\"]').tooltip();
+  });
+")),
+tags$style(HTML("
+  .info-hover-icon {
+    margin-left: 5px;
+    color: #007BFF;
+    cursor: pointer;
+  }
+")),
+    
     tags$style(HTML("
-  .input-label-icon {
+  .info-label-icon {
     display: inline-flex;
     align-items: center;
     gap: 6px;

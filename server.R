@@ -23,39 +23,38 @@ server <- function(input, output, session) {
   
   
   ## helper function for tooltips
-  inputWithHoverInfo <- function(inputTag, infoText) {
+  inputWithHoverInfo <- function(inputTag, info_text) {
     inputId <- inputTag$attribs$id
     labelTag <- inputTag$children[[1]]
     inputBody <- inputTag$children[[2]]
     
     tooltipIcon <- tags$span(
       icon("info-circle"),
-      class = "info-hover-icon",
-      `data-bs-toggle` = "tooltip",
-      `data-bs-placement` = "right",
-      `data-bs-html` = "true",            # <-- CRUCIAL for HTML content like images
-      title = HTML(infoText)            # Use HTML() to parse tags like <img>
+      class = "info-hover-icon",          # same class as in generateInputWithTooltip
+      `data-toggle` = "tooltip",
+      `data-placement` = "right",
+      `data-html` = "true",               # Allows HTML content
+      title = HTML(info_text)              # Use HTML() here for consistency
     )
     
+    labelWithTooltip <- div(
+      class = "input-label-icon",         # wrap label and icon in same container
+      tags$label(`for` = inputId, labelTag),
+      tooltipIcon
+    )
     
-    # Wrap the whole thing
-    div(class = "form-group shiny-input-container input-with-tooltip",
-        tags$label(`for` = inputId, labelTag),
-        tooltipIcon,
-        inputBody
+    div(
+      class = "form-group shiny-input-container input-with-tooltip",
+      labelWithTooltip,
+      inputBody
     )
   }
   
   
-  ## helper function for tooltips from table
   generateInputWithTooltip <- function(id, label, input_type, placeholder, info_text) {
     
     if (is.na(id) || id == "") {
       stop(paste("Invalid input ID:", id))
-    }
-    
-    if (is.na(id) || id == "") {
-      stop("Input ID must not be NA or empty.")
     }
     
     # Create input tag based on type
@@ -66,20 +65,19 @@ server <- function(input, output, session) {
                        textInput(id, label = NULL, value = "", placeholder = placeholder)
     )
     
-    # Tooltip content - if it contains an image tag, treat it as HTML
+    # Tooltip content - if contains HTML tags, use HTML()
     infoIcon <- if (!is.na(info_text) && nchar(info_text) > 0) {
       tags$span(
         icon("info-circle"),
         class = "info-hover-icon",
-        `data-bs-toggle` = "tooltip",
-        `data-bs-placement` = "right",
-        `data-bs-html` = "true",     # Critical: allows HTML content
-        title = HTML(info_text)      # Critical: parse as HTML
+        `data-toggle` = "tooltip",
+        `data-placement` = "right",
+        `data-html` = "true",         # Allows HTML content
+        title = HTML(info_text)        # Parse as HTML
       )
     } else {
       NULL
     }
-    
     
     # Combine label + tooltip icon
     labelWithTooltip <- div(
@@ -417,7 +415,7 @@ server <- function(input, output, session) {
     value <- if (!is.null(num_classes())) num_classes() else NULL
     inputWithHoverInfo(
       numericInput("d_response_4", "Number of Classes", value = value),
-      infoText = "Specify the number of classes of the response variable"
+      info_text = "Specify the number of classes of the response variable"
     )
   }
   
@@ -425,7 +423,7 @@ server <- function(input, output, session) {
     value <- if (!is.null(num_samples_per_class())) num_samples_per_class() else NULL
     inputWithHoverInfo(
       numericInput("d_response_5", "Number of Samples per Class", value = value),
-      infoText = "Specify the number of samples per class of the response variable"
+      info_text = "Specify the number of samples per class of the response variable"
     )
   }
   
@@ -433,7 +431,7 @@ server <- function(input, output, session) {
     value <- if (!is.null(interpolation_range())) interpolation_range() else NULL
     inputWithHoverInfo(
       textInput("d_response_6", "Response Range", value = value),
-      infoText = "Specify the range of the response values from min to max"
+      info_text = "Specify the range of the response values from min to max"
     )
   }
   
@@ -441,7 +439,7 @@ server <- function(input, output, session) {
     value <- if (!is.null(names_predictors())) names_predictors() else NULL
     inputWithHoverInfo(
       textInput("d_predictors_3", "Names of Predictors", value = value),
-      infoText = "Specify the names of the predictor variables"
+      info_text = "Specify the names of the predictor variables"
     )
   } 
   
@@ -449,7 +447,7 @@ server <- function(input, output, session) {
     value <- if (!is.null(model_hyperparams())) model_hyperparams() else NULL
     inputWithHoverInfo(
       textInput("m_validation_3", "Hyperparameter values", value = value),
-      infoText = "Specify all tuned hyperparameters with their corresponding final value. E.g.: mtry=6, ntrees=100"
+      info_text = "Specify all tuned hyperparameters with their corresponding final value. E.g.: mtry=6, ntrees=100"
     )
   } 
   
@@ -488,7 +486,7 @@ server <- function(input, output, session) {
         label = "Coordinate Reference System (esri)",
         value = samples_crs()  # NULL if unset
       ),
-      infoText = "Specify the coordinate reference system as ESRI code"
+      info_text = "Specify the coordinate reference system as ESRI code"
     )
   } 
   
