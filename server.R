@@ -18,27 +18,186 @@ library(mlr3)
 odmap_dict = read.csv("www/odmap_dict.csv", header = T, stringsAsFactors = F)
 rmm_dict = rmmDataDictionary()
 
+
 server <- function(input, output, session) {
-  # ------------------------------------------------------------------------------------------#
-  #                           Rendering functions for UI elements                             # 
-  # ------------------------------------------------------------------------------------------#
-  render_text = function(element_id, element_placeholder){
-    textAreaInput(inputId = element_id, label = element_placeholder, height = "45px", resize = "vertical")
-  }
   
-  render_authors = function(){
-    div(
-      dataTableOutput("authors_table", width = "100%"),
-      actionButton("add_author", label = NULL, icon = icon("plus")),
-      br(), br()
+  
+  ## helper function for tooltips
+  inputWithHoverInfo <- function(inputTag, infoText) {
+    inputId <- inputTag$attribs$id
+    labelTag <- inputTag$children[[1]]
+    inputBody <- inputTag$children[[2]]
+    
+    tooltipIcon <- tags$span(
+      icon("info-circle"),
+      class = "info-hover-icon",
+      `data-bs-toggle` = "tooltip",
+      `data-bs-placement` = "right",
+      `data-bs-html` = "true",            # <-- CRUCIAL for HTML content like images
+      title = HTML(infoText)            # Use HTML() to parse tags like <img>
+    )
+    
+    
+    # Wrap the whole thing
+    div(class = "form-group shiny-input-container input-with-tooltip",
+        tags$label(`for` = inputId, labelTag),
+        tooltipIcon,
+        inputBody
     )
   }
   
-  render_objective = function(element_id, element_placeholder){
-    selectizeInput(inputId = element_id, label = NULL, multiple = F, options = list(create = T, placeholder = "Choose from list"),
-                   choices = list("", "Inference and explanation", "Mapping and interpolation"))
+  
+  ## helper function for tooltips from table
+  generateInputWithTooltip <- function(id, label, input_type, placeholder, info_text) {
+    
+    if (is.na(id) || id == "") {
+      stop(paste("Invalid input ID:", id))
+    }
+    
+    if (is.na(id) || id == "") {
+      stop("Input ID must not be NA or empty.")
+    }
+    
+    # Create input tag based on type
+    inputTag <- switch(input_type,
+                       "text" = textInput(id, label = NULL, value = "", placeholder = placeholder),
+                       "numeric" = numericInput(id, label = NULL, value = NULL, placeholder = placeholder),
+                       "suggestion" = selectInput(id, label = NULL, choices = strsplit(placeholder, ",")[[1]]),
+                       textInput(id, label = NULL, value = "", placeholder = placeholder)
+    )
+    
+    # Tooltip content - if it contains an image tag, treat it as HTML
+    infoIcon <- if (!is.na(info_text) && nchar(info_text) > 0) {
+      tags$span(
+        icon("info-circle"),
+        class = "info-hover-icon",
+        `data-bs-toggle` = "tooltip",
+        `data-bs-placement` = "right",
+        `data-bs-html` = "true",     # Critical: allows HTML content
+        title = HTML(info_text)      # Critical: parse as HTML
+      )
+    } else {
+      NULL
+    }
+    
+    
+    # Combine label + tooltip icon
+    labelWithTooltip <- div(
+      class = "input-label-icon",
+      tags$label(`for` = id, label),
+      infoIcon
+    )
+    
+    # Wrap and return
+    div(
+      id = id,
+      class = "form-group shiny-input-container input-with-tooltip",
+      labelWithTooltip,
+      inputTag
+    )
   }
   
+  
+  
+  
+  
+  ## Extract information from uploaded spatial objects ----------
+  samples_crs <- reactiveVal(NULL)
+  auto_selected <- reactiveVal(NULL)
+  samples_valid <- reactiveVal(TRUE)
+  trainArea_valid <- reactiveVal(TRUE)
+  prediction_valid <- reactiveVal(TRUE)
+  
+  # check if training area is valid
+  observeEvent(input$trainArea_upload, {
+    req(input$trainArea_upload)
+    
+    trainArea_valid(TRUE)  # reset
+    auto_selected(NULL)
+    
+    trainArea <- tryCatch({
+      st_read(input$trainArea_upload$datapath, quiet = TRUE)
+    }, error = function(e) {
+      showNotification("Could not read prediction area file.", type = "error")
+      return(NULL)
+    })
+    
+    if (!is.null(trainArea)) {
+      geom_type <- unique(st_geometry_type(trainArea))
+      if (!all(geom_type %in% c("POLYGON", "MULTIPOLYGON"))) {
+        showNotification("Prediction area must contain only POLYGON geometries.", type = "error")
+        trainArea_valid(FALSE)
+      }
+    }
+  })
+  
+  # check if prediction area is valid
+  observeEvent(input$prediction_upload, {
+    req(input$prediction_upload)
+    
+    prediction_valid(TRUE)  # reset
+    auto_selected(NULL)
+    
+    prediction_area <- tryCatch({
+      st_read(input$prediction_upload$datapath, quiet = TRUE)
+    }, error = function(e) {
+      showNotification("Could not read prediction area file.", type = "error")
+      return(NULL)
+    })
+    
+    if (!is.null(prediction_area)) {
+      geom_type <- unique(st_geometry_type(prediction_area))
+      if (!all(geom_type %in% c("POLYGON", "MULTIPOLYGON"))) {
+        showNotification("Prediction area must contain only POLYGON geometries.", type = "error")
+        prediction_valid(FALSE)
+      }
+    }
+  })
+  
+  # check if samples are valid
+  observeEvent(input$samples_upload, {
+    req(input$samples_upload)
+    
+    samples_valid(TRUE)  # reset
+    auto_selected(NULL)
+    
+    samples <- tryCatch({
+      st_read(input$samples_upload$datapath, quiet = TRUE)
+    }, error = function(e) {
+      showNotification("Could not read samples file.", type = "error")
+      return(NULL)
+    })
+    
+    if (!is.null(samples)) {
+      geom_type <- unique(st_geometry_type(samples))
+      if (!all(geom_type %in% c("POINT", "MULTIPOINT"))) {
+        showNotification("Samples file must contain only POINT geometries.", type = "error")
+        samples_valid(FALSE)
+      }
+    }
+  })
+  
+  # When samples are uploaded, extract epsg string
+  observeEvent(input$samples_upload, {
+    
+    req(samples_valid())
+    req(input$samples_upload)
+    
+    # Reset reactive values if new model object is uploaded
+    samples_crs(NULL)
+    
+    # read data --------
+    samples <- tryCatch({
+      st_read(input$samples_upload$datapath)
+    }, error = function(e) {
+      showNotification("Invalid .gpkg file or failed to load model.", type = "error")
+      return(NULL)
+    })
+    
+    # Check if samples are a POINT geometry
+    samples_crs(st_crs(samples)$epsg)
+    
+  })
   
   ##### Infer information from model objects---------------
   # Initialize reactive values to store the training sample count etc. 
@@ -76,7 +235,7 @@ server <- function(input, output, session) {
       showNotification("Invalid RDS file or failed to load model.", type = "error")
       return(NULL)
     })
-
+    
     # --------------------------------------
     # Caret model
     # --------------------------------------
@@ -177,85 +336,131 @@ server <- function(input, output, session) {
     
   })
   
+  observeEvent(model_type(), {
+    if (!is.null(model_type()) && !is.null(model_algorithm()) && !is.null(num_training_samples())) {
+      showNotification("Model details filled from uploaded .RDS", type = "message")
+    }
+  })
+  
+  
+  # ------------------------------------------------------------------------------------------#
+  #                           Rendering functions for UI elements                             # 
+  # ------------------------------------------------------------------------------------------#
+  render_text <- function(element_id, element, info_text = NULL) {
+    # Create textarea input with placeholder (empty value) and tooltip
+    inputTag <- textAreaInput(
+      inputId = element_id,
+      label = NULL,
+      height = "45px",
+      resize = "vertical"
+    )
+    
+    # Tooltip icon with HTML-enabled content
+    infoIcon <- if (!is.null(info_text) && nchar(info_text) > 0) {
+      tags$span(
+        icon("info-circle"),
+        class = "info-hover-icon",
+        `data-bs-toggle` = "tooltip",
+        `data-bs-html` = "true",
+        `data-bs-placement` = "right",
+        title = HTML(info_text)
+      )
+    } else {
+      NULL
+    }
+    
+    # Combine label and tooltip
+    labelWithTooltip <- div(
+      class = "input-label-icon",
+      tags$label(`for` = element_id, style = "font-weight: normal;", element),
+      infoIcon
+    )
+    
+    # Wrap everything and add id attribute here
+    div(
+      id = element_id,  # <-- added id here
+      class = "form-group shiny-input-container input-with-tooltip",
+      labelWithTooltip,
+      inputTag
+    )
+  }
+  
+  render_authors = function(){
+    div(
+      dataTableOutput("authors_table", width = "100%"),
+      actionButton("add_author", label = NULL, icon = icon("plus")),
+      br(), br()
+    )
+  }
+  
+  render_objective <- function(element_id, element) {
+    radioButtons(
+      inputId = element_id,
+      label = element,
+      choices = c("Model only", "Model and prediction"),
+      selected = "Model only"
+    )
+  }
+  
   # Render UI for extracted model information
-  render_n_samples = function(element_id, element_placeholder) {
-      if (!is.null(num_training_samples())) {
-        tagList(
-          numericInput("d_response_3", "Number of Training Samples", value = num_training_samples()),
-        )
-      } else {
-        numericInput("d_response_3", "Number of Training Samples", value = NULL)
-      }
+  render_n_samples = function(element_id, element) {
+    value <- if (!is.null(num_training_samples())) num_training_samples() else NULL
+    tagList(numericInput("d_response_3", "Number of Training Samples*", value = value))
   }
   
-  render_n_predictors = function(element_id, element_placeholder) {
-    if (!is.null(num_predictors())) {
-      tagList(
-        numericInput("d_predictors_2", "Number of Predictors", value = num_predictors()),
-      )
-    } else {
-      numericInput("d_predictors_2", "Number of Predictors", value = NULL)
-    }
+  render_n_predictors = function(element_id, element) {
+    value <- if (!is.null(num_predictors())) num_predictors() else NULL
+    tagList(numericInput("d_predictors_2", "Number of Predictors*", value = num_predictors()))
   }
   
-  render_n_classes = function(element_id, element_placeholder) {
-    if (!is.null(num_classes())) {
-      tagList(
-        numericInput("d_response_4", "Number of Classes", value = num_classes()),
-      )
-    } else {
-      numericInput("d_response_4", "Number of Classes", value = NULL)
-    }
+  render_n_classes = function(element_id, element) {
+    value <- if (!is.null(num_classes())) num_classes() else NULL
+    inputWithHoverInfo(
+      numericInput("d_response_4", "Number of Classes", value = value),
+      infoText = "Specify the number of classes of the response variable"
+    )
   }
   
-  render_n_samples_class = function(element_id, element_placeholder) {
-    if (!is.null(num_samples_per_class())) {
-      tagList(
-        textInput("d_response_5", "Number of Samples per Class", value = num_samples_per_class()),
-      )
-    } else {
-      textInput("d_response_5", "Number of Samples per Class", value = NULL)
-    }
+  render_n_samples_class = function(element_id, element) {
+    value <- if (!is.null(num_samples_per_class())) num_samples_per_class() else NULL
+    inputWithHoverInfo(
+      numericInput("d_response_5", "Number of Samples per Class", value = value),
+      infoText = "Specify the number of samples per class of the response variable"
+    )
   }
   
-  render_range = function(element_id, element_placeholder) {
-    if (!is.null(interpolation_range())) {
-      tagList(
-        textInput("d_response_6", "Response range", value = interpolation_range()),
-      )
-    } else {
-      textInput("d_response_6", "Response range", value = NULL)
-    }
+  render_range = function(element_id, element) {
+    value <- if (!is.null(interpolation_range())) interpolation_range() else NULL
+    inputWithHoverInfo(
+      textInput("d_response_6", "Response Range", value = value),
+      infoText = "Specify the range of the response values from min to max"
+    )
   }
   
-  render_names_predictors = function(element_id, element_placeholder) {
-    if (!is.null(names_predictors())) {
-      tagList(
-        textInput("d_predictors_3", "Names of Predictors", value = names_predictors()),
-      )
-    } else {
-      textInput("d_predictors_3", "Names of Predictors", value = NULL)
-    }
+  render_names_predictors = function(element_id, element) {
+    value <- if (!is.null(names_predictors())) names_predictors() else NULL
+    inputWithHoverInfo(
+      textInput("d_predictors_3", "Names of Predictors", value = value),
+      infoText = "Specify the names of the predictor variables"
+    )
   } 
   
-  render_hyperparameters = function(element_id, element_placeholder) {
-    if (!is.null(model_hyperparams())) {
-      tagList(
-        textInput("m_validation_3", "Hyperparameter values", value = model_hyperparams()),
-      )
-    } else {
-      textInput("m_validation_3", "Hyperparameter values", value = NULL)
-    }
+  render_hyperparameters = function(element_id, element) {
+    value <- if (!is.null(model_hyperparams())) model_hyperparams() else NULL
+    inputWithHoverInfo(
+      textInput("m_validation_3", "Hyperparameter values", value = value),
+      infoText = "Specify all tuned hyperparameters with their corresponding final value. E.g.: mtry=6, ntrees=100"
+    )
   } 
   
-  render_model_type = function(element_id, element_placeholder) {
-    selectInput("m_algorithms_1", "Model Type",
+  render_model_type = function(element_id, element) {
+    selectInput("m_algorithms_1", "Model Type*",
                 choices = c("", "Classification", "Regression"),
                 selected = model_type())
     
   }
   
-  render_model_algorithm = function(element_id, element_placeholder) {
+  render_model_algorithm = function(element_id, element) {
     # Default list of known algorithms
     default_algos <- c("rf", "gbm", "glm", "svmRadial", "nnet", "rpart")
     selected_algo <- model_algorithm()
@@ -268,128 +473,26 @@ server <- function(input, output, session) {
     }
     
     selectInput(
-        "m_algorithms_2", "Algorithm",
-        choices = c("", unique(algo_choices)),
-        selected = selected_algo
-      )
+      "m_algorithms_2", "Algorithm*",
+      choices = c("", unique(algo_choices)),
+      selected = selected_algo
+    )
     
   }
   
-  observeEvent(model_type(), {
-    if (!is.null(model_type()) && !is.null(model_algorithm()) && !is.null(num_training_samples())) {
-      showNotification("Model details filled from uploaded .RDS", type = "message")
-    }
-  })
-  
-  
-  ## Extract information from uploaded spatial objects ----------
-  samples_crs <- reactiveVal(NULL)
-  auto_selected <- reactiveVal(NULL)
-  samples_valid <- reactiveVal(TRUE)
-  trainArea_valid <- reactiveVal(TRUE)
-  prediction_valid <- reactiveVal(TRUE)
-  
-  # check if training area is valid
-  observeEvent(input$trainArea_upload, {
-    req(input$trainArea_upload)
-    
-    trainArea_valid(TRUE)  # reset
-    auto_selected(NULL)
-    
-    trainArea <- tryCatch({
-      st_read(input$trainArea_upload$datapath, quiet = TRUE)
-    }, error = function(e) {
-      showNotification("Could not read prediction area file.", type = "error")
-      return(NULL)
-    })
-    
-    if (!is.null(trainArea)) {
-      geom_type <- unique(st_geometry_type(trainArea))
-      if (!all(geom_type %in% c("POLYGON", "MULTIPOLYGON"))) {
-        showNotification("Prediction area must contain only POLYGON geometries.", type = "error")
-        trainArea_valid(FALSE)
-      }
-    }
-  })
-  
-  # check if prediction area is valid
-  observeEvent(input$prediction_upload, {
-    req(input$prediction_upload)
-    
-    prediction_valid(TRUE)  # reset
-    auto_selected(NULL)
-    
-    prediction_area <- tryCatch({
-      st_read(input$prediction_upload$datapath, quiet = TRUE)
-    }, error = function(e) {
-      showNotification("Could not read prediction area file.", type = "error")
-      return(NULL)
-    })
-    
-    if (!is.null(prediction_area)) {
-      geom_type <- unique(st_geometry_type(prediction_area))
-      if (!all(geom_type %in% c("POLYGON", "MULTIPOLYGON"))) {
-        showNotification("Prediction area must contain only POLYGON geometries.", type = "error")
-        prediction_valid(FALSE)
-      }
-    }
-  })
-  
-  # check if samples are valid
-  observeEvent(input$samples_upload, {
-    req(input$samples_upload)
-    
-    samples_valid(TRUE)  # reset
-    auto_selected(NULL)
-    
-    samples <- tryCatch({
-      st_read(input$samples_upload$datapath, quiet = TRUE)
-    }, error = function(e) {
-      showNotification("Could not read samples file.", type = "error")
-      return(NULL)
-    })
-    
-    if (!is.null(samples)) {
-      geom_type <- unique(st_geometry_type(samples))
-      if (!all(geom_type %in% c("POINT", "MULTIPOINT"))) {
-        showNotification("Samples file must contain only POINT geometries.", type = "error")
-        samples_valid(FALSE)
-      }
-    }
-  })
-  
-  # When samples are uploaded, extract epsg string
-  observeEvent(input$samples_upload, {
-    
-    req(samples_valid())
-    req(input$samples_upload)
-    
-    # Reset reactive values if new model object is uploaded
-    samples_crs(NULL)
-    
-    # read data --------
-    samples <- tryCatch({
-      st_read(input$samples_upload$datapath)
-    }, error = function(e) {
-      showNotification("Invalid .gpkg file or failed to load model.", type = "error")
-      return(NULL)
-    })
-    
-    # Check if samples are a POINT geometry
-    samples_crs(st_crs(samples)$epsg)
-      
-  })
-  
-  
-  render_crs = function(element_id, element_placeholder) {
-    textInput(
-      inputId = element_id,
-      label = "Coordinate Reference System (epsg)",
-      value = samples_crs()  # NULL if unset
+  render_crs = function(element_id, element) {
+    value <- if (!is.null(num_classes())) num_classes() else NULL
+    inputWithHoverInfo(
+      textInput(
+        inputId = element_id,
+        label = "Coordinate Reference System (esri)",
+        value = samples_crs()  # NULL if unset
+      ),
+      infoText = "Specify the coordinate reference system as ESRI code"
     )
   } 
   
-  render_design = function(element_id, element_placeholder){
+  render_design = function(element_id, element){
     
     req(samples_valid(), prediction_valid())
     
@@ -410,7 +513,7 @@ server <- function(input, output, session) {
         
         # sampling design
         geod <- CAST::geodist(samples, modeldomain = prediction_area)
-
+        
         Gj <- geod[geod$what == "sample-to-sample",]$dist
         Gij <- geod[geod$what == "prediction-to-sample",]$dist
         
@@ -437,33 +540,31 @@ server <- function(input, output, session) {
     # Create dropdown menu
     if (is.null(auto_val)) {
       # No preselection
-      selectInput("sampling_design", "Sampling Design",
+      selectInput("sampling_design", "Sampling Design*",
                   choices = c("", "clustered", "random", "stratified"),
                   selected = "")
     } else {
       # Preselect inferred value
-      selectInput("sampling_design", "Sampling Design",
+      selectInput("sampling_design", "Sampling Design*",
                   choices = c("clustered", "random", "stratified"),
                   selected = auto_val)
     }
   }
-
+  
   
   ## Render other stuff -----------
-  render_suggestion = function(element_id, element_placeholder, suggestions){
+  render_suggestion = function(element_id, element, suggestions){
     suggestions = sort(trimws(unlist(strsplit(suggestions, ","))))
-    selectizeInput(inputId = element_id, label = element_placeholder, choices = suggestions, multiple = TRUE, options = list(create = T,  placeholder = "Choose from list or insert new values"))
+    selectizeInput(inputId = element_id, label = element, choices = suggestions, multiple = TRUE, options = list(create = T,  placeholder = "Choose from list or insert new values"))
   }
-
   
-
-  render_suggestion_single = function(element_id, element_placeholder, suggestions){
+  render_suggestion_single = function(element_id, element, suggestions){
     suggestions = sort(trimws(unlist(strsplit(suggestions, ","))))
     suggestions = suggestions[suggestions != ""]  # Remove blanks
     
     selectizeInput(
       inputId = element_id,
-      label = element_placeholder,
+      label = element,
       choices = suggestions,
       selected = character(0),  # Ensures nothing is selected -- doesnt work!!!
       multiple = FALSE,
@@ -498,42 +599,63 @@ server <- function(input, output, session) {
         element_UI_list = vector("list", 3) # holds UI elements for current element 
         
         # First element: Header 
-        if(subsection != section_dict$subsection_id[i]){
-          subsection = section_dict$subsection_id[i]
-          subsection_label = section_dict$subsection[i]
-          element_UI_list[[1]] = div(id = section_dict$subsection_id[i], h5(subsection_label, style = "font-weight: bold"))
-        }
+        # if(subsection != section_dict$subsection_id[i]){
+        #   subsection = section_dict$subsection_id[i]
+        #   subsection_label = section_dict$subsection[i]
+        #   element_UI_list[[1]] = div(id = section_dict$subsection_id[i], h5(subsection_label, style = "font-weight: bold"))
+        # }
+        
+        ## Create label with info icon (tooltip)
+        label_with_tooltip <- tags$span(
+          class = "input-label-icon",
+          section_dict$element[i],
+          if (!is.na(section_dict$info_text[i]) && nzchar(section_dict$info_text[i])) {
+            tags$span(
+              class = "info-hover-icon",
+              `data-toggle` = "tooltip",
+              `data-placement` = "top",
+              title = section_dict$info_text[i],
+              icon("circle-info")
+            )
+          }
+        )
         
         # Second element: Input field(s) 
         element_UI_list[[2]] = switch(section_dict$element_type[i],
-                                      text = render_text(section_dict$element_id[i], section_dict$element_placeholder[i]),
+                                      text = render_text(
+                                        element_id = section_dict$element_id[i],
+                                        element = section_dict$element[i],
+                                        info_text = section_dict$info_text[i]
+                                      ),
                                       author = render_authors(),
-                                      objective = render_objective(section_dict$element_id[i], section_dict$element_placeholder[i]),
+                                      objective = render_objective(section_dict$element_id[i], section_dict$element[i]),
                                       
-                                      sample_size = render_n_samples(section_dict$element_id[i], section_dict$element_placeholder[i]),
-                                      n_predictors = render_n_predictors(section_dict$element_id[i], section_dict$element_placeholder[i]),
-                                      names_predictors = render_names_predictors(section_dict$element_id[i], section_dict$element_placeholder[i]),
+                                      sample_size = render_n_samples(section_dict$element_id[i], section_dict$element[i]),
+                                      n_predictors = render_n_predictors(section_dict$element_id[i], section_dict$element[i]),
+                                      names_predictors = render_names_predictors(section_dict$element_id[i], section_dict$element[i]),
                                       
-                                      n_classes = render_n_classes(section_dict$element_id[i], section_dict$element_placeholder[i]),
-                                      n_samples_per_class = render_n_samples_class(section_dict$element_id[i], section_dict$element_placeholder[i]),
+                                      n_classes = render_n_classes(section_dict$element_id[i], section_dict$element[i]),
+                                      n_samples_per_class = render_n_samples_class(section_dict$element_id[i], section_dict$element[i]),
                                       
                                       interpolation_range = {
                                         if (!is.null(model_type()) && model_type() == "Classification") {
                                           NULL  # Hide interpolation_range for classification models
                                         } else {
-                                          render_range(section_dict$element_id[i], section_dict$element_placeholder[i])
+                                          render_range(section_dict$element_id[i], section_dict$element[i])
                                         }},
-                                        
-                                      hyperparams = render_hyperparameters(section_dict$element_id[i], section_dict$element_placeholder[i]),
-
-                                      model_type = render_model_type(section_dict$element_id[i], section_dict$element_placeholder[i]),
-                                      model_algorithm = render_model_algorithm(section_dict$element_id[i], section_dict$element_placeholder[i]),
                                       
-                                      sampling_design = render_design(section_dict$element_id[i], section_dict$element_placeholder[i]),
-                                      samples_crs = render_crs(section_dict$element_id[i], section_dict$element_placeholder[i]),
+                                      hyperparams = render_hyperparameters(section_dict$element_id[i], section_dict$element[i]),
                                       
-                                      suggestion_single = render_suggestion_single(section_dict$element_id[i], section_dict$element_placeholder[i], section_dict$suggestions[i]),
-                                      suggestion = render_suggestion(section_dict$element_id[i], section_dict$element_placeholder[i], section_dict$suggestions[i]),
+                                      model_type = render_model_type(section_dict$element_id[i], section_dict$element[i]),
+                                      model_algorithm = render_model_algorithm(section_dict$element_id[i], section_dict$element[i]),
+                                      
+                                      sampling_design = render_design(section_dict$element_id[i], section_dict$element[i]),
+                                      samples_crs = render_crs(section_dict$element_id[i], section_dict$element[i]),
+                                      
+                                      ## 🟨 MODIFIED: Use label_with_tooltip in suggestion inputs
+                                      suggestion_single = render_suggestion_single(section_dict$element_id[i], label_with_tooltip, section_dict$suggestions[i]),
+                                      suggestion = render_suggestion(section_dict$element_id[i], label_with_tooltip, section_dict$suggestions[i]),
+                                      
                                       model_setting = render_model_settings())
         
         # Third element: Next/previous button
@@ -738,6 +860,24 @@ server <- function(input, output, session) {
   #                                   UI Elements                                             # 
   # ------------------------------------------------------------------------------------------#
   # "Create a protocol" - mainPanel elements
+  output$dynamic_form <- renderUI({
+    dict <- read.csv("www/dict.csv", stringsAsFactors = FALSE)
+    
+    inputs <- lapply(1:nrow(dict), function(i) {
+      row <- dict[i, ]
+      generateInputWithTooltip(
+        id = row$element_id,
+        label = row$element_placeholder,
+        input_type = row$element_type,
+        placeholder = row$element_placeholder,  # Use as placeholder only
+        info_text = row$info_text
+      )
+    })
+    
+    tagList(inputs)
+  })
+  
+  
   output$Overview_UI = render_section("Overview", NULL, odmap_dict)
   output$Model_UI_response <- render_section("Model", "Response", odmap_dict)
   output$Model_UI_predictor <- render_section("Model", "Predictors", odmap_dict)
@@ -894,15 +1034,18 @@ server <- function(input, output, session) {
   })
   
   # Monitor current progress
-  elem_hide = list("Inference and explanation" = c(pull(odmap_dict %>% filter(inference == 0), element_id), # unused elements
-                                                   unique(pull(odmap_dict %>% group_by(subsection_id) %>% filter(all(inference  == 0)), subsection_id)), # unused subsections
-                                                   "p"),
-                   "Prediction and mapping" =  c(pull(odmap_dict %>% filter(prediction == 0), element_id), 
-                                                 unique(pull(odmap_dict %>% group_by(subsection_id) %>% filter(all(prediction == 0)), subsection_id))))
+  elem_optional <- c(
+    pull(odmap_dict %>% filter(optional == 1), element_id),
+    unique(pull(odmap_dict %>% group_by(subsection_id) %>% filter(all(optional == 1)), subsection_id))
+  )
   
-  elem_optional = c(pull(odmap_dict %>% filter(optional == 1), element_id), # optional elements
-                    unique(pull(odmap_dict %>% group_by(subsection_id) %>% filter(all(optional == 1)), subsection_id))) # optional subsections)
-  
+  elem_hide <- list(
+    "Model only" = c(
+      pull(odmap_dict %>% filter(prediction == 0), element_id),
+      unique(pull(odmap_dict %>% group_by(subsection_id) %>% filter(all(prediction == 0)), subsection_id)),
+      "p"  # if "p" is also a UI input or section
+    )
+  )
   elem_hidden = "" # keep track of hidden elements
   
   # ------------------------------------------------------------------------------------------#
@@ -910,18 +1053,31 @@ server <- function(input, output, session) {
   # ------------------------------------------------------------------------------------------#
   # Study objective
   observeEvent(input$o_objective_1, {
-    # Dynamically show/hide corresponding input fields
-    shinyjs::show(selector = paste0("#", setdiff(elem_hidden, elem_hide[[input$o_objective_1]])))
-    shinyjs::hide(selector = paste0("#", elem_hide[[input$o_objective_1]]))
-    elem_hidden <<- elem_hide[[input$o_objective_1]]
+    # Elements to hide for selected objective
+    to_hide <- elem_hide[[input$o_objective_1]]
     
-    # Show/hide Prediction tab when study objective is inference
-    if(input$o_objective_1 == "Inference and explanation"){
+    # Elements to show: everything that's *not* in to_hide
+    to_show <- setdiff(unlist(elem_hide), to_hide)
+    
+    # Show and hide using shinyjs
+    lapply(to_show, function(id) {
+      shinyjs::show(id)
+    })
+    lapply(to_hide, function(id) {
+      shinyjs::hide(id)
+    })
+    
+    # Update global tracking variable
+    elem_hidden <<- to_hide
+    
+    # Hide Prediction tab if "Model only" is selected
+    if (input$o_objective_1 == "Model only") {
       hideTab("tabset", "Prediction")
     } else {
       showTab("tabset", "Prediction")
     }
   })
+  
   
   
   # -------------------------------------------
@@ -962,9 +1118,9 @@ server <- function(input, output, session) {
   observe({
     req(input$sampling_design, input$d_predictors_1)
     if (input$sampling_design == "clustered" && "Spatial Proxies" %in% input$d_predictors_1) {
-        showNotification("⚠️ Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\nYou might
+      showNotification("⚠️ Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\nYou might
                          consider using physically relevant predictors instead.", type = "warning")
-      }
+    }
   })
   
   
@@ -972,19 +1128,25 @@ server <- function(input, output, session) {
   
   # -------------------------------------------
   # Optional fields
-  observeEvent(input$hide_optional,{
-    if(is.null(input$o_objective_1)){
-      return(NULL)
-    } else if(input$hide_optional == T & input$o_objective_1 == ""){
-      showNotification("Please select a model objective under '1. Overview'", duration = 3, type = "message")
-      Sys.sleep(0.3)
-      updateMaterialSwitch(session, "hide_optional", value = F)
-      updateTabsetPanel(session, "tabset", "Overview")
-      # TODO jump to Input field
-    } else {
-      shinyjs::toggle(selector = paste0("#", setdiff(elem_optional, elem_hide[[input$o_objective_1]])), condition = !input$hide_optional) 
-    }
+  # No need to wrap with _wrapper if elements don't have it
+  observeEvent(input$hide_optional, {
+    req(input$o_objective_1)
+    
+    hide_elements <- elem_hide[[input$o_objective_1]]
+    if (is.null(hide_elements)) hide_elements <- character(0)
+    
+    toggle_elements <- setdiff(elem_optional, hide_elements)
+    
+    selector_string <- paste0("#", toggle_elements, collapse = ", ")
+    
+    print(paste("Toggling elements:", selector_string))
+    
+    shinyjs::toggle(selector = selector_string, condition = !input$hide_optional)
   })
+  
+  
+  
+  
   
   # -------------------------------------------
   # Model algorithms and settings
@@ -1012,7 +1174,7 @@ server <- function(input, output, session) {
         local({ # Needs local evaluation because of asynchronous execution of renderDataTable
           .new_alg = new_alg
           output[[.new_alg]] = renderDataTable(model_settings[[.new_alg]], editable = T, rownames = F,
-                                        options = list(dom = "t", pageLength = 50, autoWidth = T, columnDefs = list(list(width = '50%', targets = "_all"))))
+                                               options = list(dom = "t", pageLength = 50, autoWidth = T, columnDefs = list(list(width = '50%', targets = "_all"))))
           observeEvent(input[[paste0(.new_alg, '_cell_edit')]], {
             model_settings[[.new_alg]][input[[paste0(.new_alg, '_cell_edit')]]$row, input[[paste0(.new_alg, '_cell_edit')]]$col + 1] = input[[paste0(.new_alg, '_cell_edit')]]$value
           })
@@ -1137,7 +1299,7 @@ server <- function(input, output, session) {
       NULL
     })
   })
-
+  
   output$d_response_7 <- renderPlot({
     sampling_locations <- uploaded_samplingLocations()
     req(sampling_locations)
@@ -1232,6 +1394,7 @@ server <- function(input, output, session) {
     }
   })
   outputOptions(output, "showGeodist", suspendWhenHidden = FALSE)
+  
   
   
 }

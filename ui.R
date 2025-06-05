@@ -5,26 +5,53 @@ library(shinythemes)
 library(shinydashboard)
 library(shinyBS)
 library(DT)
+library(bslib)
 
 
 ui <-  tagList(
-  tags$head(tags$style(HTML(readChar("www/odmap.css", file.info("www/odmap.css")$size)))),
+  tags$head(
+    tags$style(HTML(readChar("www/odmap.css", file.info("www/odmap.css")$size))),
+    tags$style(HTML("...tooltip CSS here...")),
+    tags$script(HTML("
+    document.addEventListener('DOMContentLoaded', function () {
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]'));
+      tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+    });
+  ")),
+    tags$style(HTML("
+  .input-label-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .info-hover-icon {
+    display: none;
+    color: #007BFF;
+    margin-left: 4px;
+  }
+  .input-label-icon:hover .info-hover-icon {
+    display: inline;
+  }
+"))
+  ),
   useShinyjs(),
-
+  
   navbarPage(
     id = "navbar",
-    windowTitle = "ODMAP v1.0",
+    windowTitle = "STeMP v0.9",
     title = div(
       div(
         id = "github_logo", 
         a(img(src="github_logo_40px.png"), href = "https://github.com/UP-macroecology/ODMAP", target="_blank")
       ),
-      "ODMAP v1.0"
+      "STeMP v0.9"
     ),
     position = "fixed-top",
-    theme = shinytheme("cosmo"),
+    theme = shinytheme("united"), #darkly, united
     selected = "about",
-  
+    
     # HOME TAB
     tabPanel("What is STeMP?", value = "about", fluidPage(
       fluidRow(
@@ -128,30 +155,33 @@ ui <-  tagList(
                                        uiOutput("Model_UI_interpretation")),
                        bsCollapsePanel("Software", style = "primary",
                                        uiOutput("Model_UI_Software"))
-                     
-                   
-                   ))),
+                       
+                       
+                     ))),
           
           tabPanel("3. Prediction", fluidPage(
-            bsCollapse(
-              bsCollapsePanel("Prediction domain", style = "primary",
-                              fileInput("prediction_upload", "Upload prediction area (.gpkg)", accept = ".gpkg"),
-                              conditionalPanel(
-                                condition = "output.show_predictionArea == 'true'",
-                                plotOutput("p_pred", height = "400px")
-                              ),
-                              conditionalPanel(
-                                condition = "output.showGeodist == 'true'",
-                                plotOutput("geodist", height = "200px")
-                              ),
-                              uiOutput("Prediction_UI_area")),
-              bsCollapsePanel("Evaluation and Uncertainty", style = "primary",
-                              uiOutput("Prediction_UI_eval")),
-              bsCollapsePanel("Post-Processing", style = "primary",
-                              uiOutput("Prediction_UI_post"))
-              
+            conditionalPanel(
+              condition = "input.o_objective_1 == 'Model and prediction'",
+              bsCollapse(
+                bsCollapsePanel("Prediction domain", style = "primary",
+                                fileInput("prediction_upload", "Upload prediction area (.gpkg)", accept = ".gpkg"),
+                                conditionalPanel(
+                                  condition = "output.show_predictionArea == 'true'",
+                                  plotOutput("p_pred", height = "400px")
+                                ),
+                                conditionalPanel(
+                                  condition = "output.showGeodist == 'true'",
+                                  plotOutput("geodist", height = "200px")
+                                ),
+                                uiOutput("Prediction_UI_area")),
+                bsCollapsePanel("Evaluation and Uncertainty", style = "primary",
+                                uiOutput("Prediction_UI_eval")),
+                bsCollapsePanel("Post-Processing", style = "primary",
+                                uiOutput("Prediction_UI_post"))
+              )
             )
           ))
+          
         ))
     )),
     
@@ -169,9 +199,9 @@ ui <-  tagList(
         column(width = 2),
         column(width = 8, 
                p("There are two options for importing data into your ODMAP protocol", style = "font-size: 18px;"),
-              # Add this section for GPKG upload
-       p(tags$b("(1) Upload an ODMAP protocol (.csv)"), br(), "This option is convenient if you want to edit or resume working on a previously saved ODMAP protocol.", style = "font-size: 18px;"),
-
+               # Add this section for GPKG upload
+               p(tags$b("(1) Upload an ODMAP protocol (.csv)"), br(), "This option is convenient if you want to edit or resume working on a previously saved ODMAP protocol.", style = "font-size: 18px;"),
+               
                p("Choose file", style = "font-size: 18px; font-weight: bold"),
                fileInput("upload", label = NULL, accept = c(".csv")),
                uiOutput("Upload_UI")),
