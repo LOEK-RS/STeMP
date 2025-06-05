@@ -2,7 +2,7 @@
 1,Overview,o,Authorship,o_authorship,Model title*,o_authorship_1,<img src='workflow.png' width='150'><br>This is a tooltip with an image.,text,,0,1,1
 2,Overview,o,Authorship,o_authorship,Author names*,o_authorship_2,Author names*,author,,0,1,1
 3,Overview,o,Authorship,o_authorship,Contact*,o_authorship_3,Contact email address*,text,,0,1,1
-4,Overview,o,Authorship,o_authorship,Study title,o_authorship_4,If a study is associated with the model, then add the title of this study,text,1,1,1
+4,Overview,o,Authorship,o_authorship,Study title,o_authorship_4,"If a study is associated with the model, then add the title of this study",text,,1,1,1
 5,Overview,o,Authorship,o_authorship,Study link,o_authorship_5,"Link to study (DOI, web address)",text,,1,1,1
 6,Overview,o,Model objective,o_objective,Model objective*,o_objective_1,Model objective*,objective,,0,1,1
 7,Overview,o,Target variable,o_objective,Target variable*,o_objective_2,The target variable the model aims to predict*,text,,0,1,1
