@@ -1,0 +1,87 @@
+section,subsection,element,Value
+Overview,Authorship,Study title,Predicting the distribution of shrub species in southern California from climate and terrain-derived variables
+Overview,Authorship,Author names,Janet Franklin
+Overview,Authorship,Contact ,janet.franklin1@gmail.com
+Overview,Authorship,Study link,10.2307/3237291
+Overview,Model objective,Model objective,Mapping and interpolation
+Overview,Model objective,Target output,continuous habitat suitability index (probability of species presence)
+Overview,Focal Taxon,Focal Taxon,20 shrub species that are commonly found in the chaparral and coastal sage scrub communities of southern California
+Overview,Location,Location,California’s southwest ecoregion
+Overview,Scale of Analysis,Spatial extent,
+Overview,Scale of Analysis,Spatial resolution,30 m
+Overview,Scale of Analysis,Temporal extent,period of climate normals (30 prior years averaged)
+Overview,Scale of Analysis,Temporal resolution,single time period
+Overview,Scale of Analysis,Boundary,natural
+Overview,Biodiversity data,Observation type,field survey
+Overview,Biodiversity data,Response data type,presence/absence
+Overview,Predictors,Predictor types,climatic; edaphic; topographic
+Overview,Hypotheses,Hypotheses,"Climate, soils and topography are correlated with plant distributions"
+Overview,Assumptions,Model assumptions,"Species–environment equilibrium, Availability of all important predictors"
+Overview,Algorithms,Modelling techniques,glm; gam; CART
+Overview,Algorithms,Model complexity,"we let the data determine model complexity in CT and GAM, and used the response shape of GAMs as indication to define the complexity of GLMs"
+Overview,Algorithms,Model averaging,none
+Overview,Workflow,Model workflow,"GAMs were first parameterized using all environmental and spatial variables, and smoothing splines, to assess the validity of the linear model for each bivariate relationship, and to explore the shape of the response curve and strength of the relationship between each species and explanatory variable. Then, GLMs were parameterized using all variables and using response functions suggested by the GAM."
+Overview,Software,Software,S-Plus software version 3.3 for Windows
+Overview,Software,Code availability,not available
+Overview,Software,Data availability,not available
+Data,Biodiversity data,Taxon names,"Adenostoma fasciculatum, Adenostoma sparsifolium, Arctostaphylos glandulosa, Arctostaphylos glauca, Ceanothus crassifolius, Ceanothus greggii-perplexans, Ceanothus leucodermis, Ceanothus tomentosus, Cercocarpus betuloides, Heteromeles arbutifolia, Quercus berberidifolia, Quercus wislizenii, Rhus ovata, Xylococcus bicolor, Yucca whipplei, Artemisia californica, Eriogonum fasciculatum, Malosma laurina,
+Salvia apiana
+Salvia mellifera"
+Data,Biodiversity data,Taxonomic reference system,Jepson Flora of California
+Data,Biodiversity data,Ecological level,species
+Data,Biodiversity data,Data sources,USDA Forest Service
+Data,Biodiversity data,Sampling design,Subjective spatial sampling (representative sampling of plant communities; once-off temporal sampling
+Data,Biodiversity data,Sample size,"Number of observations 322 to 906 per species, prevalence 25 to 859 presences per species"
+Data,Biodiversity data,Clipping,National Forests in California Southwest Ecoregion
+Data,Biodiversity data,Scaling,
+Data,Biodiversity data,Cleaning,
+Data,Biodiversity data,Absence data,plant community plot data yielded presence and absence. Cover data simplified to presence
+Data,Biodiversity data,Background data,
+Data,Biodiversity data,Errors and biases,Subjective sampling locations
+Data,Data partitioning,Training data,All data were used for model training and model performance was only assessed internally
+Data,Data partitioning,Validation data,
+Data,Data partitioning,Test data,
+Data,Predictor variables,Predictor variables,"annual precipitation, mean minimum temperature of the coldest month, mean maxi- mum temperature of the warmest month, Quarterly estimates of Potential solar, radiation, slope, geographical coordinates"
+Data,Predictor variables,Data sources,J. Michaelsen (unpubl.) provided 1-km gridded estimates of 28 climate variables for the southwest ecoregion
+Data,Predictor variables,Spatial extent,
+Data,Predictor variables,Spatial resolution,"1 km, 30 m"
+Data,Predictor variables,Coordinate reference system,UTM
+Data,Predictor variables,Temporal extent,
+Data,Predictor variables,Temporal resolution,
+Data,Predictor variables,Data processing,"-	mean minimum and maximum monthly temperature for each month, and annual and trimesterly mean precipitation were interpolated from climate station data using elevation from a digital elevation model. Universal kriging was used as interpolation method. In"
+Data,Predictor variables,Errors and biases,
+Data,Predictor variables,Dimension reduction,
+Data,Transfer data,Data sources,
+Data,Transfer data,Spatial extent,
+Data,Transfer data,Spatial resolution,
+Data,Transfer data,Temporal extent,
+Data,Transfer data,Temporal resolution,
+Data,Transfer data,Models and scenarios,
+Data,Transfer data,Data processing,
+Data,Transfer data,Quantification of Novelty,
+Model,Variable pre-selection,Variable pre-selection,"Because there is a body of literature and theory linking bioclimatic gradients to plant distributions, and because the models are intended to be predictive rather than exploratory, explanatory variables were chosen a priori."
+Model,Multicollinearity,Multicollinearity,"I excluded highly correlated variables based on ecological plausibility. For example, the deviation of the coldest temperature from the annual mean was also examined, but was strongly correlated with jul.maxt. Also, quarterly estimates of solar radiation for the growing season (spring: Mar-May), and driest quarter (summer: Jun-Aug) were highly correlated (r = 0.88), and therefore only winter (Dec-Feb) and spring values were used in modeling."
+Model,Model settings,Model settings (fitting),"glm: family (binomial), formula (linear, quadratic, higher-order polynomial); gam: family (binomial); CART: nodesize (5), pruning (All trees were pruned to the 22 ‘best’ nodes based on a cost- complexity measure (deleting those ‘branches’ that reduce deviance the least). Then the tree was pruned inter- actively to the smallest size possible without increasing model error.)"
+Model,Model settings,Model settings (extrapolation),
+Model,Model estimates,Coefficients,
+Model,Model estimates,Parameter uncertainty,Cross-validation was used to determine the optimum tree size yielding the most robust predictions
+Model,Model estimates,Variable importance,assessed by quantifying how much deviance each variable explains
+Model,Model selection - model averaging - ensembles,Model selection,
+Model,Model selection - model averaging - ensembles,Model averaging,
+Model,Model selection - model averaging - ensembles,Model ensembles,
+Model,Analysis and Correction of non-independence,Spatial autocorrelation,"Model residuals were not explicitly tested for spatial dependence. I developed models both with and without geographic coordinates as explanatory variables. This addresses geographic patterning but not spatial dependence or clustering in the dataset. Because of strong clustering of some species among the sample plots, spatial variables accounted for large proportions of the explained deviance in some GAMs and GLMs. However, CT-models that included spatial variables only accounted for a small increase in prediction accuracy over those that did not."
+Model,Analysis and Correction of non-independence,Temporal autocorrelation,
+Model,Analysis and Correction of non-independence,Nested data,
+Model,Threshold selection,Threshold selection,"I chose an optimum threshold value of p that minimizes omission and commission errors. This is important because when a species is rare in the sample, a ‘model’ that predicted it to be absent everywhere would have high overall accuracy (but high omission error), and vice versa"
+Assessment,Performance statistics,Performance on training data,True negative rate; True positive rate; False negative rate; False positive rate; Performance statistics were only estimated on training data. The model fit and significance of the variables were evaluated using the residual deviance. [Austin et al.] suggest deleting observations that are beyond the last positive observation by greater than 1% of the sample; sorted by an important environmental variable. I included the last positive observation +/–10% of the sample; and so the fit of my models may still be overestimated somewhat. The models were also assessed by examining the number of observations (presence/absence) correctly predicted by each model; as well as the proportion of omission (type I) and commission (type II) errors – predicting the species to be absent when it is present; and vice versa.
+Assessment,Performance statistics,Performance on validation data,
+Assessment,Performance statistics,Performance on test data,
+Assessment,Plausibility check,Response shapes,"Response curves were checked for complexity and plausibility. I assessed response shape (linear, unimodal), confidence intervals and optima."
+Assessment,Plausibility check,Expert judgement,
+Prediction,Prediction output,Prediction unit,presence and absence
+Prediction,Prediction output,Post-processing,I took care to delimit prediction to interpolation within the study area (no prediction or projection to new place or time).
+Prediction,Uncertainty quantification,Algorithmic uncertainty,
+Prediction,Uncertainty quantification,Input data uncertainty,
+Prediction,Uncertainty quantification,Parameter uncertainty,
+Prediction,Uncertainty quantification,Scenario uncertainty,
+Prediction,Uncertainty quantification,Novel environments,
