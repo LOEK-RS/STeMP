@@ -25,6 +25,6 @@ Please cite as follows:
 
 ## Acknowledgements
 
-This app builds on the ODMAP protocol ([Zurell et al., 2020, Ecography]((https://onlinelibrary.wiley.com/doi/full/10.1111/ecog.04960)), which standardizes reporting for species distribution models. 
+This app builds on the ODMAP protocol ([Zurell et al., 2020, Ecography](https://onlinelibrary.wiley.com/doi/full/10.1111/ecog.04960)), which standardizes reporting for species distribution models. 
 We acknowledge the authors' foundational contribution.
 
