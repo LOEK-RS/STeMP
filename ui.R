@@ -133,21 +133,19 @@ tags$style(HTML("
                    shiny::fluidPage(
                      
                      bsCollapse(
-                       bsCollapsePanel("Upload of model", style = "primary",
-                                       fileInput("model_upload", "Upload model object (RDS)", accept = ".rds")),
                        bsCollapsePanel("Predictor Variables", style = "primary",
                                        uiOutput("Model_UI_predictor")),
                        bsCollapsePanel("Response Variables", style = "primary",
-                                       fileInput("samples_upload", "Upload training data (GeoPackage)", accept = ".gpkg"),
-                                       # Optional map output shown only if a file is uploaded
                                        conditionalPanel(
                                          condition = "output.show_samplingLocations == true",
                                          plotOutput("d_response_7", height = "400px")
                                        ),
+                                       conditionalPanel(
+                                         condition = "output.showGeodist == 'true'",
+                                         plotOutput("geodist", height = "200px")
+                                       ),
                                        uiOutput("Model_UI_response")),
                        bsCollapsePanel("Learning method", style = "primary",
-                                       fileInput("trainArea_upload", "Upload training area (GeoPackage)", accept = ".gpkg"),
-                                       # Optional map output shown only if a file is uploaded
                                        conditionalPanel(
                                          condition = "output.show_trainArea == true",
                                          plotOutput("m_algorithms_5", height = "400px")
@@ -168,15 +166,8 @@ tags$style(HTML("
               condition = "input.o_objective_1 == 'Model and prediction'",
               bsCollapse(
                 bsCollapsePanel("Prediction domain", style = "primary",
-                                fileInput("prediction_upload", "Upload prediction area (.gpkg)", accept = ".gpkg"),
-                                conditionalPanel(
-                                  condition = "output.show_predictionArea == 'true'",
-                                  plotOutput("p_pred", height = "400px")
-                                ),
-                                conditionalPanel(
-                                  condition = "output.showGeodist == 'true'",
-                                  plotOutput("geodist", height = "200px")
-                                ),
+                                #fileInput("prediction_upload", "Upload prediction area (.gpkg)", accept = ".gpkg"),
+                                conditionalPanel("output.show_predictionArea == 'true'", plotOutput("p_pred", height = "300px")),
                                 uiOutput("Prediction_UI_area")),
                 bsCollapsePanel("Evaluation and Uncertainty", style = "primary",
                                 uiOutput("Prediction_UI_eval")),
@@ -202,13 +193,30 @@ tags$style(HTML("
       fluidRow(
         column(width = 2),
         column(width = 8, 
-               p("There are two options for importing data into your ODMAP protocol", style = "font-size: 18px;"),
-               # Add this section for GPKG upload
-               p(tags$b("(1) Upload an ODMAP protocol (.csv)"), br(), "This option is convenient if you want to edit or resume working on a previously saved ODMAP protocol.", style = "font-size: 18px;"),
+               p(tags$b("(1) Upload an STeMP protocol (.csv)"), br(), 
+                 "This option is convenient if you want to edit or resume working on a previously saved STeMP protocol.", style = "font-size: 18px;"),
                
                p("Choose file", style = "font-size: 18px; font-weight: bold"),
                fileInput("upload", label = NULL, accept = c(".csv")),
-               uiOutput("Upload_UI")),
+               uiOutput("Upload_UI"),
+               
+               tags$hr(),
+               
+               p(tags$b("(2) Upload model (.RDS)"), br(),
+                 "This allows you to upload an existing model object (caret, mlr3, tidymodels)", style = "font-size: 18px;"),
+               fileInput("model_upload", "Upload model object (RDS)", accept = ".rds"),
+               
+               tags$hr(),
+               
+               p(tags$b("(3) Upload geospatial data (.gpkg)"), br(),
+                 "This allows you to upload geospatial data (samples and training/prediction area).", style = "font-size: 18px;"),
+               fileInput("samples_upload", "Upload sampling locations (.gpkg)", accept = ".gpkg"),
+               fileInput("trainArea_upload", "Upload training area (.gpkg)", accept = ".gpkg"),
+               conditionalPanel(
+                 condition = "input.o_objective_1 == 'Model and prediction'",
+                 fileInput("prediction_upload", "Upload prediction area (.gpkg)", accept = ".gpkg")
+               )
+        ),
         column(width = 2)
       )
     ))

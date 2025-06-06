@@ -492,40 +492,52 @@ server <- function(input, output, session) {
   
   render_design = function(element_id, element){
     
-    req(samples_valid(), prediction_valid())
+    # Require the validity of the relevant inputs based on objective
+    req(samples_valid())
+    req(input$o_objective_1)
     
     auto_val <- NULL
     
-    if (!is.null(input$samples_upload) && !is.null(input$prediction_upload)) {
-      samples <- tryCatch({
-        st_read(input$samples_upload$datapath, quiet = TRUE)
-      }, error = function(e) NULL)
-      
-      prediction_area <- tryCatch({
+    # Read samples once (assuming samples_valid() means this is safe)
+    samples <- tryCatch({
+      st_read(input$samples_upload$datapath, quiet = TRUE)
+    }, error = function(e) NULL)
+    
+    # Choose domain based on objective
+    domain_sf <- NULL
+    
+    if (input$o_objective_1 == "Model and prediction") {
+      req(prediction_valid())
+      domain_sf <- tryCatch({
         st_read(input$prediction_upload$datapath, quiet = TRUE)
       }, error = function(e) NULL)
+    } else if (input$o_objective_1 == "Model only") {
+      req(trainArea_valid())
+      domain_sf <- tryCatch({
+        st_read(input$trainArea_upload$datapath, quiet = TRUE)
+      }, error = function(e) NULL)
+    }
+    
+    if (!is.null(samples) && !is.null(domain_sf)) {
       
-      if (!is.null(samples) && !is.null(prediction_area)) {
-        
-        samples <- st_transform(samples, st_crs(prediction_area))
-        
-        # sampling design
-        geod <- CAST::geodist(samples, modeldomain = prediction_area)
-        
-        Gj <- geod[geod$what == "sample-to-sample",]$dist
-        Gij <- geod[geod$what == "prediction-to-sample",]$dist
-        
-        testks <- suppressWarnings(stats::ks.test(Gj, Gij, alternative = "great"))
-        
-        if(testks$p.value >= 0.05) {
-          auto_val <- "random"
-          auto_selected("random")
-        } else {
-          auto_val <- "clustered"
-          auto_selected("clustered")
-        }
-        
+      samples <- st_transform(samples, st_crs(domain_sf))
+      
+      # sampling design
+      geod <- CAST::geodist(samples, modeldomain = domain_sf)
+      
+      Gj <- geod[geod$what == "sample-to-sample",]$dist
+      Gij <- geod[geod$what == "prediction-to-sample",]$dist
+      
+      testks <- suppressWarnings(stats::ks.test(Gj, Gij, alternative = "great"))
+      
+      if(testks$p.value >= 0.05) {
+        auto_val <- "random"
+        auto_selected("random")
+      } else {
+        auto_val <- "clustered"
+        auto_selected("clustered")
       }
+      
     }
     
     observe({
@@ -1375,22 +1387,53 @@ server <- function(input, output, session) {
   ## show geodist plot if both prediction area and samples are uploaded -------------
   output$geodist <- renderPlot({
     samples <- uploaded_samplingLocations()
-    prediction_area <- uploaded_predictionArea()
-    req(samples, prediction_area)
+    req(samples)
+    req(input$o_objective_1)
     
-    sf::st_crs(samples) <- sf::st_crs(prediction_area)
-    plot(CAST::geodist(samples, prediction_area)) + 
-      ggplot2::ggtitle("Density distribution of Nearest-Neighbour Distances") +
-      ggplot2::theme(aspect.ratio=0.5)
+    if (input$o_objective_1 == "Model and prediction") {
+      prediction_area <- uploaded_predictionArea()
+      req(prediction_area)
+      st_crs(samples) <- st_crs(prediction_area)
+      dist_result <- CAST::geodist(samples, prediction_area)
+      
+    } else {
+      training_area <- uploaded_trainingArea()
+      req(training_area)
+      st_crs(samples) <- st_crs(training_area)
+      dist_result <- CAST::geodist(samples, training_area)
+    }
+    
+    plot(dist_result) +
+      ggtitle("Density distribution of Nearest-Neighbour Distances") +
+      theme(aspect.ratio = 0.5)
   })
   
+  
   output$showGeodist <- renderText({
-    if (isTruthy(input$prediction_upload) && prediction_valid() && isTruthy(input$samples_upload) && samples_valid()) {
-      "true"
+    req(input$o_objective_1)  # make sure this input exists
+    
+    if (input$o_objective_1 == "Model and prediction") {
+      # For "Model and prediction", both prediction area and samples must be valid
+      if (isTruthy(input$prediction_upload) && prediction_valid() &&
+          isTruthy(input$samples_upload) && samples_valid()) {
+        "true"
+      } else {
+        "false"
+      }
+    } else if (input$o_objective_1 == "Model only") {
+      # For "Model only", use training area and samples
+      if (isTruthy(input$trainArea_upload) && trainArea_valid() &&
+          isTruthy(input$samples_upload) && samples_valid()) {
+        "true"
+      } else {
+        "false"
+      }
     } else {
+      # Fallback to false if none match
       "false"
     }
   })
+  
   outputOptions(output, "showGeodist", suspendWhenHidden = FALSE)
   
   
