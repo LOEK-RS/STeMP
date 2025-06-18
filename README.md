@@ -35,7 +35,7 @@ You can run the app locally by cloning this repository and running the following
 
 ```R
 library(shiny)
-runGitHub("STeMP", "WSL-IMU")
+runGitHub("LOEK-RS/STeMP")
 ```
 
 <!--
