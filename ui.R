@@ -73,11 +73,11 @@ tags$style(HTML("
                  style= "font-size: 18px;"), 
                img(src = "workflow.png", width = "60%", style="display: block; margin-left: auto; margin-right: auto; min-width: 500px;"), br(),
                p("We propose a protocol for spatio-temporal models to fill this gap: STeMP. This protocol contains three major sections.
-                  To facilitate community engagement, the protocol is hosted on Github (). Any missing points or other feedback can be 
+                  To facilitate community engagement, the protocol is hosted on Github (https://github.com/LOEK-RS/STeMP). Any missing points or other feedback can be 
                   submitted as a pull request, and the community can vote if it should be included in the protocol.",
                  style= "font-size: 18px;"),
-               p("This Shiny web application helps to implement ", style= "font-size: 18px;"),
-               em(p("Please cite as follows:", style = "font-size: 18px;")),
+               # p("This Shiny web application helps to implement ", style= "font-size: 18px;"),
+               # em(p("Please cite as follows:", style = "font-size: 18px;")),
                p("", style= "font-size: 18px;")
         )),
       column(width = 2)
