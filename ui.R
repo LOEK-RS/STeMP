@@ -78,7 +78,10 @@ tags$style(HTML("
                  style= "font-size: 18px;"),
                # p("This Shiny web application helps to implement ", style= "font-size: 18px;"),
                # em(p("Please cite as follows:", style = "font-size: 18px;")),
-               p("", style= "font-size: 18px;")
+               p("", style= "font-size: 18px;"),
+               p("Acknowledgements", style = "padding-top: 10px; font-size: 24px; font-weight:bold;"),
+               p("This app builds on the ODMAP protocol (Zurell et al., 2020, Ecography), which standardizes reporting for species distribution models. 
+                 We acknowledge the authors' foundational contribution.", style = "font-size: 18px;")
         )),
       column(width = 2)
     )),
@@ -92,15 +95,15 @@ tags$style(HTML("
                p("Enter all relevant information into the fields provided under 'Create a protocol'. Your progress in individual sections is displayed in the 
              side bar at the left. The 'Hide optional fields' switch on the left allows you to only display mandatory fields, which depend on the model objective chosen.
              A preview of your current protocol is available in the 'Protocol Viewer'.", style = "font-size: 18px;"),
-               p("You can always save your progress by clicking the download button on the left. We recommend always downloading the csv file as this will allow you to resume your work later. After downloading your protocol as csv, it is safe to close the Shiny app. For a better layout, you can also download the ODMAP protocol as word document. Please note that word documents cannot be uploaded again to the Shiny app.", style = "font-size: 18px;"),
-               p("You will be able to resume working on your protocol by choosing the Upload tab above and uploading your previously saved STeMP csv file. 
-             In addition, you can import objects generated with the ", 
-                 a(href = 'https://cran.r-project.org/web/packages/rangeModelMetadata/index.html', 'rangeModelsMetaData', target = "_blank", .noWS = "outside"),
-                 " R-package to autofill your STeMP protocol.", style = "font-size: 18px;"),
+               p("You can always save your progress by clicking the download button on the left. We recommend always downloading the csv file as this will allow you to resume your work later. After downloading your protocol as csv, it is safe to close the Shiny app. For a better layout, you can also download the protocol as word document. Please note that word documents cannot be uploaded again to the Shiny app.", style = "font-size: 18px;"),
+               p("You will be able to resume working on your protocol by choosing the Upload tab above and uploading your previously saved STeMP csv file.", style = "font-size: 18px;"),
+              # In addition, you can import objects generated with the ", 
+                 # a(href = 'https://cran.r-project.org/web/packages/rangeModelMetadata/index.html', 'rangeModelsMetaData', target = "_blank", .noWS = "outside"),
+                 # " R-package to autofill your STeMP protocol.", style = "font-size: 18px;"),
                p("Should you have any conceptual questions or feedback regarding the STeMP protocol, or any technical questions and feedback regarding the Shiny app, please do not hesitate to visit our ", 
-                 a(href = 'https://github.com/UP-macroecology/ODMAP', 'Github repository', target = "_blank", .noWS = "outside"), 
-                 " or contact us directly at ", 
-                 a(href = 'mailto:odmap@wsl.ch', 'odmap@wsl.ch', .noWS = "outside"), ".", style = "font-size: 18px;")
+                 a(href = 'https://github.com/LOEK-RS/STeMP', 'Github repository', target = "_blank", .noWS = "outside"), "and open a new issue.", style = "font-size: 18px;"),
+                 # " or contact us directly at ", 
+                 # a(href = 'mailto:odmap@wsl.ch', 'odmap@wsl.ch', .noWS = "outside"), ".", style = "font-size: 18px;")
         )),
       column(width = 2)
     )),
