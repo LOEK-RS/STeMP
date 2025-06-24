@@ -15,6 +15,29 @@ STeMP outlines a standard set of information that should be provided for each st
 This [Shiny web application](https://odmap.wsl.ch/) helps to implement the ODMAP approach and produces well formatted protocols that can be exported for further usage. For further explanation please refer to the original publication [(Zurell et al., 2020)](https://onlinelibrary.wiley.com/doi/full/10.1111/ecog.04960). 
 -->
 
+## Try the app locally
+
+### Requirements
+
+To run the app, you need to have the following R packages installed:
+
+```R
+install.packages(c(
+  "shiny", "shinyjs", "shinyWidgets", "shinythemes", "shinydashboard", "shinyBS",
+  "bslib", "DT", "dplyr", "tidyr", "markdown", "ggplot2",
+  "CAST", "parsnip", "workflows", "mlr3"
+))
+```
+
+### Run
+
+You can run the app locally by cloning this repository and running the following command in R:
+
+```R
+library(shiny)
+runGitHub("LOEK-RS/STeMP")
+```
+
 <!--
 
 ## Citation
