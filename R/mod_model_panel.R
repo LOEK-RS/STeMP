@@ -106,7 +106,8 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
             render_design(
               element_id = ns(row$element_id),
               element = row$element,
-              selected = selected_val
+              selected = selected_val,
+              info_text = row$info_text
             )
             
           } else {

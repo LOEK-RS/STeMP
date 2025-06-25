@@ -5,9 +5,9 @@ ui <- tagList(
     tags$style(HTML(readChar("www/stemp.css", file.info("www/stemp.css")$size))),
     tags$style(HTML("/* tooltip CSS placeholder */")),
     tags$script(HTML("
-      $(document).ready(function () {
-        $('[data-toggle=\"tooltip\"]').tooltip();
-      });
+      $(document).ready(function() {
+        $('[data-toggle=\"tooltip\"]').tooltip({ container: 'body' });
+       });
     ")),
     tags$style(HTML("
       .info-hover-icon {

@@ -1,52 +1,52 @@
-﻿running_number,section,section_id,subsection,subsection_id,element,element_id,info_text,element_type,suggestions,optional,inference,prediction
-1,Overview,o,Authorship,o_authorship,Model title*,o_authorship_1,<img src='workflow.png' width='150'><br>This is a tooltip with an image.,text,,0,1,1
-2,Overview,o,Authorship,o_authorship,Author names*,o_authorship_2,Author names*,author,,0,1,1
-3,Overview,o,Authorship,o_authorship,Contact*,o_authorship_3,Contact email address*,text,,0,1,1
+running_number,section,section_id,subsection,subsection_id,element,element_id,info_text,element_type,suggestions,optional,inference,prediction
+1,Overview,o,Authorship,o_authorship,Model title*,o_authorship_1,The title of the model,text,,0,1,1
+2,Overview,o,Authorship,o_authorship,Author names*,o_authorship_2,The names of the authors,author,,0,1,1
+3,Overview,o,Authorship,o_authorship,Contact*,o_authorship_3,Contact email address,text,,0,1,1
 4,Overview,o,Authorship,o_authorship,Study title,o_authorship_4,"If a study is associated with the model, then add the title of this study",text,,1,1,1
-5,Overview,o,Authorship,o_authorship,Study link,o_authorship_5,"Link to study (DOI, web address)",text,,1,1,1
-7,Overview,o,Target variable,o_objective,Target variable*,o_objective_2,The target variable the model aims to predict*,text,,0,1,1
-8,Overview,o,Scientific Field,o_field,Scientific Field*,o_field,Scientific field in which the model was developed*,suggestion,"Biogeosciences, Atmosphere, Oceanography, Cryosphere, Hydrology",0,1,1
-1,Model,m,Response,m_response,Sample plot,d_response_1,plot of samples,sample_plot,,1,1,1
-1,Model,m,Response,m_response,Sample plot,d_response_2,plot of training area,training_area_plot,,1,1,1
-1,Model,m,Response,m_response,Sample plot geodist,d_response_3,geodist plot,geodist_plot_training,,1,1,1
-1,Model,m,Response,m_response,Sample acquisition*,d_response_4,Sample acquisition*,suggestion,"In-Situ, Image interpretation, Simulation",0,1,1
-2,Model,m,Response,m_response,Sample geometry,d_response_5,Sample geometry,suggestion,"Point, Polygon, Raster, Image Tiles",1,1,1
-3,Model,m,Response,m_response,Sample size*,d_response_6,Sample size*,num_training_samples,,0,1,1
-4,Model,m,Response,m_response,Classes,d_response_7,Number of classes,num_classes,,1,1,1
-5,Model,m,Response,m_response,Samples per class,d_response_8,Samples per class,num_samples_per_class,,1,1,1
-6,Model,m,Response,m_response,Range,d_response_9,Interpolation range,interpolation_range,,1,1,1
-8,Model,m,Response,m_response,Sampling design*,d_response_10,Sampling design* (will be automatically filled when sampling locations and prediction area are provided as .gpkg),sampling_design,,0,1,1
-9,Model,m,Response,m_response,Coordinate Reference System,d_response_11,Coordinate Reference System (epsg),samples_crs,,1,1,1
-10,Model,m,Response,m_response,Data sources,d_response_12,Data sources,text,,1,1,1
+5,Overview,o,Authorship,o_authorship,Study link,o_authorship_5,"If a study is associated with the model, then add the link to the study (doi, url)",text,,1,1,1
+7,Overview,o,Target variable,o_objective,Target variable*,o_objective_2,The target variable the model aims to predict,text,,0,1,1
+8,Overview,o,Scientific Field,o_field,Scientific Field*,o_field,The scientific field in which the model was developed,suggestion,"Biogeosciences, Atmosphere, Oceanography, Cryosphere, Hydrology",0,1,1
+1,Model,m,Response,m_response,Sample plot,d_response_1,Plot of samples,sample_plot,,1,1,1
+1,Model,m,Response,m_response,Sample plot,d_response_2,Plot of the training area,training_area_plot,,1,1,1
+1,Model,m,Response,m_response,Sample plot geodist,d_response_3,"Plot of nearest neighbour distances in geographic space (see \url {https://hannameyer.github.io/CAST/reference/geodist.html} for more information)",geodist_plot_training,,1,1,1
+6,Model,m,Response,m_response,Training domain,d_response_4,At what spatial/temporal extent where the samples collected?,suggestion,"global, regional, landscape, local",0,1,1
+1,Model,m,Response,m_response,Sample acquisition*,d_response_5,How where the samples collected?,suggestion,"In-Situ, Image interpretation, Simulation",0,1,1
+2,Model,m,Response,m_response,Sample geometry,d_response_6,"The geometry type of the samples (e.g., Polygons of Land-Cover classes, Points of climate stations)",suggestion,"Point, Polygon, Raster, Image Tiles",1,1,1
+3,Model,m,Response,m_response,Sample size*,d_response_7,The number of training samples,num_training_samples,,0,1,1
+4,Model,m,Response,m_response,Classes,d_response_8,The number of response classes,num_classes,,1,1,1
+5,Model,m,Response,m_response,Samples per class,d_response_9,The number of samples in each class,num_samples_per_class,,1,1,1
+6,Model,m,Response,m_response,Range,d_response_10,The range of response values represented in the training data,interpolation_range,,1,1,1
+8,Model,m,Response,m_response,Sampling design*,d_response_11,The sampling design(will be automatically filled when sampling locations and prediction area are provided as .gpkg),sampling_design,,0,1,1
+9,Model,m,Response,m_response,Coordinate Reference System,d_response_12,The coordinate reference system used to reference the samples (epsg code),samples_crs,,1,1,1
+10,Model,m,Response,m_response,Data sources,d_response_13,"The sources of the response data (e.g., own field sampling, biodiversity databes like GBIF etc.)",text,,1,1,1
 11,Model,m,Predictors,m_predictors,Predictor types,d_predictors_1,Type of predictor variables*,suggestion,"Remote Sensing Images, Simulated Data, Spatial Proxies",0,1,1
-12,Model,m,Predictors,m_predictors,Number of predictors*,d_predictors_2,Amount of predictor variables*,num_predictors,,0,1,1
+12,Model,m,Predictors,m_predictors,Number of predictors*,d_predictors_2,The number of predictor variables used initially (before predictor selection),num_predictors,,0,1,1
 13,Model,m,Predictors,m_predictors,Names of predictors,d_predictors_3,List of all initial predictor variables,names_predictors,,1,1,1
 15,Model,m,Predictors,m_predictors,Preprocessing,d_predictors_5,Detail on preprocessing steps taken,suggestion,"Cloud removal, Normalization, Filtering, Outlier removal",1,1,1
-16,Model,m,Predictors,m_predictors,Data sources,d_predictors_6,Data sources,text,,1,1,1
-1,Model,m,Learning method,m_algorithms,Model type*,m_algorithms_1,Model type*,model_type,"Regression, Classification",0,1,1
-2,Model,m,Learning method,m_algorithms,Learning method*,m_algorithms_2,Learning method*,model_algorithm,,0,1,1
+16,Model,m,Predictors,m_predictors,Data sources,d_predictors_6,"The sources of predictors (e.g., Worldclim)",text,,1,1,1
+1,Model,m,Learning method,m_algorithms,Model type*,m_algorithms_1,Is the learning method developed for Regression or Classification tasks?,model_type,"Regression, Classification",0,1,1
+2,Model,m,Learning method,m_algorithms,Learning method*,m_algorithms_2,Name of the applied learning method,model_algorithm,,0,1,1
 3,Model,m,Learning method,m_algorithms,Architecture,m_algorithms_3,"Outline the model's architecture (nodes, layers etc.)",text,,1,1,1
-6,Model,m,Learning method,m_algorithms,Training domain,m_algorithms_5,(Spatial) Training domain / area*,suggestion,"global, regional, landscape, local",0,1,1
-8,Model,m,Parameter uncertainty and biases,m_bias,Potential biases*,m_bias_1,Specify potential biases in the data or algorithmic decision-making*,text,,0,1,1
+8,Model,m,Parameter uncertainty and biases,m_bias,Potential biases*,m_bias_1,Specify potential biases in the data or algorithmic decision-making,text,,0,1,1
 5,Prediction,m,Parameter uncertainty and biases,m_bias,Sensitivity assessment,m_bias_2,Assessment of the impact of varying input parameters or assumptions on the prediction,text,,1,1,1
-9,Model,m,Parameter uncertainty and biases,m_bias,Limitations*,m_bias_3,Describe limitations in the use of the model*,text,,0,1,1
-11,Model,m,Model validation and selection,m_validation,Validation strategy*,m_validation_1,Details on the validation strategy used for model selection*,suggestion_single,"Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Target-Oriented Cross-Validation, bootstrap, -",0,1,1
-12,Model,m,Model validation and selection,m_validation,Performance metrics*,m_validation_2,Performance metrics used*,suggestion,"RMSE, MAE, Rsquared, adjusted Rsquared, Kappa, Accuracy, Confusion Matrix, AUC",0,1,1
-12,Model,m,Model validation and selection,m_validation,Validation results*,m_validation_3,Results of the validation*,text,,0,1,1
-13,Model,m,Model validation and selection,m_validation,Hyperparameter tuning,m_validation_4,Methods for hyperparameter tuning (List tuning range and final value)*,model_hyperparams,,0,1,1
+9,Model,m,Parameter uncertainty and biases,m_bias,Limitations*,m_bias_3,Describe limitations in the use of the model,text,,0,1,1
+11,Model,m,Model validation and selection,m_validation,Validation strategy*,m_validation_1,Details on the validation strategy used for model selection,suggestion_single,"Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Target-Oriented Cross-Validation, bootstrap, -",0,1,1
+12,Model,m,Model validation and selection,m_validation,Performance metrics*,m_validation_2,Which performance metrics were used?,suggestion,"RMSE, MAE, Rsquared, adjusted Rsquared, Kappa, Accuracy, Confusion Matrix, AUC",0,1,1
+12,Model,m,Model validation and selection,m_validation,Validation results*,m_validation_3,Results of the validation,text,,0,1,1
+13,Model,m,Model validation and selection,m_validation,Hyperparameter tuning,m_validation_4,Methods for hyperparameter tuning (List tuning range and final value),model_hyperparams,,0,1,1
 14,Model,m,Model validation and selection,m_validation,Predictor selection*,m_validation_5,Methods for selection of predictors,suggestion,"FFS, RFE, LASSO, Ridge, None",0,1,1
 17,Model,m,Model interpretation,m_interpretation,Explainability,m_estim_1,Methods of explainable AI used to gain insights into the models behaviour,suggestion,"SHAP, Permutation Importance, ALE, ICE, PDP, H-statistic",1,1,1
 18,Model,m,Model interpretation,m_interpretation,Scientific interpretation,m_estim_2,Discuss the implications of the models results in the context of ecological theory / processes / management decisions,text,,1,1,1
-19,Model,m,Software,m_software,Software*,m_software_1,Programming language and versioning of key libraries*,text,,0,1,1
-20,Model,m,Software,m_software,Code availability*,m_software_2,"Code availability (e.g., Link to Code Repository (such as GitHub))*",text,,0,1,1
-21,Model,m,Software,m_software,Data availability*,m_software_3,"Data availability (e.g., Link to Data repository (such as Figshare))*",text,,0,1,1
+19,Model,m,Software,m_software,Software*,m_software_1,Programming language and versioning of key libraries,text,,0,1,1
+20,Model,m,Software,m_software,Code availability*,m_software_2,"Code availability (e.g., Link to Code Repository (such as GitHub))",text,,0,1,1
+21,Model,m,Software,m_software,Data availability*,m_software_3,"Data availability (e.g., Link to Data repository (such as Figshare))",text,,0,1,1
 1,Prediction,p,Prediction domain,p_pred,Prediction domain*,p_pred_1,plot of prediction area,prediction_area_plot,,1,1,1
 1,Prediction,p,Prediction domain,p_pred,Geodist plot*,p_pred_2,plot of geodist,geodist_plot_prediction,,1,1,1
 1,Prediction,p,Prediction domain,p_pred,Prediction domain*,p_pred_3,Intended (spatial) prediction domain / area (only needed if no prediction area is uploaded),suggestion,"global, regional, landscape, local",0,0,1
-2,Prediction,p,Evaluation and Uncertainty,p_uncertainty,Evaluation strategy*,p_eval_1,Details on the evaluation of the prediction*,suggestion,"Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Target-Oriented Cross-Validation, bootstrap",0,1,1
-2,Prediction,p,Evaluation and Uncertainty,p_uncertainty,Performance metrics,p_eval_2,Performance metrics used*,suggestion,"RMSE, MAE, Rsquared, adjusted Rsquared, Kappa, Accuracy, Confusion Matrix, AUC",0,1,1
-2,Prediction,p,Evaluation and Uncertainty,p_uncertainty,Map accuracy*,p_eval_3,Map accuracy*,text,,0,1,1
-4,Prediction,p,Evaluation and Uncertainty,p_uncertainty,Uncertainty qunatification*,p_eval_4,Details on the uncertainty quantification method*,suggestion,"AOA, MESS, None",0,1,1
+2,Prediction,p,Evaluation and Uncertainty,p_uncertainty,Evaluation strategy*,p_eval_1,Details on the evaluation of the prediction,suggestion,"Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Target-Oriented Cross-Validation, bootstrap",0,1,1
+2,Prediction,p,Evaluation and Uncertainty,p_uncertainty,Performance metrics,p_eval_2,Performance metrics used,suggestion,"RMSE, MAE, Rsquared, adjusted Rsquared, Kappa, Accuracy, Confusion Matrix, AUC",0,1,1
+2,Prediction,p,Evaluation and Uncertainty,p_uncertainty,Map accuracy*,p_eval_3,Final map accuracy,text,,0,1,1
+4,Prediction,p,Evaluation and Uncertainty,p_uncertainty,Uncertainty qunatification*,p_eval_4,Details on the uncertainty quantification method,suggestion,"AOA, MESS, None",0,1,1
 6,Prediction,p,Post-Processing,p_post,Threshold selection,p_post_1,"Details on threshold selection, if applicable: transforming continuous predictions into binary predictions",text,,1,0,1
 7,Prediction,p,Post-Processing,p_post,Post-processing,p_post_2,"Post-processing, e.g. Filter",text,,1,0,1
 
