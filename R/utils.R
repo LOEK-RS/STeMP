@@ -8,20 +8,37 @@ inputWithHoverInfo <- function(inputTag, info_text) {
   labelIndex <- which(sapply(children, function(x) inherits(x, "shiny.tag") && x$name == "label"))
   
   if (length(labelIndex) == 1 && !is.null(info_text) && nchar(info_text) > 0) {
-    tooltipIcon <- tags$span(
-      icon("info-circle"),
-      class = "info-hover-icon",
-      `data-toggle` = "tooltip",
-      `data-placement` = "right",
-      `data-html` = "true",
-      title = HTML(info_text)
+    # Extract and wrap the label
+    originalLabel <- children[[labelIndex]]
+    
+    wrappedLabel <- tags$div(class = "input-label-icon",
+                             originalLabel,
+                             tags$span(
+                               icon("info-circle"),
+                               class = "info-hover-icon",
+                               `data-toggle` = "tooltip",
+                               `data-placement` = "right",
+                               `data-html` = "true",
+                               title = HTML(info_text)
+                             )
     )
     
-    inputTag$children[[labelIndex]] <- tagAppendChildren(inputTag$children[[labelIndex]], tooltipIcon)
+    # Replace the label with the wrapped version
+    inputTag$children[[labelIndex]] <- wrappedLabel
   }
   
   inputTag
 }
+
+# Tooltip helper
+with_tooltip <- function(inputTag, info_text = NULL) {
+  if (!is.null(info_text) && nchar(info_text) > 0) {
+    inputWithHoverInfo(inputTag, info_text)
+  } else {
+    inputTag
+  }
+}
+
 
 
 unwrap_metadata <- function(metadata_list) {
