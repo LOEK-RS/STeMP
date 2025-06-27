@@ -18,11 +18,13 @@ render_suggestion_single <- function(element_id, label, suggestions, info_text =
     inputId = element_id,
     label = label,
     choices = choices,
+    selected = "None",  # set default selected
     multiple = FALSE,
     options = list(create = TRUE, placeholder = "Choose or type")
   )
   with_tooltip(input, info_text)
 }
+
 
 render_text_input <- function(element_id, element, info_text = NULL) {
   input <- textInput(inputId = element_id, label = element)

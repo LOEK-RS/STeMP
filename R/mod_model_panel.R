@@ -18,9 +18,9 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
 
     # Update sampling_design selectInput only if geodist_sel() is not NULL
     observe({
-      sel <- geodist_sel()
-      if (!is.null(sel)) {
-        updateSelectInput(session, "sampling_design", selected = sel)
+      selected_val <- geodist_sel()
+      if (!is.null(selected_val)) {
+        updateSelectInput(session, "sampling_design", selected = selected_val)
       }
     })
     
@@ -194,6 +194,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     })
     
     
+    # Outputs
     inputs_reactive <- reactive({
       df <- model_data()
       vals <- lapply(df$element_id, function(id) input[[ns(id)]])
@@ -201,8 +202,28 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       vals
     })
     
+    validation_method <- reactive({
+      input[["m_validation_1"]]
+    })
+    
+    sampling_design <- reactive({
+      input[["d_response_11"]]
+    })
+    
+    uncertainty_quantification <- reactive({
+      input[["p_eval_4"]]
+    })
+    
+    predictor_types <- reactive({
+      input[["d_predictors_1"]]
+    })
+    
     return(list(
-      model_inputs = inputs_reactive
+      "model_inputs" = inputs_reactive,
+      "validation_method" = validation_method,
+      "sampling_design" = sampling_design,
+      "uncertainty_quantification" = uncertainty_quantification,
+      "predictor_types" = predictor_types
     ))
   })
 }
