@@ -46,13 +46,30 @@ mod_create_protocol_server <- function(id, protocol_data, model_metadata, geo_me
     )
     
     # 3) Model panel - pass geodist_sel reactive for updating sampling_design field
-    mod_model_panel_server(
+    model_results <- mod_model_panel_server(
       "model",
       protocol_data,
       model_metadata = model_metadata,
       geo_metadata = geo_metadata,
       o_objective_1_val = overview$o_objective_1,
       geodist_sel = geodist_sel
+    )
+    
+    ## debug
+    observe({
+      req(model_results$sampling_design(), model_results$validation_method())
+      message("Higher-level module sees uncertainty_quantification: ", model_results$uncertainty_quantification())
+      message("Higher-level module sees validation_method: ", model_results$validation_method())
+    })
+    ##
+    
+    # Warnings
+    mod_warnings_server(
+      id = "warnings",
+      sampling_design = model_results$sampling_design,
+      validation_method = model_results$validation_method,
+      uncertainty_quantification = model_results$uncertainty_quantification,
+      predictor_types = model_results$predictor_types
     )
     
     # Return relevant reactive values

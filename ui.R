@@ -34,6 +34,9 @@ ui <- tagList(
   ),
   useShinyjs(),
   
+  # activate warnings ui
+  mod_warnings_ui("warnings"),
+  
   navbarPage(
     id = "navbar",
     windowTitle = "STeMP v0.9",
