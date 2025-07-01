@@ -23,5 +23,6 @@ server <- function(input, output, session) {
   
   mod_sidebar_server("sidebar", protocol_data = protocol$protocol_updated, o_objective_1_val=protocol$o_objective_1)
 
+  mod_viewer_server("viewer", protocol_data = protocol$protocol_updated, o_objective_1_val = protocol$o_objective_1)
  
 }

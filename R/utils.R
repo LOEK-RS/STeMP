@@ -99,7 +99,7 @@ save_figure <- function(figure, element_id) {
   else if(element_id == "protocol-model-d_response_1") fig_name <- "sampling_locations"
   else if(element_id == "protocol-model-d_response_3") fig_name <- "geodist_sampling_area"
   else fig_name <- element_id
-  plot_path <- file.path(fig_dir, paste0("protocol_plot_", fig_name, ".png"))
+  plot_path <- file.path(fig_dir, paste0(fig_name, ".png"))
   ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
 }
 
