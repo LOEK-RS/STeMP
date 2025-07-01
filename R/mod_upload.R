@@ -36,10 +36,12 @@ mod_upload_server <- function(id) {
     
     # CSV upload handling
     csv_data <- reactiveVal(NULL)
+    
     observeEvent(input$csv_upload, {
       req(input$csv_upload)
       tryCatch({
-        csv_data(read.csv(input$csv_upload$datapath))
+        csv_data(read.csv(input$csv_upload$datapath) |> 
+                   dplyr::mutate("element_id" = normalize_id(element)))
         output$csv_status <- renderUI({
           tags$p("CSV loaded successfully", style = "color: blue;")
         })

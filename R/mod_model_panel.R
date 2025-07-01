@@ -12,10 +12,11 @@ mod_model_panel_ui <- function(id) {
 
 
 mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo_metadata = NULL, o_objective_1_val,
-                                   geodist_sel = reactive(NULL)) {
+                                   geodist_sel = reactive(NULL),
+                                   uploaded_values = reactive(NULL)) {  
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
+    
     # Update sampling_design selectInput only if geodist_sel() is not NULL
     observe({
       selected_val <- geodist_sel()
@@ -39,7 +40,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       unique(model_data()$subsection)
     })
     
-    
     output$model_collapse_ui <- renderUI({
       df <- model_data()
       subs <- subsections()
@@ -55,20 +55,32 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       meta_geo_training_area_list <- valid_geo_training_area_metadata()
       if (is.null(meta_geo_training_area_list)) meta_geo_training_area_list <- list()
       
+      # Get uploaded values data.frame (element_id, value) or NULL
+      uploaded_df <- uploaded_values()
+      
       panels <- lapply(subs, function(subsec) {
         sub_df <- df[df$subsection == subsec, ]
         
         inputs <- lapply(seq_len(nrow(sub_df)), function(i) {
           row <- sub_df[i, ]
           
+          # Override row$value if uploaded value exists for this element_id
+          if (!is.null(uploaded_df)) {
+            uploaded_val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
+            if (length(uploaded_val) == 1 && !is.null(uploaded_val) && nzchar(uploaded_val)) {
+              row$value <- uploaded_val
+            }
+          }
+          
           if (row$element_type == "sample_plot") {
             if(!is.null(valid_geo_samples_metadata())) {
-            render_samples_plot(
-              element_id = ns(row$element_id),
-              element = row$element,
-              geo_metadata = meta_geo_samples_list,
-              ns = ns
-            ) } else {
+              render_samples_plot(
+                element_id = ns(row$element_id),
+                element = row$element,
+                geo_metadata = meta_geo_samples_list,
+                ns = ns
+              )
+            } else {
               NULL
             }
             
@@ -97,7 +109,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
             
           } else if (row$element_type == "sampling_design") {
             selected_val <- NULL
-            # Only call geodist_sel() here, and wrap in try()
             try({
               if (!is.null(geodist_sel())) {
                 selected_val <- geodist_sel()
@@ -119,7 +130,9 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
               suggestions = row$suggestions,
               info_text = row$info_text,
               model_metadata = meta_model_list,
-              geo_metadata = meta_geo_samples_list
+              geo_metadata = meta_geo_samples_list,
+              ns = ns,
+              row = row  # row$value now has uploaded value if present
             )
           }
         })
@@ -138,7 +151,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       
       sample_plot_ids <- df$element_id[df$element_type == "sample_plot"]
       
-      #message("🧪 sample_plot_ids: ", ns(sample_plot_ids))
       render_samples_plot_server(output, ns(sample_plot_ids), meta_geo_samples_list, what = "samples_sf")
     })
     
@@ -150,7 +162,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       
       training_area_plot_ids <- df$element_id[df$element_type == "training_area_plot"]
       
-      #message("🧪 training_area_plot_ids: ", ns(training_area_plot_ids))
       render_training_area_plot_server(output, ns(training_area_plot_ids), meta_geo_training_area_list, what = "training_area_sf")
     })
     
@@ -161,10 +172,9 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
         df <- model_data()
         meta_geo_all_list <- valid_geo_all_metadata()
         if (is.null(meta_geo_all_list)) meta_geo_all_list <- list()
-
+        
         pid <- df$element_id[df$element_type == "geodist_plot_training"]
         if (length(pid) == 1) {
-          #message("🗺️ Rendering geodist plot for: ", ns(pid))
           render_geodist_plot_server(
             output = output,
             element_id = ns(pid),
@@ -174,7 +184,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
         }
       }
     })
-    
     
     # Integrate render_design_server for all sampling_design inputs to update them reactively
     observe({
@@ -192,7 +201,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
         )
       }
     })
-    
     
     # Outputs
     inputs_reactive <- reactive({
@@ -216,19 +224,19 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     })
     
     validation_method <- reactive({
-      input[["m_validation_1"]]
+      input[["validation_strategy"]]
     })
     
     sampling_design <- reactive({
-      input[["d_response_11"]]
+      input[["sampling_design"]]
     })
     
     uncertainty_quantification <- reactive({
-      input[["p_eval_4"]]
+      input[["uncertainty_quantification"]]
     })
     
     predictor_types <- reactive({
-      input[["d_predictors_1"]]
+      input[["predictor_types"]]
     })
     
     return(list(
@@ -240,4 +248,5 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     ))
   })
 }
+
 
