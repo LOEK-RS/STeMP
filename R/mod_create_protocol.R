@@ -11,80 +11,90 @@ mod_create_protocol_ui <- function(id) {
   )
 }
 
-mod_create_protocol_server <- function(id, protocol_data, model_metadata, geo_metadata) {
+mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata) {
   moduleServer(id, function(input, output, session) {
     
-    # 1) Overview panel (provides reactive o_objective_1)
-    overview <- mod_overview_panel_server("overview", protocol_data)
     
-    # Reactive geodist classification, depends on o_objective_1 and geo_metadata
+    # 1) Extract uploaded values from uploaded_csv
+    uploaded_values <- reactive({
+      df <- uploaded_csv()
+      if (is.null(df)) return(NULL)
+      section_names <- c("Overview", "Model", "Prediction")
+      sections_list <- lapply(section_names, function(section) {
+        section_df <- df[df$section == section, c("element_id", "value")]
+        if (nrow(section_df) == 0) return(NULL)
+        else return(section_df)
+      })
+      
+      names(sections_list) <- section_names
+      return(sections_list)
+      
+    })
+    
+    
+    # 2) Overview panel
+    overview <- mod_overview_panel_server("overview", protocol_data, uploaded_values = reactive({
+      uploaded_values()[["Overview"]]
+    }))
+    
+    
+    # 3) reactive geodist_sel
     geodist_sel <- reactive({
       req(overview$o_objective_1())
-      
-      # Select correct area based on objective
       area_sf <- switch(
         overview$o_objective_1(),
         "Model only" = geo_metadata$training_area_sf(),
         "Model and prediction" = geo_metadata$prediction_area_sf(),
         stop("Unsupported objective for geodist calculation")
       )
-      
       samples_sf <- geo_metadata$samples_sf()
-      
       req(samples_sf, area_sf)
-      
-      # Use helper function for geodist classification (defined in utils.R)
       calculate_geodist_classification(samples_sf, area_sf)
     })
     
-    # 2) Prediction panel
+    
+    # 4) Prediction panel
     prediction_results <- mod_prediction_panel_server(
       "prediction",
       overview$o_objective_1,
       protocol_data,
-      geo_metadata = geo_metadata
+      geo_metadata = geo_metadata,
+      uploaded_values = reactive({
+        uploaded_values()[["Prediction"]]
+      })
     )
     
-    # 3) Model panel - pass geodist_sel reactive for updating sampling_design field
+    
+    # 5) Model panel
     model_results <- mod_model_panel_server(
       "model",
       protocol_data,
       model_metadata = model_metadata,
       geo_metadata = geo_metadata,
       o_objective_1_val = overview$o_objective_1,
-      geodist_sel = geodist_sel
+      geodist_sel = geodist_sel,
+      uploaded_values = reactive({
+        uploaded_values()[["Model"]]
+      })
     )
     
     
-    # Extract updated data
+    # 6) Combine results
     updated_protocol <- reactive({
       overview_df <- overview$overview_inputs()
       model_df <- model_results$model_inputs()
-      
-      if(overview$o_objective_1() == "Model and prediction") {
+      if (overview$o_objective_1() == "Model and prediction") {
         prediction_df <- prediction_results$prediction_inputs()
-        df <- rbind(overview_df, model_df) |> 
-          rbind(prediction_df)
-        
+        df <- rbind(overview_df, model_df) |> rbind(prediction_df)
       } else {
         df <- rbind(overview_df, model_df)
       }
-      
-      df <- df[!grepl("plot", df$element),]
-      return(df)
-      
+      df <- df[!grepl("plot", df$element), ]
+      df
     })
     
     
-    ## debug
-    observe({
-      req(model_results$sampling_design(), model_results$validation_method())
-      message("Higher-level module sees uncertainty_quantification: ", model_results$uncertainty_quantification())
-      message("Higher-level module sees validation_method: ", model_results$validation_method())
-    })
-    ##
-    
-    # Warnings
+    # 7) Warnings
     mod_warnings_server(
       id = "warnings",
       sampling_design = model_results$sampling_design,
@@ -93,7 +103,7 @@ mod_create_protocol_server <- function(id, protocol_data, model_metadata, geo_me
       predictor_types = model_results$predictor_types
     )
     
-    # Return relevant reactive values
+    # 8) Return
     return(list(
       o_objective_1 = overview$o_objective_1,
       protocol_updated = updated_protocol

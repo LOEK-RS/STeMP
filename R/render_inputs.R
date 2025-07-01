@@ -25,98 +25,107 @@ render_suggestion_single <- function(element_id, label, suggestions, info_text =
   with_tooltip(input, info_text)
 }
 
-
-render_text_input <- function(element_id, element, info_text = NULL) {
-  input <- textInput(inputId = element_id, label = element)
-  with_tooltip(input, info_text)
-}
-
-render_text_area <- function(element_id, element, info_text = NULL) {
-  input <- textAreaInput(inputId = element_id, label = element, rows = 3)
-  with_tooltip(input, info_text)
-}
-
-render_n_samples <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(model_metadata) && !is.null(model_metadata$num_training_samples)) {
-    model_metadata$num_training_samples()
-  } else NULL
-  
-  input <- numericInput(inputId = element_id, label = element, value = value)
-  with_tooltip(input, info_text)
-}
-
-render_n_predictors <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(model_metadata) && !is.null(model_metadata$num_predictors)) {
-    model_metadata$num_predictors()
-  } else NULL
-  
-  input <- numericInput(inputId = element_id, label = element, value = value)
-  with_tooltip(input, info_text)
-}
-
-render_n_classes <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(model_metadata) && !is.null(model_metadata$num_classes)) {
-    model_metadata$num_classes()
-  } else NULL
-  
-  input <- numericInput(inputId = element_id, label = element, value = value)
-  with_tooltip(input, info_text)
-}
-
-render_n_samples_class <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(model_metadata) && !is.null(model_metadata$num_samples_per_class)) {
-    model_metadata$num_samples_per_class()
-  } else NULL
-  
-  input <- numericInput(inputId = element_id, label = element, value = value)
-  with_tooltip(input, info_text)
-}
-
-render_range <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(model_metadata) && !is.null(model_metadata$interpolation_range)) {
-    model_metadata$interpolation_range()
-  } else NULL
-  
+render_text_input <- function(element_id, element, info_text = NULL, value = NULL) {
   input <- textInput(inputId = element_id, label = element, value = value)
   with_tooltip(input, info_text)
 }
 
-render_names_predictors <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(model_metadata) && !is.null(model_metadata$names_predictors)) {
-    model_metadata$names_predictors()
-  } else NULL 
-  
-  input <- textInput(inputId = element_id, label = element, value = value)
+render_text_area <- function(element_id, element, info_text = NULL, value = NULL) {
+  input <- textAreaInput(inputId = element_id, label = element, value = value, rows = 3)
   with_tooltip(input, info_text)
 }
 
-render_hyperparameters <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(model_metadata) && !is.null(model_metadata$model_hyperparams)) {
-    model_metadata$model_hyperparams()
-  } else NULL 
-  
-  input <- textInput(inputId = element_id, label = element, value = value)
+render_n_samples <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$num_training_samples)) {
+      model_metadata$num_training_samples()
+    } else NULL
+  })
+  input <- numericInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
-render_model_type <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(model_metadata) && !is.null(model_metadata$model_type)) {
-    model_metadata$model_type()
-  } else "" 
-  
+render_n_predictors <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$num_predictors)) {
+      model_metadata$num_predictors()
+    } else NULL
+  })
+  input <- numericInput(inputId = element_id, label = element, value = val)
+  with_tooltip(input, info_text)
+}
+
+render_n_classes <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$num_classes)) {
+      model_metadata$num_classes()
+    } else NULL
+  })
+  input <- numericInput(inputId = element_id, label = element, value = val)
+  with_tooltip(input, info_text)
+}
+
+render_n_samples_class <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$num_samples_per_class)) {
+      model_metadata$num_samples_per_class()
+    } else NULL
+  })
+  input <- numericInput(inputId = element_id, label = element, value = val)
+  with_tooltip(input, info_text)
+}
+
+render_range <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$interpolation_range)) {
+      model_metadata$interpolation_range()
+    } else NULL
+  })
+  input <- textInput(inputId = element_id, label = element, value = val)
+  with_tooltip(input, info_text)
+}
+
+render_names_predictors <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$names_predictors)) {
+      model_metadata$names_predictors()
+    } else NULL
+  })
+  input <- textInput(inputId = element_id, label = element, value = val)
+  with_tooltip(input, info_text)
+}
+
+render_hyperparameters <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$model_hyperparams)) {
+      model_metadata$model_hyperparams()
+    } else NULL
+  })
+  input <- textInput(inputId = element_id, label = element, value = val)
+  with_tooltip(input, info_text)
+}
+
+render_model_type <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$model_type)) {
+      model_metadata$model_type()
+    } else ""
+  })
   input <- selectInput(
     inputId = element_id, label = element,
     choices = c("", "Classification", "Regression"),
-    selected = value
+    selected = val
   )
   with_tooltip(input, info_text)
 }
 
-render_model_algorithm <- function(element_id, element, model_metadata = NULL, info_text = NULL) {
+render_model_algorithm <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
   default_algos <- c("rf", "gbm", "glm", "svmRadial", "nnet", "rpart")
-  selected_algo <- if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
-    model_metadata$model_algorithm()
-  } else ""
+  selected_algo <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
+      model_metadata$model_algorithm()
+    } else ""
+  })
   
   algo_choices <- if (selected_algo != "" && !(selected_algo %in% default_algos)) {
     c(default_algos, selected_algo)
@@ -133,12 +142,13 @@ render_model_algorithm <- function(element_id, element, model_metadata = NULL, i
   with_tooltip(input, info_text)
 }
 
-render_crs <- function(element_id, element, geo_metadata = NULL, info_text = NULL) {
-  value <- if (!is.null(geo_metadata) && !is.null(geo_metadata$samples_crs)) {
-    geo_metadata$samples_crs()
-  } else NULL 
-  
-  input <- textInput(inputId = element_id, label = element, value = value)
+render_crs <- function(element_id, element, geo_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(geo_metadata) && !is.null(geo_metadata$samples_crs)) {
+      geo_metadata$samples_crs()
+    } else NULL
+  })
+  input <- textInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -194,30 +204,32 @@ render_geodist_plot_server <- function(output, element_id, geo_metadata = NULL, 
 }
 
 render_input_field <- function(element_type, element_id, label, o_objective_1, suggestions = NULL, 
-                               info_text = NULL, model_metadata = NULL, geo_metadata = NULL, ns = identity) {
+                               info_text = NULL, model_metadata = NULL, geo_metadata = NULL, ns = identity, row) {
+  
+  uploaded_value <- if (!is.null(row$value) && nzchar(row$value)) row$value else NULL
   
   input_tag <- switch(
     element_type,
     
-    "text" = render_text_input(element_id, label, info_text),
-    "author" = render_text_input(element_id, label, info_text),
-    "hyperparams" = render_text_area(element_id, label, info_text),
+    "text" = render_text_input(element_id, label, info_text, value = uploaded_value),
+    "author" = render_text_input(element_id, label, info_text, value = uploaded_value),
+    "hyperparams" = render_text_area(element_id, label, info_text, value = uploaded_value),
     "suggestion" = render_suggestion(element_id, label, suggestions, info_text),
     "suggestion_single" = render_suggestion_single(element_id, label, suggestions, info_text),
     
-    "num_training_samples" = render_n_samples(element_id, label, model_metadata, info_text),
-    "num_predictors" = render_n_predictors(element_id, label, model_metadata, info_text),
-    "num_classes" = render_n_classes(element_id, label, model_metadata, info_text),
-    "num_samples_per_class" = render_n_samples_class(element_id, label, model_metadata, info_text),
-    "interpolation_range" = render_range(element_id, label, model_metadata, info_text),
-    "names_predictors" = render_names_predictors(element_id, label, model_metadata, info_text),
-    "model_hyperparams" = render_hyperparameters(element_id, label, model_metadata, info_text),
-    "model_type" = render_model_type(element_id, label, model_metadata, info_text),
-    "model_algorithm" = render_model_algorithm(element_id, label, model_metadata, info_text),
-    "samples_crs" = render_crs(element_id, label, geo_metadata, info_text),
+    "num_training_samples" = render_n_samples(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "num_predictors" = render_n_predictors(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "num_classes" = render_n_classes(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "num_samples_per_class" = render_n_samples_class(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "interpolation_range" = render_range(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "names_predictors" = render_names_predictors(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "model_hyperparams" = render_hyperparameters(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "model_type" = render_model_type(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "model_algorithm" = render_model_algorithm(element_id, label, model_metadata, info_text, value = uploaded_value),
+    "samples_crs" = render_crs(element_id, label, geo_metadata, info_text, value = uploaded_value),
     
     # fallback
-    render_text_input(element_id, label, info_text)
+    render_text_input(element_id, label, info_text, value = uploaded_value)
   )
   
   return(input_tag)

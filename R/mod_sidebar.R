@@ -19,12 +19,18 @@ mod_sidebar_ui <- function(id) {
 mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
   moduleServer(id, function(input, output, session) {
     
+    # Add a reactive timer that invalidates every second
+    autoInvalidate <- reactiveTimer(1000)  # 1000 ms = 1 sec
+    
+    # This now updates every second
     figures_exist <- reactive({
+      autoInvalidate()
       plot_dir <- file.path("www", "figures")
       length(list.files(plot_dir, pattern = "\\.png$")) > 0
     })
     
     observe({
+      req(input$document_format)
       if (input$document_format == "figures" && !figures_exist()) {
         shinyjs::disable("protocol_download")
         showNotification("No figures generated yet. Download disabled.", type = "warning")
@@ -32,6 +38,7 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
         shinyjs::enable("protocol_download")
       }
     })
+    
     
     # Clean permanent figures on session end
     session$onSessionEnded(function() {

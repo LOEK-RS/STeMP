@@ -1,3 +1,23 @@
+
+# Helper to convert element to element_id
+normalize_id <- function(x) {
+  # Lowercase, remove asterisks, replace punctuation/spaces with underscores
+  gsub("[^a-zA-Z0-9]", "_", tolower(gsub("\\*", "", x)))
+}
+
+
+# helper to get value from uploaded csv file
+get_value <- function(uploaded_value, fallback_fn) {
+  if (!is.null(uploaded_value)) {
+    return(uploaded_value)
+  } else if (!is.null(fallback_fn)) {
+    return(fallback_fn())
+  } else {
+    return(NULL)
+  }
+}
+
+
 ## helper function for tooltips
 inputWithHoverInfo <- function(inputTag, info_text) {
   children <- inputTag$children
@@ -93,11 +113,11 @@ validate_geo_metadata <- function(geo_metadata, required_fields = character()) {
 save_figure <- function(figure, element_id) {
   fig_dir <- file.path("www", "figures")
   if (!dir.exists(fig_dir)) dir.create(fig_dir)
-  if(element_id == "protocol-prediction-p_pred_2") fig_name <- "geodist_prediction_area"
-  else if(element_id == "protocol-prediction-p_pred_1") fig_name <- "prediction_area"
-  else if(element_id == "protocol-model-d_response_2") fig_name <- "sampling_area"
-  else if(element_id == "protocol-model-d_response_1") fig_name <- "sampling_locations"
-  else if(element_id == "protocol-model-d_response_3") fig_name <- "geodist_sampling_area"
+  if(element_id == "protocol-prediction-geodistance_plot_prediction_area") fig_name <- "geodist_prediction_area"
+  else if(element_id == "protocol-prediction-prediction_map") fig_name <- "prediction_area"
+  else if(element_id == "protocol-model-sampling_area_map") fig_name <- "sampling_area"
+  else if(element_id == "protocol-model-sampling_locations") fig_name <- "sampling_locations"
+  else if(element_id == "protocol-model-geodistance_plot_prediction_area") fig_name <- "geodist_sampling_area"
   else fig_name <- element_id
   plot_path <- file.path(fig_dir, paste0(fig_name, ".png"))
   ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
