@@ -1,0 +1,54 @@
+---
+title: "STeMP: Spatio-TEmporal Modelling Protocol"
+output:
+  pdf_document:
+    toc: false
+    number_sections: false
+    latex_engine: xelatex
+    extra_dependencies: ["longtable", "booktabs"]
+header-includes:
+  - \usepackage[table]{xcolor}
+  - \usepackage{makecell}  # for better multi-line cells
+params:
+  data: NULL
+  plot_files: NULL
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Table
+```{r echo=FALSE, message=FALSE}
+library(knitr)
+library(kableExtra)
+library(stringr)
+
+df <- params$data
+
+# Wrap the 'value' column at width 30 characters
+df$value <- str_wrap(df$value, width = 30)
+
+# Replace newline with LaTeX line break wrapped in \makecell{}
+df$value <- paste0("\\makecell[l]{", gsub("\n", " \\\\ ", df$value), "}")
+row.names(df) <- NULL
+
+kable(df, format = "latex", booktabs = TRUE, longtable = TRUE, escape = FALSE) |> 
+  kable_styling(latex_options = c("striped", "hold_position"), font_size = 6) |>
+  column_spec(1, width = "2cm") |>      # Adjust widths as you like
+  column_spec(2, width = "4cm") |>
+  column_spec(3, width = "4cm") |>
+  column_spec(4, width = "6cm")
+
+```
+
+# Figures
+```{r echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics(params$plot_files)
+```
+
+

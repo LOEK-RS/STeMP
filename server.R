@@ -21,5 +21,7 @@ server <- function(input, output, session) {
   # Only those that _server functions, others just define UI elements
   protocol <- mod_create_protocol_server("protocol", protocol_data, model_metadata, geo_metadata)  
   
+  mod_sidebar_server("sidebar", protocol_data = protocol$protocol_updated, o_objective_1_val=protocol$o_objective_1)
+
  
 }

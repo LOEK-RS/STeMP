@@ -197,9 +197,22 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     # Outputs
     inputs_reactive <- reactive({
       df <- model_data()
-      vals <- lapply(df$element_id, function(id) input[[ns(id)]])
-      names(vals) <- df$element_id
-      vals
+      vals <- lapply(df$element_id, function(id) {
+        val <- input[[id]]
+        if (is.null(val) || (is.character(val) && val == "")) {
+          NA
+        } else {
+          val
+        }
+      })
+      
+      data.frame(
+        section = df$section,
+        subsection = df$subsection,
+        element = df$element,
+        value = unlist(vals, use.names = FALSE),
+        stringsAsFactors = FALSE
+      )
     })
     
     validation_method <- reactive({

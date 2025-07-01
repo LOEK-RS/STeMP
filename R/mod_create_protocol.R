@@ -38,7 +38,7 @@ mod_create_protocol_server <- function(id, protocol_data, model_metadata, geo_me
     })
     
     # 2) Prediction panel
-    mod_prediction_panel_server(
+    prediction_results <- mod_prediction_panel_server(
       "prediction",
       overview$o_objective_1,
       protocol_data,
@@ -54,6 +54,27 @@ mod_create_protocol_server <- function(id, protocol_data, model_metadata, geo_me
       o_objective_1_val = overview$o_objective_1,
       geodist_sel = geodist_sel
     )
+    
+    
+    # Extract updated data
+    updated_protocol <- reactive({
+      overview_df <- overview$overview_inputs()
+      model_df <- model_results$model_inputs()
+      
+      if(overview$o_objective_1() == "Model and prediction") {
+        prediction_df <- prediction_results$prediction_inputs()
+        df <- rbind(overview_df, model_df) |> 
+          rbind(prediction_df)
+        
+      } else {
+        df <- rbind(overview_df, model_df)
+      }
+      
+      df <- df[!grepl("plot", df$element),]
+      return(df)
+      
+    })
+    
     
     ## debug
     observe({
@@ -74,7 +95,8 @@ mod_create_protocol_server <- function(id, protocol_data, model_metadata, geo_me
     
     # Return relevant reactive values
     return(list(
-      o_objective_1 = overview$o_objective_1
+      o_objective_1 = overview$o_objective_1,
+      protocol_updated = updated_protocol
     ))
   })
 }

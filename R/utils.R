@@ -90,6 +90,20 @@ validate_geo_metadata <- function(geo_metadata, required_fields = character()) {
 }
 
 
+save_figure <- function(figure, element_id) {
+  fig_dir <- file.path("www", "figures")
+  if (!dir.exists(fig_dir)) dir.create(fig_dir)
+  if(element_id == "protocol-prediction-p_pred_2") fig_name <- "geodist_prediction_area"
+  else if(element_id == "protocol-prediction-p_pred_1") fig_name <- "prediction_area"
+  else if(element_id == "protocol-model-d_response_2") fig_name <- "sampling_area"
+  else if(element_id == "protocol-model-d_response_1") fig_name <- "sampling_locations"
+  else if(element_id == "protocol-model-d_response_3") fig_name <- "geodist_sampling_area"
+  else fig_name <- element_id
+  plot_path <- file.path(fig_dir, paste0("protocol_plot_", fig_name, ".png"))
+  ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
+}
+
+
 geo_map <- function(output, element_id, geo_metadata = NULL, what=c("samples_sf", "training_area_sf", "prediction_area_sf")) {
 
   output[[element_id]] <- renderPlot({
@@ -118,7 +132,7 @@ geo_map <- function(output, element_id, geo_metadata = NULL, what=c("samples_sf"
     
    
     if (!is.null(samples_data) && inherits(samples_data, "sf") && nrow(samples_data) > 0) {
-      ggplot() +
+      p <- ggplot() +
         tryCatch(
           geom_sf(data = samples_data),
           error = function(e) {
@@ -130,14 +144,18 @@ geo_map <- function(output, element_id, geo_metadata = NULL, what=c("samples_sf"
         labs(title = title)
     } else {
       #message("⚠️ No samples data, rendering placeholder")
-      ggplot() +
+      p <- ggplot() +
         annotate("text", x = 0.5, y = 0.5, label = paste("No", title, "uploaded yet"), size = 6, hjust = 0.5, vjust = 0.5) +
         theme_void()
     }
+    
+    # Save to disk for report generation
+    save_figure(figure=p, element_id=element_id)
+    return(p)
   })
 }
 
-render_geodist_plot_server <- function(output, element_id, geo_metadata = NULL, objective = c("Model and prediction", "Model only")) {
+geodist_plot <- function(output, element_id, geo_metadata = NULL, objective = c("Model and prediction", "Model only")) {
 
   sel_val <- reactiveVal(NULL)  # reactive container to store the selection
   
@@ -178,13 +196,17 @@ render_geodist_plot_server <- function(output, element_id, geo_metadata = NULL, 
       sel <- if (testks$p.value >= 0.05) "random" else "clustered"
       
       sel_val(sel)
-      plot(geod)
+      p <- plot(geod) +
+        labs(title = "geodistance plot")
       
     } else {
-      ggplot() +
+      p <- ggplot() +
         annotate("text", x = 0.5, y = 0.5, label = "No geodist plot yet", size = 6, hjust = 0.5, vjust = 0.5) +
         theme_void()
     }
+    # Save to disk for report generation
+    save_figure(figure=p, element_id=element_id)
+    return(p)
   })
   
 }

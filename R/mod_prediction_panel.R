@@ -124,9 +124,22 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
     # Collect prediction input values
     inputs_reactive <- reactive({
       df <- prediction_data()
-      vals <- lapply(df$element_id, function(id) input[[ns(id)]])
-      names(vals) <- df$element_id
-      vals
+      vals <- lapply(df$element_id, function(id) {
+        val <- input[[id]]
+        if (is.null(val) || (is.character(val) && val == "")) {
+          NA
+        } else {
+          val
+        }
+      })
+      
+      data.frame(
+        section = df$section,
+        subsection = df$subsection,
+        element = df$element,
+        value = unlist(vals, use.names = FALSE),
+        stringsAsFactors = FALSE
+      )
     })
     
     return(list(
