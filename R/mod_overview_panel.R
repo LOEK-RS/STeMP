@@ -42,14 +42,28 @@ mod_overview_panel_server <- function(id, protocol_data) {
     # 3. Return all input values from dynamic inputs
     inputs_reactive <- reactive({
       df <- overview_data()
-      vals <- lapply(df$element_id, function(id) input[[id]])
-      names(vals) <- df$element_id
-      vals
+      vals <- lapply(df$element_id, function(id) {
+        val <- input[[id]]
+        if (is.null(val) || (is.character(val) && val == "")) {
+          NA
+        } else {
+          val
+        }
+      })
+  
+      data.frame(
+        section = df$section,
+        subsection = df$subsection,
+        element = df$element,
+        value = unlist(vals, use.names = FALSE),
+        stringsAsFactors = FALSE
+      )
     })
+    
     
     return(list(
       o_objective_1 = reactive(input$o_objective_1),
-      overview_inputs = reactive(inputs_reactive())
+      overview_inputs = inputs_reactive
     ))
   })
 }
