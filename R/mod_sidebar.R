@@ -37,31 +37,31 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
     session$onSessionEnded(function() {
       fig_dir <- file.path("www", "figures")
       if (dir.exists(fig_dir)) {
-        files <- list.files(fig_dir, pattern = "^protocol_plot_.*\\.png$", full.names = TRUE)
+        files <- list.files(fig_dir, pattern = "*\\.png$", full.names = TRUE)
         if (length(files) > 0) {
           file.remove(files)
-          message("Permanent figures cleaned up on session end.")
         }
       }
     })
     
     # Helper: get allowed element_ids based on objective
-    get_allowed_element_ids <- reactive({
-      if (is.null(o_objective_1_val())) return(character(0))
-      
-      if (o_objective_1_val() == "Model and prediction") {
-        c("sampling_locations",
+    get_allowed_element_ids <- function(objective) {
+      switch(
+        objective,
+        "Model and prediction" = c(
+          "sampling_locations",
           "sampling_area",
           "prediction_area",
-          "geodist_prediction_area")
-      } else if (o_objective_1_val() == "Model only") {
-        c("sampling_locations",
+          "geodist_prediction_area"
+        ),
+        "Model only" = c(
+          "sampling_locations",
           "sampling_area",
-          "geodist_sampling_area")
-      } else {
+          "geodist_sampling_area"
+        ),
         character(0)
-      }
-    })
+      )
+    }
     
     output$protocol_download <- downloadHandler(
       filename = function() {
@@ -84,11 +84,15 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
           all_plot_files <- list.files(plot_dir, pattern = "\\.png$", full.names = TRUE)
           
           # Filter plot files based on allowed element_ids
-          allowed_ids <- get_allowed_element_ids()
-          # We assume plot file names contain the element_id strings, so filter:
-          selected_files <- all_plot_files[sapply(all_plot_files, function(f) {
-            any(sapply(allowed_ids, function(id) grepl(id, basename(f), fixed = TRUE)))
-          })]
+          allowed_ids <- get_allowed_element_ids(o_objective_1_val())
+          file_names <- basename(all_plot_files)
+          ids_no_ext <- trimws(sub("\\.png$", "", tolower(file_names)))
+          allowed_ids_lc <- trimws(tolower(allowed_ids))
+          
+          match_idx <- match(allowed_ids_lc, ids_no_ext)
+          valid_idx <- which(!is.na(match_idx))
+          selected_files <- all_plot_files[match_idx[valid_idx]]
+          
           
           # Prepare temp .Rmd and copy plots
           temp_dir <- tempdir()
@@ -119,10 +123,14 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
           plot_dir <- file.path("www", "figures")
           all_plot_files <- list.files(plot_dir, pattern = "\\.png$", full.names = TRUE)
           
-          allowed_ids <- get_allowed_element_ids()
-          selected_files <- all_plot_files[sapply(all_plot_files, function(f) {
-            any(sapply(allowed_ids, function(id) grepl(id, basename(f), fixed = TRUE)))
-          })]
+          allowed_ids <- get_allowed_element_ids(o_objective_1_val())
+          file_names <- basename(all_plot_files)
+          ids_no_ext <- trimws(sub("\\.png$", "", tolower(file_names)))
+          allowed_ids_lc <- trimws(tolower(allowed_ids))
+          
+          match_idx <- match(allowed_ids_lc, ids_no_ext)
+          valid_idx <- which(!is.na(match_idx))
+          selected_files <- all_plot_files[match_idx[valid_idx]]
           
           temp_dir <- tempdir()
           zip_dir <- file.path(temp_dir, "figures_for_zip")
