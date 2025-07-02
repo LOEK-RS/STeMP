@@ -19,6 +19,8 @@ mod_sidebar_ui <- function(id) {
 mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
   moduleServer(id, function(input, output, session) {
     
+    
+    ## download ----------
     # Add a reactive timer that invalidates every second
     autoInvalidate <- reactiveTimer(1000)  # 1000 ms = 1 sec
     
@@ -168,5 +170,21 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
         }
       }
     )
+    
+    ## Filter protocol data based on toggle ----------
+    filtered_protocol_data <- reactive({
+      req(protocol_data())
+      df <- protocol_data()
+      if (isTRUE(input$hide_optional)) {
+        df <- df[df$optional == 0, ]
+      }
+      df
+    })
+    
+    return(list(
+      filtered_protocol_data = filtered_protocol_data,
+      hide_optional = reactive(input$hide_optional)
+    ))
+    
   })
 }

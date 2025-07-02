@@ -6,9 +6,9 @@
 "5",5,"Overview","o","Authorship","o_authorship","Study link","study_link","If a study is associated with the model, then add the link to the study (doi, url)","text","",1,1,1
 "6",7,"Overview","o","Target variable","o_objective","Target variable*","target_variable","The target variable the model aims to predict","text","",0,1,1
 "7",8,"Overview","o","Scientific Field","o_field","Scientific Field*","scientific_field","The scientific field in which the model was developed","suggestion","Biogeosciences, Atmosphere, Oceanography, Cryosphere, Hydrology",0,1,1
-"8",1,"Model","m","Response","m_response","Sampling locations","sampling_locations","Plot of samples","sample_plot","",1,1,1
-"9",1,"Model","m","Response","m_response","Sampling area map","sampling_area_map","Plot of the training area","training_area_plot","",1,1,1
-"10",1,"Model","m","Response","m_response","Geodistance plot sampling area","geodistance_plot_sampling_area","Plot of nearest neighbour distances in geographic space (see \url {https://hannameyer.github.io/CAST/reference/geodist.html} for more information)","geodist_plot_training","",1,1,1
+"8",1,"Model","m","Response","m_response","Sampling locations","sampling_locations","Plot of samples","sample_plot","",0,1,1
+"9",1,"Model","m","Response","m_response","Sampling area map","sampling_area_map","Plot of the training area","training_area_plot","",0,1,1
+"10",1,"Model","m","Response","m_response","Geodistance plot sampling area","geodistance_plot_sampling_area","Plot of nearest neighbour distances in geographic space (see \url {https://hannameyer.github.io/CAST/reference/geodist.html} for more information)","geodist_plot_training","",0,1,1
 "11",6,"Model","m","Response","m_response","Training domain","training_domain","At what spatial/temporal extent where the samples collected?","suggestion","global, regional, landscape, local",0,1,1
 "12",1,"Model","m","Response","m_response","Sample acquisition*","sample_acquisition","How where the samples collected?","suggestion","In-Situ, Image interpretation, Simulation",0,1,1
 "13",2,"Model","m","Response","m_response","Sample geometry","sample_geometry","The geometry type of the samples (e.g., Polygons of Land-Cover classes, Points of climate stations)","suggestion","Point, Polygon, Raster, Image Tiles",1,1,1
@@ -40,8 +40,8 @@
 "39",19,"Model","m","Software","m_software","Software*","software","Programming language and versioning of key libraries","text","",0,1,1
 "40",20,"Model","m","Software","m_software","Code availability*","code_availability","Code availability (e.g., Link to Code Repository (such as GitHub))","text","",0,1,1
 "41",21,"Model","m","Software","m_software","Data availability*","data_availability","Data availability (e.g., Link to Data repository (such as Figshare))","text","",0,1,1
-"42",1,"Prediction","p","Prediction domain","p_pred","Prediction map","prediction_map","plot of prediction area","prediction_area_plot","",1,1,1
-"43",1,"Prediction","p","Prediction domain","p_pred","Geodistance plot prediction area*","geodistance_plot_prediction_area","plot of geodist","geodist_plot_prediction","",1,1,1
+"42",1,"Prediction","p","Prediction domain","p_pred","Prediction map","prediction_map","plot of prediction area","prediction_area_plot","",0,1,1
+"43",1,"Prediction","p","Prediction domain","p_pred","Geodistance plot prediction area*","geodistance_plot_prediction_area","plot of geodist","geodist_plot_prediction","",0,1,1
 "44",1,"Prediction","p","Prediction domain","p_pred","Prediction domain*","prediction_domain","Intended (spatial) prediction domain / area (only needed if no prediction area is uploaded)","suggestion","global, regional, landscape, local",0,0,1
 "45",2,"Prediction","p","Evaluation and Uncertainty","p_uncertainty","Evaluation strategy*","evaluation_strategy","Details on the evaluation of the prediction","suggestion","Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Target-Oriented Cross-Validation, bootstrap",0,1,1
 "46",2,"Prediction","p","Evaluation and Uncertainty","p_uncertainty","Performance metrics","performance_metrics","Performance metrics used","suggestion","RMSE, MAE, Rsquared, adjusted Rsquared, Kappa, Accuracy, Confusion Matrix, AUC",0,1,1
