@@ -123,7 +123,7 @@ save_figure <- function(figure, element_id) {
   else if(element_id == "protocol-prediction-prediction_map") fig_name <- "prediction_area"
   else if(element_id == "protocol-model-sampling_area_map") fig_name <- "sampling_area"
   else if(element_id == "protocol-model-sampling_locations") fig_name <- "sampling_locations"
-  else if(element_id == "protocol-model-geodistance_plot_prediction_area") fig_name <- "geodist_sampling_area"
+  else if(element_id == "protocol-model-geodistance_plot_sampling_area") fig_name <- "geodist_sampling_area"
   else fig_name <- element_id
   plot_path <- file.path(fig_dir, paste0(fig_name, ".png"))
   ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
