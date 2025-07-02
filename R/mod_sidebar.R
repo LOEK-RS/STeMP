@@ -1,4 +1,9 @@
-# UI
+#' Sidebar Module - UI
+#'
+#' UI for progress display, optional fields toggle, document format selection, and download button.
+#'
+#' @param id Module namespace ID
+#' @return UI elements including progress bars, toggle switch, radio buttons, and download button
 mod_sidebar_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -9,28 +14,39 @@ mod_sidebar_ui <- function(id) {
     materialSwitch(ns("hide_optional"), label = NULL, status = "danger"),
     
     shinyjs::useShinyjs(),
+    
     h5("Download protocol", style = "font-weight: bold"),
     radioButtons(ns("document_format"), label = NULL, choices = c("csv", "pdf", "figures")),
     downloadButton(ns("protocol_download"))
   )
 }
 
-# Server
+#' Sidebar Module - Server
+#'
+#' Manages download logic, figure availability, filtering protocol data based on user input,
+#' and cleans up figures on session end.
+#'
+#' @param id Module namespace ID
+#' @param protocol_data Reactive returning the protocol data frame
+#' @param o_objective_1_val Reactive returning the objective value affecting plot selection
+#' @return A list containing:
+#' \describe{
+#'   \item{filtered_protocol_data}{Reactive filtered protocol data frame based on toggle}
+#'   \item{hide_optional}{Reactive logical for hide optional toggle}
+#' }
 mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
   moduleServer(id, function(input, output, session) {
     
+    ## Reactive timer for figure existence check, updates every second
+    autoInvalidate <- reactiveTimer(1000)
     
-    ## download ----------
-    # Add a reactive timer that invalidates every second
-    autoInvalidate <- reactiveTimer(1000)  # 1000 ms = 1 sec
-    
-    # This now updates every second
     figures_exist <- reactive({
       autoInvalidate()
       plot_dir <- file.path("www", "figures")
       length(list.files(plot_dir, pattern = "\\.png$")) > 0
     })
     
+    ## Enable/disable download button based on figures availability and selected format
     observe({
       req(input$document_format)
       if (input$document_format == "figures" && !figures_exist()) {
@@ -41,19 +57,16 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
       }
     })
     
-    
-    # Clean permanent figures on session end
+    ## Clean up figures in www/figures on session end
     session$onSessionEnded(function() {
       fig_dir <- file.path("www", "figures")
       if (dir.exists(fig_dir)) {
         files <- list.files(fig_dir, pattern = "*\\.png$", full.names = TRUE)
-        if (length(files) > 0) {
-          file.remove(files)
-        }
+        if (length(files) > 0) file.remove(files)
       }
     })
     
-    # Helper: get allowed element_ids based on objective
+    ## Helper: Get allowed plot element IDs based on objective value
     get_allowed_element_ids <- function(objective) {
       switch(
         objective,
@@ -72,6 +85,7 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
       )
     }
     
+    ## Download handler for protocol data (csv/pdf/figures zip)
     output$protocol_download <- downloadHandler(
       filename = function() {
         ext <- switch(input$document_format,
@@ -81,18 +95,15 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
         paste0("protocol_", Sys.Date(), ".", ext)
       },
       content = function(file) {
-        ## csv files ----------
         if (input$document_format == "csv") {
           write.csv(protocol_data(), file, row.names = FALSE)
           
-          ## pdf files ----------
         } else if (input$document_format == "pdf") {
           df <- protocol_data()
           
           plot_dir <- file.path("www", "figures")
           all_plot_files <- list.files(plot_dir, pattern = "\\.png$", full.names = TRUE)
           
-          # Filter plot files based on allowed element_ids
           allowed_ids <- get_allowed_element_ids(o_objective_1_val())
           file_names <- basename(all_plot_files)
           ids_no_ext <- trimws(sub("\\.png$", "", tolower(file_names)))
@@ -102,8 +113,6 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
           valid_idx <- which(!is.na(match_idx))
           selected_files <- all_plot_files[match_idx[valid_idx]]
           
-          
-          # Prepare temp .Rmd and copy plots
           temp_dir <- tempdir()
           temp_rmd <- file.path(temp_dir, "protocol_temp.Rmd")
           template_path <- "www/protocol_template.Rmd"
@@ -115,11 +124,10 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
           
           plot_files_rel <- file.path("figures", basename(selected_files))
           
-          # remove underscores etc., which cause errors in latex
           sanitize_latex <- function(x) {
-            x <- gsub("\\\\", "\\textbackslash{}", x)   # backslash first
-            x <- gsub("([_%&$#{}])", "\\\\\\1", x)      # escape special chars
-            x <- gsub("\n", " ", x)                      # remove newlines if needed
+            x <- gsub("\\\\", "\\textbackslash{}", x)
+            x <- gsub("([_%&$#{}])", "\\\\\\1", x)
+            x <- gsub("\n", " ", x)
             x
           }
           
@@ -137,7 +145,6 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
             clean = TRUE
           )
           
-          ## figures folder (zip) ----------
         } else if (input$document_format == "figures") {
           plot_dir <- file.path("www", "figures")
           all_plot_files <- list.files(plot_dir, pattern = "\\.png$", full.names = TRUE)
@@ -164,14 +171,13 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
           setwd(old_wd)
           
           file.copy(zipfile, file)
-          
           unlink(zip_dir, recursive = TRUE)
           unlink(zipfile)
         }
       }
     )
     
-    ## Filter protocol data based on toggle ----------
+    ## Reactive filtered protocol data based on "hide optional" toggle
     filtered_protocol_data <- reactive({
       req(protocol_data())
       df <- protocol_data()
@@ -181,10 +187,11 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
       df
     })
     
-    return(list(
+    # Return reactive values for use in app
+    list(
       filtered_protocol_data = filtered_protocol_data,
       hide_optional = reactive(input$hide_optional)
-    ))
+    )
     
   })
 }

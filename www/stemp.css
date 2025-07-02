@@ -1,54 +1,67 @@
+/* Padding top for rows to avoid overlap with fixed navbar */
 .row {
-	padding-top: 65px;
+  padding-top: 65px;
 }
 
-.selectize-input.items, div.selectize-input.items.not-full.has-options.has-items, .form-control {
-        height: 45px;
-	padding: 9px 12px;
-	vertical-align: middle;
+/* Consistent height and padding for selectize input and form controls */
+.selectize-input.items,
+div.selectize-input.items.not-full.has-options.has-items,
+.form-control {
+  height: 45px;
+  padding: 9px 12px;
+  vertical-align: middle;
 }
 
+/* Textarea styling for minimum height and rounded corners */
 textarea.form-control {
-	min-height: 45px;
-	border-radius: 4px;
+  min-height: 45px;
+  border-radius: 4px;
 }
 
+/* Notification style: fixed position below top navbar, centered text, slightly transparent */
 .shiny-notification {
-	position: fixed; 
-	top: 50px;
-	left: 0%; 
-	right: 0%;
-	opacity: .9;
-	text-align: center;
-	font-size: 120%;
-} 
-
-nav div ul li {
-	width: 15%;
-	min-width: 160px;
- 	text-align: center;
-	border-left: solid 1px Grey;
+  position: fixed;
+  top: 50px;
+  left: 0%;
+  right: 0%;
+  opacity: 0.9;
+  text-align: center;
+  font-size: 120%;
 }
 
-#github_logo{
+/* Navigation tabs styling: fixed width with min-width, centered text, and left border */
+nav div ul li {
+  width: 15%;
+  min-width: 160px;
+  text-align: center;
+  border-left: solid 1px grey;
+}
+
+/* GitHub logo positioning fixed top-right */
+/* Note: Use colon for CSS properties */
+#github_logo {
   position: fixed;
-  height = 20px;
+  height: 20px;  /* corrected from '=' to ':' */
   right: 10px;
   top: 5px;
 }
 
+/* Make shiny input containers full width except inline inputs */
 .shiny-input-container:not(.shiny-input-container-inline) {
-	width: 100%;
+  width: 100%;
 }
 
-.control-label{
-  font-weight:normal;
+/* Control label font weight normal for softer label appearance */
+.control-label {
+  font-weight: normal;
 }
 
+/* DataTable rows fixed height for consistent row size */
 table.dataTable tbody tr {
-	height: 35px;
+  height: 35px;
 }
 
+/* Padding inside table data cells for spacing */
 table.dataTable tbody td {
-	padding: 10px 18px;
+  padding: 10px 18px;
 }

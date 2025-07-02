@@ -1,23 +1,47 @@
-# mod_model_panel.R
-# Module to render inputs grouped by subsections inside collapsible panels
-# Supports optional automatic filling from model_metadata reactive input
-
+#' Model Panel UI Module
+#'
+#' Creates a collapsible panel UI to group and render inputs for model-related protocol elements.
+#' Supports dynamic rendering based on the protocol data and metadata, including plots and input fields.
+#'
+#' @param id Module namespace ID
+#' @return UI output container for model input elements
 mod_model_panel_ui <- function(id) {
   ns <- NS(id)
-
+  
   fluidPage(
-    uiOutput(ns("model_collapse_ui")),  # container for the full collapsible UI
+    uiOutput(ns("model_collapse_ui"))  # container for the full collapsible UI
   )
 }
 
-
+#' Model Panel Server Module
+#'
+#' Manages the server-side logic for the model panel inputs grouped by subsections.
+#' Updates inputs reactively based on protocol data, uploaded values, model metadata, and geographic metadata.
+#' Supports rendering of specialized plots and input fields, including sampling design updates.
+#'
+#' @param id Module namespace ID
+#' @param protocol_data Reactive data frame containing protocol information filtered for model section
+#' @param model_metadata Reactive or reactiveValues containing model metadata; optional
+#' @param geo_metadata Reactive or reactiveValues containing geographic metadata; optional
+#' @param o_objective_1_val Reactive returning the selected modeling objective (e.g., "Model only")
+#' @param geodist_sel Reactive returning selected geographic distance classification; defaults to reactive(NULL)
+#' @param uploaded_values Reactive data frame with uploaded element_id and value pairs to override defaults; optional
+#'
+#' @return A list of reactive expressions:
+#' \itemize{
+#'   \item{model_inputs}{Data frame of current input values for model section elements}
+#'   \item{validation_method}{Selected validation strategy}
+#'   \item{sampling_design}{Selected sampling design}
+#'   \item{uncertainty_quantification}{Selected uncertainty quantification approach}
+#'   \item{predictor_types}{Selected predictor types}
+#' }
 mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo_metadata = NULL, o_objective_1_val,
                                    geodist_sel = reactive(NULL),
                                    uploaded_values = reactive(NULL)) {  
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # Update sampling_design selectInput only if geodist_sel() is not NULL
+    # Update sampling_design input when geodist_sel changes and is not NULL
     observe({
       selected_val <- geodist_sel()
       if (!is.null(selected_val)) {
@@ -25,21 +49,25 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
     
+    # Validate availability of model and geographic metadata subsets
     valid_model_metadata <- validate_model_metadata(model_metadata, "has_model")
     valid_geo_samples_metadata <- validate_geo_metadata(geo_metadata, "has_samples")
     valid_geo_training_area_metadata <- validate_geo_metadata(geo_metadata, "has_training_area")
     valid_geo_all_metadata <- validate_geo_metadata(geo_metadata, c("has_samples", "has_training_area"))
     
+    # Filter protocol data for model section
     model_data <- reactive({
       req(protocol_data())
       df <- protocol_data()
       df[df$section == "Model", ]
     })
     
+    # Identify unique subsections within model data
     subsections <- reactive({
       unique(model_data()$subsection)
     })
     
+    # Render collapsible UI panels grouped by subsections with inputs and plots
     output$model_collapse_ui <- renderUI({
       df <- model_data()
       subs <- subsections()
@@ -55,7 +83,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       meta_geo_training_area_list <- valid_geo_training_area_metadata()
       if (is.null(meta_geo_training_area_list)) meta_geo_training_area_list <- list()
       
-      # Get uploaded values data.frame (element_id, value) or NULL
       uploaded_df <- uploaded_values()
       
       panels <- lapply(subs, function(subsec) {
@@ -64,7 +91,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
         inputs <- lapply(seq_len(nrow(sub_df)), function(i) {
           row <- sub_df[i, ]
           
-          # Override row$value if uploaded value exists for this element_id
+          # Override default value if uploaded value exists for this element_id
           if (!is.null(uploaded_df)) {
             uploaded_val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
             if (length(uploaded_val) == 1 && !is.null(uploaded_val) && nzchar(uploaded_val)) {
@@ -72,6 +99,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
             }
           }
           
+          # Render specialized input or plot based on element_type
           if (row$element_type == "sample_plot") {
             if(!is.null(valid_geo_samples_metadata())) {
               render_samples_plot(
@@ -80,9 +108,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
                 geo_metadata = meta_geo_samples_list,
                 ns = ns
               )
-            } else {
-              NULL
-            }
+            } else NULL
             
           } else if (row$element_type == "training_area_plot") {
             if(!is.null(valid_geo_training_area_metadata())) {
@@ -92,9 +118,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
                 geo_metadata = meta_geo_training_area_list,
                 ns = ns
               )
-            } else {
-              NULL
-            }
+            } else NULL
             
           } else if (row$element_type == "geodist_plot_training") {
             if (o_objective_1_val() == "Model only" && !is.null(valid_geo_all_metadata())) {
@@ -103,9 +127,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
                 element = row$element,
                 ns = ns
               )
-            } else {
-              NULL
-            }
+            } else NULL
             
           } else if (row$element_type == "sampling_design") {
             selected_val <- NULL
@@ -132,7 +154,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
               model_metadata = meta_model_list,
               geo_metadata = meta_geo_samples_list,
               ns = ns,
-              row = row  # row$value now has uploaded value if present
+              row = row  # row$value now contains uploaded override if any
             )
           }
         })
@@ -143,29 +165,27 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       do.call(bsCollapse, panels)
     })
     
-    # Server-side render for samples plot
+    # Server-side rendering for sample plots
     observe({
       df <- model_data()
       meta_geo_samples_list <- valid_geo_samples_metadata()
       if (is.null(meta_geo_samples_list)) meta_geo_samples_list <- list()
       
       sample_plot_ids <- df$element_id[df$element_type == "sample_plot"]
-      
       render_samples_plot_server(output, ns(sample_plot_ids), meta_geo_samples_list, what = "samples_sf")
     })
     
-    # Server-side render for training area plot
+    # Server-side rendering for training area plots
     observe({
       df <- model_data()
       meta_geo_training_area_list <- valid_geo_training_area_metadata()
       if (is.null(meta_geo_training_area_list)) meta_geo_training_area_list <- list()
       
       training_area_plot_ids <- df$element_id[df$element_type == "training_area_plot"]
-      
       render_training_area_plot_server(output, ns(training_area_plot_ids), meta_geo_training_area_list, what = "training_area_sf")
     })
     
-    # Server-side render for geodist plot (if o_objective_1_val is "Model only")
+    # Server-side rendering for geodist plots when objective is "Model only"
     observe({
       req(o_objective_1_val())
       if (o_objective_1_val() == "Model only") {
@@ -185,7 +205,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
     
-    # Integrate render_design_server for all sampling_design inputs to update them reactively
+    # Reactive updating of sampling_design inputs
     observe({
       req(model_data())
       df <- model_data()
@@ -202,7 +222,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
     
-    # Outputs
+    # Reactive collection of all model input values
     inputs_reactive <- reactive({
       df <- model_data()
       vals <- lapply(df$element_id, function(id) {
@@ -223,22 +243,13 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       )
     })
     
-    validation_method <- reactive({
-      input[["validation_strategy"]]
-    })
+    # Reactive getters for selected model options
+    validation_method <- reactive({ input[["validation_strategy"]] })
+    sampling_design <- reactive({ input[["sampling_design"]] })
+    uncertainty_quantification <- reactive({ input[["uncertainty_quantification"]] })
+    predictor_types <- reactive({ input[["predictor_types"]] })
     
-    sampling_design <- reactive({
-      input[["sampling_design"]]
-    })
-    
-    uncertainty_quantification <- reactive({
-      input[["uncertainty_quantification"]]
-    })
-    
-    predictor_types <- reactive({
-      input[["predictor_types"]]
-    })
-    
+    # Return reactive values for use by calling modules
     return(list(
       "model_inputs" = inputs_reactive,
       "validation_method" = validation_method,
@@ -248,5 +259,3 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     ))
   })
 }
-
-

@@ -14,7 +14,19 @@ params:
   plot_files: NULL
 ---
 
-
+<!--
+  This R Markdown template generates the STeMP protocol PDF report.
+  
+  It renders:
+  - A formatted table of protocol data (params$data) with line wrapping and multi-line LaTeX cells.
+  - Figures included from the provided plot file paths (params$plot_files).
+  
+  The document is compiled using XeLaTeX with specific LaTeX packages for styling.
+  
+  Usage:
+  - Pass a data.frame to `params$data` with columns expected by the table renderer.
+  - Provide vector of plot file paths to `params$plot_files` to include figures.
+-->
 
 
 ```{r setup, include=FALSE}

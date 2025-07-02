@@ -1,29 +1,52 @@
+#' Overview Panel UI Module
+#'
+#' Creates UI for the Overview section of the protocol, rendering inputs dynamically
+#' based on the protocol data. Also includes an objective radio button selector.
+#'
+#' @param id Module namespace ID
+#' @return UI output container for overview inputs and objective selector
 mod_overview_panel_ui <- function(id) {
   ns <- NS(id)
   fluidPage(
-    uiOutput(ns("overview_ui")),  # dynamic UI from CSV
+    uiOutput(ns("overview_ui")),  # dynamic UI generated from protocol data CSV
     radioButtons(ns("o_objective_1"), "Objective:",
                  choices = c("Model and prediction", "Model only"),
                  selected = "Model and prediction")
   )
 }
 
-
+#' Overview Panel Server Module
+#'
+#' Manages server-side logic for the Overview panel inputs.
+#' Renders inputs dynamically from protocol data filtered for the Overview section,
+#' supports overriding defaults with uploaded values,
+#' and provides reactive values of inputs and the objective selector.
+#'
+#' @param id Module namespace ID
+#' @param protocol_data Reactive data frame containing protocol information
+#' @param uploaded_values Reactive data frame (optional) with uploaded element_id/value pairs to override defaults
+#'
+#' @return A list of reactive expressions:
+#' \itemize{
+#'   \item{o_objective_1}{Reactive returning the selected objective option}
+#'   \item{overview_inputs}{Data frame of current input values for overview section elements}
+#' }
 mod_overview_panel_server <- function(id, protocol_data, uploaded_values = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
+    # Filter protocol data for Overview section
     overview_data <- reactive({
       df <- protocol_data()
       req(df)
       df[df$section == "Overview", ]
     })
     
+    # Render UI inputs dynamically from Overview data, replacing defaults with uploaded values if present
     output$overview_ui <- renderUI({
       df <- overview_data()
       req(nrow(df) > 0)
       
-      # Get uploaded values data.frame (element_id, value) or NULL
       uploaded_df <- uploaded_values()
       
       ui_list <- lapply(seq_len(nrow(df)), function(i) {
@@ -51,6 +74,7 @@ mod_overview_panel_server <- function(id, protocol_data, uploaded_values = react
       do.call(tagList, ui_list)
     })
     
+    # Reactive collection of all Overview input values
     inputs_reactive <- reactive({
       df <- overview_data()
       vals <- lapply(df$element_id, function(id) {
@@ -71,6 +95,7 @@ mod_overview_panel_server <- function(id, protocol_data, uploaded_values = react
       )
     })
     
+    # Return reactive outputs
     return(list(
       o_objective_1 = reactive(input$o_objective_1),
       overview_inputs = inputs_reactive

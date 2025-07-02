@@ -1,14 +1,31 @@
-# UI function
+#' Warnings Module - UI
+#'
+#' No visible UI elements. This module dynamically shows warning notifications
+#' based on reactive inputs.
+#'
+#' @param id Module namespace ID
+#' @return Empty UI placeholder (notifications appear dynamically)
 mod_warnings_ui <- function(id) {
   ns <- NS(id)
-  tagList()  # No visible UI, notifications appear dynamically
+  tagList()
 }
 
-# Server function
+#' Warnings Module - Server
+#'
+#' Observes reactive inputs and shows context-specific warning notifications
+#' to alert users about potential issues with sampling design, validation,
+#' uncertainty quantification, and predictor types.
+#'
+#' @param id Module namespace ID
+#' @param sampling_design Reactive returning current sampling design (e.g., "clustered", "random")
+#' @param validation_method Reactive returning current validation method (e.g., "Random Cross-Validation", "Spatial Cross-Validation")
+#' @param uncertainty_quantification Reactive returning uncertainty quantification method (e.g., "none")
+#' @param predictor_types Reactive returning a vector of predictor types (e.g., contains "Spatial Proxies")
 mod_warnings_server <- function(id, sampling_design, validation_method, uncertainty_quantification, predictor_types) {
   moduleServer(id, function(input, output, session) {
     warning_flags <- reactiveValues()
     
+    # Utility to check condition and show notification only once
     check_and_warn <- function(condition, message, flag_name) {
       if (isTRUE(condition()) && is.null(warning_flags[[flag_name]])) {
         showNotification(message, type = "warning", duration = 10)
@@ -18,6 +35,7 @@ mod_warnings_server <- function(id, sampling_design, validation_method, uncertai
       }
     }
     
+    # Warning: Random CV with clustered samples can be optimistic
     observe({
       req(sampling_design(), validation_method())
       
@@ -31,6 +49,7 @@ mod_warnings_server <- function(id, sampling_design, validation_method, uncertai
       )
     })
     
+    # Warning: Spatial CV with random samples can be pessimistic
     observe({
       req(sampling_design(), validation_method())
       
@@ -44,37 +63,35 @@ mod_warnings_server <- function(id, sampling_design, validation_method, uncertai
       )
     })
     
+    # Warning: Spatial proxies + clustered samples → extrapolation risk
     observe({
       req(sampling_design(), predictor_types())
       
-      is_problematic <- predictor_types() %in% "Spatial Proxies" &&
+      is_problematic <- "Spatial Proxies" %in% predictor_types() &&
         sampling_design() == "clustered"
       
       check_and_warn(
         condition = reactive({ is_problematic }),
-        message = "⚠️ Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\nYou might
-                         consider using physically relevant predictors instead.",
+        message = "⚠️ Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\nConsider using physically relevant predictors instead.",
         flag_name = "clustered_proxies"
       )
     })
     
-    
-    ## to-do ------
+    # Warning: Clustered samples + no uncertainty quantification
     observe({
-      req(uncertainty_quantification(), sampling_design())
+      req(sampling_design(), uncertainty_quantification())
       
       is_problematic <- sampling_design() == "clustered" &&
         uncertainty_quantification() == "none"
       
       check_and_warn(
         condition = reactive({ is_problematic }),
-        message = "⚠️ Warning: Clustered samples often lead to extrapolation when the model is applied to feature combinations not present in the training data.
-    Identifying areas of extrapolation/uncertainty and communicating them to the user of the prediction is recommended.",
+        message = paste0(
+          "⚠️ Warning: Clustered samples often lead to extrapolation when the model is applied to feature combinations not present in the training data.\n",
+          "Identifying areas of extrapolation/uncertainty and communicating them to the user of the prediction is recommended."
+        ),
         flag_name = "clustered_noAssessment"
       )
     })
-    
-      
   })
 }
-

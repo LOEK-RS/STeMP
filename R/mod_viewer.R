@@ -1,3 +1,9 @@
+#' Protocol PDF Viewer Module - UI
+#'
+#' UI for displaying a protocol PDF preview and a button to generate/refresh the PDF.
+#'
+#' @param id Module namespace ID
+#' @return UI elements including a header, action button, and PDF preview output
 mod_viewer_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -8,16 +14,24 @@ mod_viewer_ui <- function(id) {
   )
 }
 
+#' Protocol PDF Viewer Module - Server
+#'
+#' Generates a PDF preview of the protocol using provided data and plots,
+#' manages temporary files, and renders a PDF viewer iframe.
+#'
+#' @param id Module namespace ID
+#' @param protocol_data Reactive returning a data frame with protocol data
+#' @param o_objective_1_val Reactive returning a string controlling which plots to include
+#' @return None; creates reactive outputs and handles side effects
 mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
+    # Cleanup any protocol preview PDFs in www/ when session ends
     session$onSessionEnded(function() {
       www_dir <- normalizePath("www", mustWork = TRUE)
       pdf_files <- list.files(www_dir, pattern = "^protocol_preview_.*\\.pdf$", full.names = TRUE)
-      if (length(pdf_files) > 0) {
-        file.remove(pdf_files)
-      }
+      if (length(pdf_files) > 0) file.remove(pdf_files)
     })
     
     pdf_preview_path <- reactiveVal(NULL)
@@ -26,9 +40,11 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
       req(protocol_data())
       df <- protocol_data()
       
+      # Directory with plot PNG files
       plot_dir <- file.path("www", "figures")
       all_plot_files <- list.files(plot_dir, pattern = "\\.png$", full.names = TRUE)
       
+      # Determine which plot IDs to include based on objective choice
       allowed_ids <- switch(
         o_objective_1_val(),
         "Model and prediction" = c(
@@ -53,15 +69,11 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
         allowed_ids_lc <- trimws(tolower(allowed_ids))
         
         match_idx <- match(allowed_ids_lc, ids_no_ext)
-        
-        # filter valid matches only
         valid_idx <- which(!is.na(match_idx))
         selected_files <- all_plot_files[match_idx[valid_idx]]
-        
       }
       
-      
-      
+      # Prepare temporary directory and copy template + selected plots
       temp_dir <- tempdir()
       temp_rmd <- file.path(temp_dir, "protocol_temp.Rmd")
       template_path <- "www/protocol_template.Rmd"
@@ -73,22 +85,23 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
       
       plot_files_rel <- file.path("figures", basename(selected_files))
       
-      # Clean up old protocol preview PDFs in temp_dir
+      # Remove any old protocol preview PDFs in temp_dir for this session
       old_pdfs <- list.files(temp_dir, pattern = paste0("^protocol_preview_", session$token, "_.*\\.pdf$"), full.names = TRUE)
       if (length(old_pdfs) > 0) file.remove(old_pdfs)
       
       temp_pdf_file <- file.path(temp_dir, paste0("protocol_preview_", session$token, "_", as.integer(Sys.time()), ".pdf"))
       
-      # remove underscores etc., which cause errors in latex
+      # Sanitize LaTeX special characters in data
       sanitize_latex <- function(x) {
         x <- gsub("\\\\", "\\textbackslash{}", x)   # backslash first
         x <- gsub("([_%&$#{}])", "\\\\\\1", x)      # escape special chars
-        x <- gsub("\n", " ", x)                      # remove newlines if needed
+        x <- gsub("\n", " ", x)                      # replace newlines with spaces
         x
       }
       
       df_sanitized <- df |> dplyr::mutate(across(everything(), sanitize_latex))
       
+      # Render the Rmarkdown to PDF quietly
       rmarkdown::render(
         input = temp_rmd,
         output_file = temp_pdf_file,
@@ -107,14 +120,12 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
     output$pdf_preview_ui <- renderUI({
       req(pdf_preview_path())
       
-      # Copy to www to serve via iframe
+      # Copy PDF to www/ folder for serving
       preview_www_path <- file.path("www", paste0("protocol_preview_", session$token, ".pdf"))
       
-      # Delete any old PDFs for this session in www/
+      # Remove any old PDFs for this session in www/
       old_www_pdfs <- list.files("www", pattern = paste0("^protocol_preview_", session$token, ".*\\.pdf$"), full.names = TRUE)
-      if (length(old_www_pdfs) > 0) {
-        file.remove(old_www_pdfs)
-      }
+      if (length(old_www_pdfs) > 0) file.remove(old_www_pdfs)
       
       file.copy(pdf_preview_path(), preview_www_path, overwrite = TRUE)
       
@@ -124,6 +135,5 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
         frameborder = 0
       )
     })
-    
   })
 }

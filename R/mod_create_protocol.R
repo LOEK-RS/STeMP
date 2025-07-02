@@ -1,3 +1,9 @@
+#' Create Protocol UI Module
+#'
+#' Provides a tabbed interface with three panels: Overview, Model, and Prediction.
+#'
+#' @param id Module namespace ID
+#' @return UI elements for the protocol creation interface
 mod_create_protocol_ui <- function(id) {
   ns <- NS(id)
   print(ns("model"))
@@ -11,11 +17,28 @@ mod_create_protocol_ui <- function(id) {
   )
 }
 
+#' Create Protocol Server Module
+#'
+#' Handles the logic for the protocol creation workflow, coordinating the Overview,
+#' Model, and Prediction submodules. It processes uploaded CSV data, extracts values,
+#' calculates spatial selections based on geographic metadata, and combines results
+#' from submodules into an updated protocol data frame.
+#'
+#' @param id Module namespace ID
+#' @param protocol_data Reactive data frame containing the raw protocol data
+#' @param uploaded_csv Reactive expression providing the uploaded CSV data as a data frame
+#' @param model_metadata ReactiveValues or reactive providing model metadata
+#' @param geo_metadata ReactiveValues or reactive providing geographic metadata
+#' 
+#' @return A list with:
+#' \itemize{
+#'   \item{o_objective_1}{Reactive expression returning the selected modeling objective}
+#'   \item{protocol_updated}{Reactive data frame of the combined, updated protocol values}
+#' }
 mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata) {
   moduleServer(id, function(input, output, session) {
     
-    
-    # 1) Extract uploaded values from uploaded_csv
+    # 1) Extract uploaded CSV values separated by sections Overview, Model, Prediction
     uploaded_values <- reactive({
       df <- uploaded_csv()
       if (is.null(df)) return(NULL)
@@ -25,20 +48,16 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
         if (nrow(section_df) == 0) return(NULL)
         else return(section_df)
       })
-      
       names(sections_list) <- section_names
-      return(sections_list)
-      
+      sections_list
     })
     
-    
-    # 2) Overview panel
+    # 2) Initialize Overview panel submodule, pass protocol_data and uploaded Overview values
     overview <- mod_overview_panel_server("overview", protocol_data, uploaded_values = reactive({
       uploaded_values()[["Overview"]]
     }))
     
-    
-    # 3) reactive geodist_sel
+    # 3) Reactive selection classification based on geographic metadata and modeling objective
     geodist_sel <- reactive({
       req(overview$o_objective_1())
       area_sf <- switch(
@@ -52,8 +71,7 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       calculate_geodist_classification(samples_sf, area_sf)
     })
     
-    
-    # 4) Prediction panel
+    # 4) Initialize Prediction panel submodule, pass reactive inputs and uploaded Prediction values
     prediction_results <- mod_prediction_panel_server(
       "prediction",
       overview$o_objective_1,
@@ -64,8 +82,7 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       })
     )
     
-    
-    # 5) Model panel
+    # 5) Initialize Model panel submodule, pass protocol_data, metadata, reactive selections and uploaded Model values
     model_results <- mod_model_panel_server(
       "model",
       protocol_data,
@@ -78,8 +95,7 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       })
     )
     
-    
-    # 6) Combine results
+    # 6) Combine data frames from Overview, Model, and (conditionally) Prediction panels into updated protocol
     updated_protocol <- reactive({
       overview_df <- overview$overview_inputs()
       model_df <- model_results$model_inputs()
@@ -89,12 +105,12 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       } else {
         df <- rbind(overview_df, model_df)
       }
+      # Remove plot elements from combined protocol data
       df <- df[!grepl("plot", df$element), ]
       df
     })
     
-    
-    # 7) Warnings
+    # 7) Run warnings module to check for sampling design, validation method, uncertainty, predictor types
     mod_warnings_server(
       id = "warnings",
       sampling_design = model_results$sampling_design,
@@ -103,7 +119,7 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       predictor_types = model_results$predictor_types
     )
     
-    # 8) Return
+    # 8) Return reactive expressions for selected objective and updated protocol data frame
     return(list(
       o_objective_1 = overview$o_objective_1,
       protocol_updated = updated_protocol

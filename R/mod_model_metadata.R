@@ -1,15 +1,38 @@
-# mod_model_metadata.R
-# Module to extract metadata from a trained model object
-
+#' Model Metadata Extraction Module - UI
+#'
+#' UI for the model metadata module.
+#' No UI elements are required unless exposing metadata visually.
+#'
+#' @param id Module namespace ID
+#' @return UI output (empty tagList here)
 mod_model_metadata_ui <- function(id) {
   ns <- NS(id)
-  tagList()  # No UI needed unless you want to expose values
+  tagList()  # No UI needed unless exposing values explicitly
 }
 
+#' Model Metadata Extraction Module - Server
+#'
+#' Extracts metadata from a trained model object.
+#' Supports caret, tidymodels, and mlr3 model objects.
+#'
+#' @param id Module namespace ID
+#' @param input_model_object Reactive containing a trained model object
+#' @return A list of reactive values with extracted metadata:
+#'   - has_model: logical indicating if a model is present
+#'   - num_training_samples: number of training samples
+#'   - num_predictors: number of predictors/features
+#'   - names_predictors: concatenated predictor names
+#'   - model_algorithm: algorithm/engine name
+#'   - model_type: model type ("Classification" or "Regression")
+#'   - model_hyperparams: hyperparameters as string
+#'   - num_classes: number of classes (for classification)
+#'   - num_samples_per_class: class counts as string
+#'   - interpolation_range: range of response variable (for regression)
+#'   - validation_results: validation metric summary string
 mod_model_metadata_server <- function(id, input_model_object) {
   moduleServer(id, function(input, output, session) {
     
-    # ReactiveVals
+    # Initialize reactive values for metadata
     model_object <- reactiveVal(NULL)
     num_training_samples <- reactiveVal(NULL)
     num_predictors <- reactiveVal(NULL)
@@ -22,6 +45,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
     interpolation_range <- reactiveVal(NULL)
     validation_results <- reactiveVal(NULL)
     
+    # Logical reactive indicating if model is present
     has_model <- reactive({
       !is.null(model_object())
     })
@@ -30,7 +54,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
       model <- input_model_object()
       req(model)
       
-      # Reset metadata
+      # Reset all metadata fields before processing new model
       model_object(NULL)
       num_training_samples(NULL)
       num_predictors(NULL)
@@ -45,7 +69,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
       
       model_object(model)
       
-      # --- Caret model ---
+      # ----------- Caret Model -----------
       if ("train" %in% class(model)) {
         data <- model$trainingData
         if (!is.null(data)) {
@@ -58,6 +82,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
           model_type(model$modelType)
           model_algorithm(model$method %||% "")
           
+          # Hyperparameters from bestTune
           if (!is.null(model$bestTune)) {
             model_hyperparams(paste0(names(model$bestTune), "=", model$bestTune, collapse = ", "))
           }
@@ -66,12 +91,15 @@ mod_model_metadata_server <- function(id, input_model_object) {
             tab <- table(response)
             num_classes(length(tab))
             num_samples_per_class(paste0(names(tab), ": ", as.integer(tab), collapse = ", "))
+            
+            # Validation metrics: accuracy and kappa
             if (!is.null(model$resample)) {
               accuracy_val <- round(mean(model$resample$Accuracy, na.rm = TRUE), 3)
               kappa_val <- round(mean(model$resample$Kappa, na.rm = TRUE), 3)
               validation_results(sprintf("Accuracy = %.3f, Kappa = %.3f", accuracy_val, kappa_val))
             }
           } else {
+            # Regression: response range and RMSE, R^2 metrics
             interpolation_range(paste(round(range(response), 3), collapse = " to "))
             if (!is.null(model$resample)) {
               rmse_val <- round(mean(model$resample$RMSE, na.rm = TRUE), 3)
@@ -81,9 +109,11 @@ mod_model_metadata_server <- function(id, input_model_object) {
           }
         }
         
-        # --- Tidymodels model ---
+        # ----------- Tidymodels Model -----------
       } else if ("workflow" %in% class(model) || "model_fit" %in% class(model)) {
         fit <- if ("workflow" %in% class(model)) workflows::extract_fit_parsnip(model) else model
+        
+        # Try to extract mold (training data)
         data <- tryCatch({
           if ("workflow" %in% class(model)) workflows::extract_mold(model) else NULL
         }, error = function(e) NULL)
@@ -91,6 +121,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
         model_algorithm(fit$spec$engine %||% "")
         model_type(firstup(fit$spec$mode) %||% "")
         
+        # Extract hyperparameters
         if (!is.null(fit$spec$args)) {
           args <- lapply(fit$spec$args, function(x) if (is.symbol(x)) NA else x)
           model_hyperparams(paste0(names(args), "=", args, collapse = ", "))
@@ -111,7 +142,8 @@ mod_model_metadata_server <- function(id, input_model_object) {
             num_samples_per_class(paste0(names(tab), ": ", as.integer(tab), collapse = ", "))
             
             try({
-              metrics_tbl <- model %>% workflows::extract_fit_engine() %>% purrr::pluck(".metrics") ## doesnt work atm
+              # Attempt to extract metrics (currently may not work)
+              metrics_tbl <- model %>% workflows::extract_fit_engine() %>% purrr::pluck(".metrics")
               if (!is.null(metrics_tbl)) {
                 acc <- metrics_tbl %>% dplyr::filter(.metric == "accuracy") %>% dplyr::pull(.estimate)
                 kap <- metrics_tbl %>% dplyr::filter(.metric == "kap") %>% dplyr::pull(.estimate)
@@ -134,7 +166,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
           }
         }
         
-        # --- mlr3 model ---
+        # ----------- mlr3 Model -----------
       } else if (any(class(model) %in% c("Learner", "GraphLearner"))) {
         model_algorithm(model$label %||% "")
         model_type(if (grepl("classif", model$id)) "Classification" else "Regression")
@@ -143,27 +175,28 @@ mod_model_metadata_server <- function(id, input_model_object) {
           model_hyperparams(paste0(names(model$param_set$values), "=", unlist(model$param_set$values), collapse = ", "))
         }
         
-        task_data <- NULL
-        response <- NULL
-        predictors <- NULL
-        
-        # Try to extract data from stored backend
+        # Try to extract training data from stored backend
         task <- tryCatch({
           model$state$train_task
         }, error = function(e) NULL)
         
+        response <- NULL
+        predictors <- NULL
+        
         if (!is.null(task) && inherits(task, "Task")) {
           try({
-            task_data <- as.data.table(task, target = TRUE)
+            task_data <- data.table::as.data.table(task, target = TRUE)
             response <- task_data[[task$target_names]]
             predictors <- task_data[, setdiff(names(task_data), task$target_names), with = FALSE]
           }, silent = TRUE)
         }
         
-        # Fallback if data was not stored
+        # Warn if no training data stored
         if (is.null(response) || is.null(predictors)) {
-          showNotification("Training data not stored in the mlr3 model. Set store_backends = TRUE when training the model to enable the complete metadata extraction.", 
-                           type = "warning")
+          showNotification(
+            "Training data not stored in the mlr3 model. Set store_backends = TRUE when training the model to enable complete metadata extraction.", 
+            type = "warning"
+          )
         }
         
         # Proceed only if data was stored
@@ -177,7 +210,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
             num_classes(length(tab))
             num_samples_per_class(paste0(names(tab), ": ", as.integer(tab), collapse = ", "))
             
-            # Classification performance
+            # Classification performance metrics
             if (!is.null(model$state$model_performance)) {
               acc <- tryCatch(model$state$model_performance$score("classif.acc"), error = function(e) NA)
               kappa <- tryCatch(model$state$model_performance$score("classif.kappa"), error = function(e) NA)
@@ -194,13 +227,13 @@ mod_model_metadata_server <- function(id, input_model_object) {
           }
         }
         
-        
-        # --- Unsupported model ---
+        # ----------- Unsupported Model Type -----------
       } else {
         showNotification("Unsupported model type. Supported: caret, tidymodels, mlr3.", type = "error")
       }
     })
     
+    # Return all reactive metadata for external use
     return(list(
       has_model = has_model,
       num_training_samples = num_training_samples,
