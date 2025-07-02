@@ -71,7 +71,7 @@ render_n_samples_class <- function(element_id, element, model_metadata = NULL, i
       model_metadata$num_samples_per_class()
     } else NULL
   })
-  input <- numericInput(inputId = element_id, label = element, value = val)
+  input <- textInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -79,6 +79,16 @@ render_range <- function(element_id, element, model_metadata = NULL, info_text =
   val <- get_value(value, function() {
     if (!is.null(model_metadata) && !is.null(model_metadata$interpolation_range)) {
       model_metadata$interpolation_range()
+    } else NULL
+  })
+  input <- textInput(inputId = element_id, label = element, value = val)
+  with_tooltip(input, info_text)
+}
+
+render_validation_results <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
+  val <- get_value(value, function() {
+    if (!is.null(model_metadata) && !is.null(model_metadata$validation_results)) {
+      model_metadata$validation_results()
     } else NULL
   })
   input <- textInput(inputId = element_id, label = element, value = val)
@@ -227,6 +237,7 @@ render_input_field <- function(element_type, element_id, label, o_objective_1, s
     "model_type" = render_model_type(element_id, label, model_metadata, info_text, value = uploaded_value),
     "model_algorithm" = render_model_algorithm(element_id, label, model_metadata, info_text, value = uploaded_value),
     "samples_crs" = render_crs(element_id, label, geo_metadata, info_text, value = uploaded_value),
+    "validation_results" = render_validation_results(element_id, label, model_metadata, info_text, value = uploaded_value),
     
     # fallback
     render_text_input(element_id, label, info_text, value = uploaded_value)

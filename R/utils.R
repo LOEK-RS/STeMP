@@ -1,4 +1,10 @@
 
+# Helper to change first letter of word to uppercase
+firstup <- function(x) {
+  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+  x
+}
+
 # Helper to convert element to element_id
 normalize_id <- function(x) {
   # Lowercase, remove asterisks, replace punctuation/spaces with underscores
