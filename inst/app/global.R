@@ -19,7 +19,7 @@ library(DT)
 library(bslib)
 
 # Source utility functions for app-wide use
-source("R/utils.R")
+# source("R/utils.R")
 
 # Path to the protocol CSV dictionary used in the app
 csv_path <- "www/stemp_dict.csv"
