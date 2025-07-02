@@ -79,11 +79,21 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
       
       temp_pdf_file <- file.path(temp_dir, paste0("protocol_preview_", session$token, "_", as.integer(Sys.time()), ".pdf"))
       
+      # remove underscores etc., which cause errors in latex
+      sanitize_latex <- function(x) {
+        x <- gsub("\\\\", "\\textbackslash{}", x)   # backslash first
+        x <- gsub("([_%&$#{}])", "\\\\\\1", x)      # escape special chars
+        x <- gsub("\n", " ", x)                      # remove newlines if needed
+        x
+      }
+      
+      df_sanitized <- df |> dplyr::mutate(across(everything(), sanitize_latex))
+      
       rmarkdown::render(
         input = temp_rmd,
         output_file = temp_pdf_file,
         params = list(
-          data = df,
+          data = df_sanitized,
           plot_files = plot_files_rel
         ),
         envir = new.env(parent = globalenv()),

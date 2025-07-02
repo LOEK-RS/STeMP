@@ -32,7 +32,7 @@
 "31",9,"Model","m","Parameter uncertainty and biases","m_bias","Limitations*","limitations","Describe limitations in the use of the model","text","",0,1,1
 "32",11,"Model","m","Model validation and selection","m_validation","Validation strategy*","validation_strategy","Details on the validation strategy used for model selection","suggestion_single","Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Target-Oriented Cross-Validation, bootstrap, None",0,1,1
 "33",12,"Model","m","Model validation and selection","m_validation","Performance metrics*","performance_metrics","Which performance metrics were used?","suggestion","RMSE, MAE, Rsquared, adjusted Rsquared, Kappa, Accuracy, Confusion Matrix, AUC",0,1,1
-"34",12,"Model","m","Model validation and selection","m_validation","Validation results*","validation_results","Results of the validation","text","",0,1,1
+"34",12,"Model","m","Model validation and selection","m_validation","Validation results*","validation_results","Results of the validation","validation_results","",0,1,1
 "35",13,"Model","m","Model validation and selection","m_validation","Hyperparameter tuning","hyperparameter_tuning","Methods for hyperparameter tuning (List tuning range and final value)","model_hyperparams","",0,1,1
 "36",14,"Model","m","Model validation and selection","m_validation","Predictor selection*","predictor_selection","Methods for selection of predictors","suggestion","FFS, RFE, LASSO, Ridge, None",0,1,1
 "37",17,"Model","m","Model interpretation","m_interpretation","Explainability","explainability","Methods of explainable AI used to gain insights into the models behaviour","suggestion","SHAP, Permutation Importance, ALE, ICE, PDP, H-statistic",1,1,1
