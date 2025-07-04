@@ -34,27 +34,27 @@ mod_gpkg_metadata_ui <- function(id) {
 #'   \item{prediction_area_sf}{Reactive sf object for prediction area}
 #' }
 mod_gpkg_metadata_server <- function(id, samples, training_area, prediction_area) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     
     # Check if samples data exists and passes validation
-    has_samples <- reactive({
+    has_samples <- shiny::reactive({
       !is.null(samples$data()) && samples$valid()
     })
     
     # Check if training area data exists and passes validation
-    has_training_area <- reactive({
+    has_training_area <- shiny::reactive({
       !is.null(training_area$data()) && training_area$valid()
     })
     
     # Check if prediction area data exists and passes validation
-    has_prediction_area <- reactive({
+    has_prediction_area <- shiny::reactive({
       !is.null(prediction_area$data()) && prediction_area$valid()
     })
     
     # Extract CRS info from samples data:
     # Prefer EPSG code if available, otherwise return proj4 string
-    samples_crs <- reactive({
-      req(has_samples())
+    samples_crs <- shiny::reactive({
+      shiny::req(has_samples())
       crs_obj <- sf::st_crs(samples$data())
       if (!is.na(crs_obj$epsg)) {
         paste0("EPSG:", crs_obj$epsg)
@@ -64,20 +64,20 @@ mod_gpkg_metadata_server <- function(id, samples, training_area, prediction_area
     })
     
     # Reactive for the samples spatial object (sf)
-    samples_sf <- reactive({
-      req(has_samples())
+    samples_sf <- shiny::reactive({
+      shiny::req(has_samples())
       samples$data()
     })
     
     # Reactive for the training area spatial object (sf)
-    training_area_sf <- reactive({
-      req(has_training_area())
+    training_area_sf <- shiny::reactive({
+      shiny::req(has_training_area())
       training_area$data()
     })
     
     # Reactive for the prediction area spatial object (sf)
-    prediction_area_sf <- reactive({
-      req(has_prediction_area())
+    prediction_area_sf <- shiny::reactive({
+      shiny::req(has_prediction_area())
       prediction_area$data()
     })
     

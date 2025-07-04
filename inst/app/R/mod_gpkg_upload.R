@@ -8,8 +8,8 @@
 mod_gpkg_upload_ui <- function(id, label = "Upload file") {
   ns <- NS(id)
   
-  tagList(
-    fileInput(ns("upload"), label, accept = c(".gpkg"))
+  shiny::tagList(
+    shiny::fileInput(ns("upload"), label, accept = c(".gpkg"))
   )
 }
 
@@ -29,12 +29,12 @@ mod_gpkg_upload_ui <- function(id, label = "Upload file") {
 #'   \item{valid}{Reactive boolean indicating whether the uploaded file is valid}
 #' }
 mod_gpkg_upload_server <- function(id, geom_types_expected = c("POINT", "MULTIPOINT")) {
-  moduleServer(id, function(input, output, session) {
-    data <- reactiveVal(NULL)
-    valid <- reactiveVal(FALSE)
+  shiny::moduleServer(id, function(input, output, session) {
+    data <- shiny::reactiveVal(NULL)
+    valid <- shiny::reactiveVal(FALSE)
     
-    observeEvent(input$upload, {
-      req(input$upload)
+    shiny::observeEvent(input$upload, {
+      shiny::req(input$upload)
       valid(FALSE)
       data(NULL)
       
@@ -42,7 +42,7 @@ mod_gpkg_upload_server <- function(id, geom_types_expected = c("POINT", "MULTIPO
       sp_data <- tryCatch({
         sf::st_read(input$upload$datapath, quiet = TRUE)
       }, error = function(e) {
-        showNotification("Could not read .gpkg file.", type = "error")
+        shiny::showNotification("Could not read .gpkg file.", type = "error")
         NULL
       })
       
@@ -50,7 +50,7 @@ mod_gpkg_upload_server <- function(id, geom_types_expected = c("POINT", "MULTIPO
       if (!is.null(sp_data)) {
         geom_type <- unique(sf::st_geometry_type(sp_data))
         if (!all(geom_type %in% geom_types_expected)) {
-          showNotification(
+          shiny::showNotification(
             paste0("Geometry must be one of: ", paste(geom_types_expected, collapse = ", ")),
             type = "error"
           )

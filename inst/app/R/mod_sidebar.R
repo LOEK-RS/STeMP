@@ -5,19 +5,19 @@
 #' @param id Module namespace ID
 #' @return UI elements including progress bars, toggle switch, radio buttons, and download button
 mod_sidebar_ui <- function(id) {
-  ns <- NS(id)
-  tagList(
-    h5("Progress", style = "font-weight: bold"),
-    uiOutput(ns("progress_bars")),
+  ns <- shiny::NS(id)
+  shiny::tagList(
+    shiny::h5("Progress", style = "font-weight: bold"),
+    shiny::uiOutput(ns("progress_bars")),
     
-    h5("Hide optional fields", style = "font-weight: bold"),
-    materialSwitch(ns("hide_optional"), label = NULL, status = "danger"),
+    shiny::h5("Hide optional fields", style = "font-weight: bold"),
+    shinyWidgets::materialSwitch(ns("hide_optional"), label = NULL, status = "danger"),
     
     shinyjs::useShinyjs(),
     
-    h5("Download protocol", style = "font-weight: bold"),
-    radioButtons(ns("document_format"), label = NULL, choices = c("csv", "pdf", "figures")),
-    downloadButton(ns("protocol_download"))
+    shiny::h5("Download protocol", style = "font-weight: bold"),
+    shiny::radioButtons(ns("document_format"), label = NULL, choices = c("csv", "pdf", "figures")),
+    shiny::downloadButton(ns("protocol_download"))
   )
 }
 
@@ -35,23 +35,23 @@ mod_sidebar_ui <- function(id) {
 #'   \item{hide_optional}{Reactive logical for hide optional toggle}
 #' }
 mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     
     ## Reactive timer for figure existence check, updates every second
-    autoInvalidate <- reactiveTimer(1000)
+    autoInvalidate <- shiny::reactiveTimer(1000)
     
-    figures_exist <- reactive({
+    figures_exist <- shiny::reactive({
       autoInvalidate()
       plot_dir <- file.path("www", "figures")
       length(list.files(plot_dir, pattern = "\\.png$")) > 0
     })
     
     ## Enable/disable download button based on figures availability and selected format
-    observe({
-      req(input$document_format)
+    shiny::observe({
+      shiny::req(input$document_format)
       if (input$document_format == "figures" && !figures_exist()) {
         shinyjs::disable("protocol_download")
-        showNotification("No figures generated yet. Download disabled.", type = "warning")
+        shiny::showNotification("No figures generated yet. Download disabled.", type = "warning")
       } else {
         shinyjs::enable("protocol_download")
       }
@@ -86,7 +86,7 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
     }
     
     ## Download handler for protocol data (csv/pdf/figures zip)
-    output$protocol_download <- downloadHandler(
+    output$protocol_download <- shiny::downloadHandler(
       filename = function() {
         ext <- switch(input$document_format,
                       "csv" = "csv",
@@ -131,7 +131,7 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
             x
           }
           
-          df_sanitized <- df |> dplyr::mutate(across(everything(), sanitize_latex))
+          df_sanitized <- df |> dplyr::mutate(dplyr::across(dplyr::everything(), sanitize_latex))
           
           rmarkdown::render(
             input = temp_rmd,
@@ -167,7 +167,7 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
           zipfile <- file.path(temp_dir, "figures.zip")
           old_wd <- getwd()
           setwd(zip_dir)
-          zip(zipfile, files = list.files(zip_dir))
+          utils::zip(zipfile, files = list.files(zip_dir))
           setwd(old_wd)
           
           file.copy(zipfile, file)
@@ -178,8 +178,8 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
     )
     
     ## Reactive filtered protocol data based on "hide optional" toggle
-    filtered_protocol_data <- reactive({
-      req(protocol_data())
+    filtered_protocol_data <- shiny::reactive({
+      shiny::req(protocol_data())
       df <- protocol_data()
       if (isTRUE(input$hide_optional)) {
         df <- df[df$optional == 0, ]
@@ -190,7 +190,7 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val) {
     # Return reactive values for use in app
     list(
       filtered_protocol_data = filtered_protocol_data,
-      hide_optional = reactive(input$hide_optional)
+      hide_optional = shiny::reactive(input$hide_optional)
     )
     
   })

@@ -6,10 +6,10 @@
 #' @param id Module namespace ID
 #' @return UI output container for model input elements
 mod_model_panel_ui <- function(id) {
-  ns <- NS(id)
+  ns <- shiny::NS(id)
   
-  fluidPage(
-    uiOutput(ns("model_collapse_ui"))  # container for the full collapsible UI
+  shiny::fluidPage(
+    shiny::uiOutput(ns("model_collapse_ui"))  # container for the full collapsible UI
   )
 }
 
@@ -36,16 +36,16 @@ mod_model_panel_ui <- function(id) {
 #'   \item{predictor_types}{Selected predictor types}
 #' }
 mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo_metadata = NULL, o_objective_1_val,
-                                   geodist_sel = reactive(NULL),
-                                   uploaded_values = reactive(NULL)) {  
-  moduleServer(id, function(input, output, session) {
+                                   geodist_sel = shiny::reactive(NULL),
+                                   uploaded_values = shiny::reactive(NULL)) {  
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Update sampling_design input when geodist_sel changes and is not NULL
-    observe({
+    shiny::observe({
       selected_val <- geodist_sel()
       if (!is.null(selected_val)) {
-        updateSelectInput(session, "sampling_design", selected = selected_val)
+        shiny::updateSelectInput(session, "sampling_design", selected = selected_val)
       }
     })
     
@@ -56,24 +56,24 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     valid_geo_all_metadata <- validate_geo_metadata(geo_metadata, c("has_samples", "has_training_area"))
     
     # Filter protocol data for model section
-    model_data <- reactive({
-      req(protocol_data())
+    model_data <- shiny::reactive({
+      shiny::req(protocol_data())
       df <- protocol_data()
       df[df$section == "Model", ]
     })
     
     # Identify unique subsections within model data
-    subsections <- reactive({
+    subsections <- shiny::reactive({
       unique(model_data()$subsection)
     })
     
     # Render collapsible UI panels grouped by subsections with inputs and plots
-    output$model_collapse_ui <- renderUI({
+    output$model_collapse_ui <- shiny::renderUI({
       df <- model_data()
       subs <- subsections()
       
       if (nrow(df) == 0) {
-        return(tags$p("No model data available"))
+        return(shiny::tags$p("No model data available"))
       }
       
       meta_model_list <- valid_model_metadata()
@@ -159,14 +159,14 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
           }
         })
         
-        bsCollapsePanel(title = subsec, do.call(tagList, inputs), style = "primary")
+        shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
       })
       
-      do.call(bsCollapse, panels)
+      do.call(shinyBS::bsCollapse, panels)
     })
     
     # Server-side rendering for sample plots
-    observe({
+    shiny::observe({
       df <- model_data()
       meta_geo_samples_list <- valid_geo_samples_metadata()
       if (is.null(meta_geo_samples_list)) meta_geo_samples_list <- list()
@@ -176,7 +176,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     })
     
     # Server-side rendering for training area plots
-    observe({
+    shiny::observe({
       df <- model_data()
       meta_geo_training_area_list <- valid_geo_training_area_metadata()
       if (is.null(meta_geo_training_area_list)) meta_geo_training_area_list <- list()
@@ -186,8 +186,8 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     })
     
     # Server-side rendering for geodist plots when objective is "Model only"
-    observe({
-      req(o_objective_1_val())
+    shiny::observe({
+      shiny::req(o_objective_1_val())
       if (o_objective_1_val() == "Model only") {
         df <- model_data()
         meta_geo_all_list <- valid_geo_all_metadata()
@@ -206,8 +206,8 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     })
     
     # Reactive updating of sampling_design inputs
-    observe({
-      req(model_data())
+    shiny::observe({
+      shiny::req(model_data())
       df <- model_data()
       design_id <- df$element_id[df$element_type == "sampling_design"]
       
@@ -223,7 +223,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     })
     
     # Reactive collection of all model input values
-    inputs_reactive <- reactive({
+    inputs_reactive <- shiny::reactive({
       df <- model_data()
       vals <- lapply(df$element_id, function(id) {
         val <- input[[id]]
@@ -244,10 +244,10 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     })
     
     # Reactive getters for selected model options
-    validation_method <- reactive({ input[["validation_strategy"]] })
-    sampling_design <- reactive({ input[["sampling_design"]] })
-    uncertainty_quantification <- reactive({ input[["uncertainty_quantification"]] })
-    predictor_types <- reactive({ input[["predictor_types"]] })
+    validation_method <- shiny::reactive({ input[["validation_strategy"]] })
+    sampling_design <- shiny::reactive({ input[["sampling_design"]] })
+    uncertainty_quantification <- shiny::reactive({ input[["uncertainty_quantification"]] })
+    predictor_types <- shiny::reactive({ input[["predictor_types"]] })
     
     # Return reactive values for use by calling modules
     return(list(

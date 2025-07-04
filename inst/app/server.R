@@ -11,6 +11,8 @@
 #' @export
 server <- function(input, output, session) {
   
+  csv_path <- "www/stemp_dict.csv"
+  
   # Reactive expression to read the protocol CSV data once per session
   protocol_data <- reactive({
     req(csv_path)  # Ensure csv_path is available before reading

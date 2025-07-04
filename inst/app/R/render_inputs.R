@@ -9,7 +9,7 @@
 #' @return A selectizeInput with multiple selection enabled
 render_suggestion <- function(element_id, label, suggestions, info_text = NULL) {
   choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
-  input <- selectizeInput(
+  input <- shiny::selectizeInput(
     inputId = element_id,
     label = label,
     choices = choices,
@@ -27,7 +27,7 @@ render_suggestion <- function(element_id, label, suggestions, info_text = NULL) 
 #' @return A selectizeInput with single selection enabled
 render_suggestion_single <- function(element_id, label, suggestions, info_text = NULL) {
   choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
-  input <- selectizeInput(
+  input <- shiny::selectizeInput(
     inputId = element_id,
     label = label,
     choices = choices,
@@ -44,7 +44,7 @@ render_suggestion_single <- function(element_id, label, suggestions, info_text =
 #' @inheritParams render_suggestion
 #' @return A textInput element
 render_text_input <- function(element_id, element, info_text = NULL, value = NULL) {
-  input <- textInput(inputId = element_id, label = element, value = value)
+  input <- shiny::textInput(inputId = element_id, label = element, value = value)
   with_tooltip(input, info_text)
 }
 
@@ -53,7 +53,7 @@ render_text_input <- function(element_id, element, info_text = NULL, value = NUL
 #' @inheritParams render_text_input
 #' @return A textAreaInput element with fixed 3 rows
 render_text_area <- function(element_id, element, info_text = NULL, value = NULL) {
-  input <- textAreaInput(inputId = element_id, label = element, value = value, rows = 3)
+  input <- shiny::textAreaInput(inputId = element_id, label = element, value = value, rows = 3)
   with_tooltip(input, info_text)
 }
 
@@ -68,7 +68,7 @@ render_n_samples <- function(element_id, element, model_metadata = NULL, info_te
       model_metadata$num_training_samples()
     } else NULL
   })
-  input <- numericInput(inputId = element_id, label = element, value = val)
+  input <- shiny::numericInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -79,7 +79,7 @@ render_n_predictors <- function(element_id, element, model_metadata = NULL, info
       model_metadata$num_predictors()
     } else NULL
   })
-  input <- numericInput(inputId = element_id, label = element, value = val)
+  input <- shiny::numericInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -90,7 +90,7 @@ render_n_classes <- function(element_id, element, model_metadata = NULL, info_te
       model_metadata$num_classes()
     } else NULL
   })
-  input <- numericInput(inputId = element_id, label = element, value = val)
+  input <- shiny::numericInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -101,7 +101,7 @@ render_n_samples_class <- function(element_id, element, model_metadata = NULL, i
       model_metadata$num_samples_per_class()
     } else NULL
   })
-  input <- textInput(inputId = element_id, label = element, value = val)
+  input <- shiny::textInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -112,7 +112,7 @@ render_range <- function(element_id, element, model_metadata = NULL, info_text =
       model_metadata$interpolation_range()
     } else NULL
   })
-  input <- textInput(inputId = element_id, label = element, value = val)
+  input <- shiny::textInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -123,7 +123,7 @@ render_validation_results <- function(element_id, element, model_metadata = NULL
       model_metadata$validation_results()
     } else NULL
   })
-  input <- textInput(inputId = element_id, label = element, value = val)
+  input <- shiny::textInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -134,7 +134,7 @@ render_names_predictors <- function(element_id, element, model_metadata = NULL, 
       model_metadata$names_predictors()
     } else NULL
   })
-  input <- textInput(inputId = element_id, label = element, value = val)
+  input <- shiny::textInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -145,7 +145,7 @@ render_hyperparameters <- function(element_id, element, model_metadata = NULL, i
       model_metadata$model_hyperparams()
     } else NULL
   })
-  input <- textInput(inputId = element_id, label = element, value = val)
+  input <- shiny::textInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
@@ -156,7 +156,7 @@ render_model_type <- function(element_id, element, model_metadata = NULL, info_t
       model_metadata$model_type()
     } else ""
   })
-  input <- selectInput(
+  input <- shiny::selectInput(
     inputId = element_id, label = element,
     choices = c("", "Classification", "Regression"),
     selected = val
@@ -179,7 +179,7 @@ render_model_algorithm <- function(element_id, element, model_metadata = NULL, i
     default_algos
   }
   
-  input <- selectInput(
+  input <- shiny::selectInput(
     inputId = element_id,
     label = element,
     choices = c("", unique(algo_choices)),
@@ -195,13 +195,13 @@ render_crs <- function(element_id, element, geo_metadata = NULL, info_text = NUL
       geo_metadata$samples_crs()
     } else NULL
   })
-  input <- textInput(inputId = element_id, label = element, value = val)
+  input <- shiny::textInput(inputId = element_id, label = element, value = val)
   with_tooltip(input, info_text)
 }
 
 #' Render select input for sampling design choices
 render_design <- function(element_id, element, selected = NULL, info_text = NULL) {
-  input <- selectInput(
+  input <- shiny::selectInput(
     inputId = element_id,
     label = element,
     choices = c("", "clustered", "random", "stratified"),
@@ -218,16 +218,16 @@ render_design <- function(element_id, element, selected = NULL, info_text = NULL
 #' @param element_id ID of the design select input to update
 #' @param geodist_sel Reactive providing selected design value
 render_design_server <- function(input, output, session, element_id, geodist_sel) {
-  observeEvent(geodist_sel(), {
+  shiny::observeEvent(geodist_sel(), {
     selected_val <- geodist_sel()
     if (is.null(selected_val)) return(NULL)
     
     shinyjs::delay(100, {
-      updateSelectInput(session, inputId = element_id, selected = selected_val)
+      shiny::updateSelectInput(session, inputId = element_id, selected = selected_val)
     })
   }, ignoreInit = FALSE)
   
-  observe({
+  shiny::observe({
     val <- input[[element_id]]
   })
 }
@@ -236,22 +236,22 @@ render_design_server <- function(input, output, session, element_id, geodist_sel
 
 #' Render placeholder for samples plot output
 render_samples_plot <- function(element_id, element, geo_metadata = NULL, ns = identity) {
-  plotOutput(outputId = ns(element_id), height = "300px")
+  shiny::plotOutput(outputId = ns(element_id), height = "300px")
 }
 
 #' Render placeholder for training area plot output
 render_training_area_plot <- function(element_id, element, geo_metadata = NULL, ns = identity) {
-  plotOutput(outputId = ns(element_id), height = "300px")
+  shiny::plotOutput(outputId = ns(element_id), height = "300px")
 }
 
 #' Render placeholder for prediction area plot output
 render_prediction_area_plot <- function(element_id, element, geo_metadata = NULL, ns = identity) {
-  plotOutput(outputId = ns(element_id), height = "300px")
+  shiny::plotOutput(outputId = ns(element_id), height = "300px")
 }
 
 #' Render placeholder for geographic distance plot output
 render_geodist_plot <- function(element_id, element, ns = identity) {
-  plotOutput(outputId = ns(element_id), height = "300px")
+  shiny::plotOutput(outputId = ns(element_id), height = "300px")
 }
 
 # --- Plot server helpers ---

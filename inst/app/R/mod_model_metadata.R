@@ -6,8 +6,8 @@
 #' @param id Module namespace ID
 #' @return UI output (empty tagList here)
 mod_model_metadata_ui <- function(id) {
-  ns <- NS(id)
-  tagList()  # No UI needed unless exposing values explicitly
+  shiny::NS(id) -> ns
+  shiny::tagList()  # No UI needed unless exposing values explicitly
 }
 
 #' Model Metadata Extraction Module - Server
@@ -30,29 +30,29 @@ mod_model_metadata_ui <- function(id) {
 #'   - interpolation_range: range of response variable (for regression)
 #'   - validation_results: validation metric summary string
 mod_model_metadata_server <- function(id, input_model_object) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     
     # Initialize reactive values for metadata
-    model_object <- reactiveVal(NULL)
-    num_training_samples <- reactiveVal(NULL)
-    num_predictors <- reactiveVal(NULL)
-    names_predictors <- reactiveVal(NULL)
-    model_algorithm <- reactiveVal(NULL)
-    model_type <- reactiveVal(NULL)
-    model_hyperparams <- reactiveVal(NULL)
-    num_classes <- reactiveVal(NULL)
-    num_samples_per_class <- reactiveVal(NULL)
-    interpolation_range <- reactiveVal(NULL)
-    validation_results <- reactiveVal(NULL)
+    model_object <- shiny::reactiveVal(NULL)
+    num_training_samples <- shiny::reactiveVal(NULL)
+    num_predictors <- shiny::reactiveVal(NULL)
+    names_predictors <- shiny::reactiveVal(NULL)
+    model_algorithm <- shiny::reactiveVal(NULL)
+    model_type <- shiny::reactiveVal(NULL)
+    model_hyperparams <- shiny::reactiveVal(NULL)
+    num_classes <- shiny::reactiveVal(NULL)
+    num_samples_per_class <- shiny::reactiveVal(NULL)
+    interpolation_range <- shiny::reactiveVal(NULL)
+    validation_results <- shiny::reactiveVal(NULL)
     
     # Logical reactive indicating if model is present
-    has_model <- reactive({
+    has_model <- shiny::reactive({
       !is.null(model_object())
     })
     
-    observeEvent(input_model_object(), {
+    shiny::observeEvent(input_model_object(), {
       model <- input_model_object()
-      req(model)
+      shiny::req(model)
       
       # Reset all metadata fields before processing new model
       model_object(NULL)
@@ -193,7 +193,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
         
         # Warn if no training data stored
         if (is.null(response) || is.null(predictors)) {
-          showNotification(
+          shiny::showNotification(
             "Training data not stored in the mlr3 model. Set store_backends = TRUE when training the model to enable complete metadata extraction.", 
             type = "warning"
           )
@@ -229,7 +229,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
         
         # ----------- Unsupported Model Type -----------
       } else {
-        showNotification("Unsupported model type. Supported: caret, tidymodels, mlr3.", type = "error")
+        shiny::showNotification("Unsupported model type. Supported: caret, tidymodels, mlr3.", type = "error")
       }
     })
     

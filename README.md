@@ -22,11 +22,9 @@ This [Shiny web application](https://odmap.wsl.ch/) helps to implement the ODMAP
 To run the app, you need to have the following R packages installed:
 
 ```R
-install.packages(c(
-  "shiny", "shinyjs", "shinyWidgets", "shinythemes", "shinydashboard", "shinyBS",
-  "bslib", "DT", "dplyr", "tidyr", "markdown", "ggplot2",
-  "CAST", "parsnip", "workflows", "mlr3"
-))
+install.packages(c("shiny", "shinyjs", "shinythemes", "shinyWidgets", "shinyBS", "htmltools", 
+                   "stringr", "knitr", "kableExtra", "dplyr", "utils", "workflows", 
+                   "purrr", "data.table", "sf", "ggplot2", "CAST", "stats"))
 ```
 
 ### Run

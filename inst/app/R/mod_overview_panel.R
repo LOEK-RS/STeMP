@@ -6,12 +6,12 @@
 #' @param id Module namespace ID
 #' @return UI output container for overview inputs and objective selector
 mod_overview_panel_ui <- function(id) {
-  ns <- NS(id)
-  fluidPage(
-    uiOutput(ns("overview_ui")),  # dynamic UI generated from protocol data CSV
-    radioButtons(ns("o_objective_1"), "Objective:",
-                 choices = c("Model and prediction", "Model only"),
-                 selected = "Model and prediction")
+  ns <- shiny::NS(id)
+  shiny::fluidPage(
+    shiny::uiOutput(ns("overview_ui")),  # dynamic UI generated from protocol data CSV
+    shiny::radioButtons(ns("o_objective_1"), "Objective:",
+                        choices = c("Model and prediction", "Model only"),
+                        selected = "Model and prediction")
   )
 }
 
@@ -31,21 +31,21 @@ mod_overview_panel_ui <- function(id) {
 #'   \item{o_objective_1}{Reactive returning the selected objective option}
 #'   \item{overview_inputs}{Data frame of current input values for overview section elements}
 #' }
-mod_overview_panel_server <- function(id, protocol_data, uploaded_values = reactive(NULL)) {
-  moduleServer(id, function(input, output, session) {
+mod_overview_panel_server <- function(id, protocol_data, uploaded_values = shiny::reactive(NULL)) {
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Filter protocol data for Overview section
-    overview_data <- reactive({
+    overview_data <- shiny::reactive({
       df <- protocol_data()
-      req(df)
+      shiny::req(df)
       df[df$section == "Overview", ]
     })
     
     # Render UI inputs dynamically from Overview data, replacing defaults with uploaded values if present
-    output$overview_ui <- renderUI({
+    output$overview_ui <- shiny::renderUI({
       df <- overview_data()
-      req(nrow(df) > 0)
+      shiny::req(nrow(df) > 0)
       
       uploaded_df <- uploaded_values()
       
@@ -57,7 +57,7 @@ mod_overview_panel_server <- function(id, protocol_data, uploaded_values = react
             row$value <- uploaded_val
           }
         }
-        render_input_field(
+        render_input_field(   # assume this is your own function, no namespace added here
           element_type = row$element_type,
           element_id = ns(row$element_id),
           label = row$element,
@@ -71,11 +71,11 @@ mod_overview_panel_server <- function(id, protocol_data, uploaded_values = react
         )
       })
       
-      do.call(tagList, ui_list)
+      do.call(shiny::tagList, ui_list)
     })
     
     # Reactive collection of all Overview input values
-    inputs_reactive <- reactive({
+    inputs_reactive <- shiny::reactive({
       df <- overview_data()
       vals <- lapply(df$element_id, function(id) {
         val <- input[[id]]
@@ -96,9 +96,9 @@ mod_overview_panel_server <- function(id, protocol_data, uploaded_values = react
     })
     
     # Return reactive outputs
-    return(list(
-      o_objective_1 = reactive(input$o_objective_1),
+    list(
+      o_objective_1 = shiny::reactive(input$o_objective_1),
       overview_inputs = inputs_reactive
-    ))
+    )
   })
 }

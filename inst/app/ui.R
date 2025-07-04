@@ -5,31 +5,35 @@
 #'
 #' @return A Shiny UI definition object.
 #' @export
-ui <- tagList(
+ui <- shiny::tagList(
   # Include custom CSS and JavaScript in the head tag
-  tags$head(
+  shiny::tags$head(
     # Load external CSS file for styling
-    tags$style(HTML(readChar("www/stemp.css", file.info("www/stemp.css")$size))),
+    shiny::tags$style(
+      shiny::HTML(
+        readChar("www/stemp.css", file.info("www/stemp.css")$size)
+      )
+    ),
     
     # Placeholder for tooltip CSS (can be extended)
-    tags$style(HTML("/* tooltip CSS placeholder */")),
+    shiny::tags$style(shiny::HTML("/* tooltip CSS placeholder */")),
     
     # Enable Bootstrap tooltips on elements with data-toggle="tooltip"
-    tags$script(HTML("
+    shiny::tags$script(shiny::HTML("
       $(document).ready(function() {
         $('[data-toggle=\"tooltip\"]').tooltip({ container: 'body' });
        });
     ")),
     
     # Custom CSS styles for info icons and hover effects
-    tags$style(HTML("
+    shiny::tags$style(shiny::HTML("
       .info-hover-icon {
         margin-left: 5px;
         color: #007BFF;
         cursor: pointer;
       }
     ")),
-    tags$style(HTML("
+    shiny::tags$style(shiny::HTML("
       .info-label-icon {
         display: inline-flex;
         align-items: center;
@@ -47,50 +51,54 @@ ui <- tagList(
   ),
   
   # Enable shinyjs for enhanced interactivity
-  useShinyjs(),
+  shinyjs::useShinyjs(),
   
   # UI module for displaying warnings
   mod_warnings_ui("warnings"),
   
   # Main navigation bar with multiple tabs
-  navbarPage(
+  shiny::navbarPage(
     id = "navbar",
     windowTitle = "STeMP v0.9",
-    title = div(
-      div(
+    title = shiny::div(
+      shiny::div(
         id = "github_logo", 
-        a(img(src = "github_logo_40px.png"), href = "https://github.com/LOEK-RS/STeMP", target = "_blank")
+        shiny::a(
+          shiny::img(src = "github_logo_40px.png"), 
+          href = "https://github.com/LOEK-RS/STeMP", 
+          target = "_blank"
+        )
       ),
       "STeMP v0.9"
     ),
     position = "fixed-top",
-    theme = shinytheme("united"),
+    theme = shinythemes::shinytheme("united"),
     selected = "about",
     
     # About tab explaining what STeMP is
-    tabPanel("What is STeMP?", value = "about", mod_about_ui("about")),
+    shiny::tabPanel("What is STeMP?", value = "about", mod_about_ui("about")),
     
     # How-to-use tab with instructions
-    tabPanel("How to use this app", value = "howto", mod_howto_ui("howto")),
+    shiny::tabPanel("How to use this app", value = "howto", mod_howto_ui("howto")),
     
     # Create protocol tab with sidebar layout
-    tabPanel("Create a protocol", value = "create", 
-             sidebarLayout(
-               sidebarPanel(
-                 style = "position:fixed; width: 16%;",
-                 width = 2,
-                 mod_sidebar_ui("sidebar")
-               ),
-               mainPanel(
-                 mod_create_protocol_ui("protocol")
-               )
-             )
+    shiny::tabPanel("Create a protocol", value = "create", 
+                    shiny::sidebarLayout(
+                      shiny::sidebarPanel(
+                        style = "position:fixed; width: 16%;",
+                        width = 2,
+                        mod_sidebar_ui("sidebar")
+                      ),
+                      shiny::mainPanel(
+                        mod_create_protocol_ui("protocol")
+                      )
+                    )
     ),
     
     # Protocol viewer tab
-    tabPanel("Protocol viewer", value = "viewer", mod_viewer_ui("viewer")),
+    shiny::tabPanel("Protocol viewer", value = "viewer", mod_viewer_ui("viewer")),
     
     # Upload/import data tab
-    tabPanel("Upload / Import", value = "import", mod_upload_ui("upload"))
+    shiny::tabPanel("Upload / Import", value = "import", mod_upload_ui("upload"))
   )
 )

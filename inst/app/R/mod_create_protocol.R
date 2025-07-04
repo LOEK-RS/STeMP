@@ -36,10 +36,10 @@ mod_create_protocol_ui <- function(id) {
 #'   \item{protocol_updated}{Reactive data frame of the combined, updated protocol values}
 #' }
 mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     
     # 1) Extract uploaded CSV values separated by sections Overview, Model, Prediction
-    uploaded_values <- reactive({
+    uploaded_values <- shiny::reactive({
       df <- uploaded_csv()
       if (is.null(df)) return(NULL)
       section_names <- c("Overview", "Model", "Prediction")
@@ -53,13 +53,13 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
     })
     
     # 2) Initialize Overview panel submodule, pass protocol_data and uploaded Overview values
-    overview <- mod_overview_panel_server("overview", protocol_data, uploaded_values = reactive({
+    overview <- mod_overview_panel_server("overview", protocol_data, uploaded_values = shiny::reactive({
       uploaded_values()[["Overview"]]
     }))
     
     # 3) Reactive selection classification based on geographic metadata and modeling objective
-    geodist_sel <- reactive({
-      req(overview$o_objective_1())
+    geodist_sel <- shiny::reactive({
+      shiny::req(overview$o_objective_1())
       area_sf <- switch(
         overview$o_objective_1(),
         "Model only" = geo_metadata$training_area_sf(),
@@ -67,7 +67,7 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
         stop("Unsupported objective for geodist calculation")
       )
       samples_sf <- geo_metadata$samples_sf()
-      req(samples_sf, area_sf)
+      shiny::req(samples_sf, area_sf)
       calculate_geodist_classification(samples_sf, area_sf)
     })
     
@@ -77,7 +77,7 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       overview$o_objective_1,
       protocol_data,
       geo_metadata = geo_metadata,
-      uploaded_values = reactive({
+      uploaded_values = shiny::reactive({
         uploaded_values()[["Prediction"]]
       })
     )
@@ -90,18 +90,18 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       geo_metadata = geo_metadata,
       o_objective_1_val = overview$o_objective_1,
       geodist_sel = geodist_sel,
-      uploaded_values = reactive({
+      uploaded_values = shiny::reactive({
         uploaded_values()[["Model"]]
       })
     )
     
     # 6) Combine data frames from Overview, Model, and (conditionally) Prediction panels into updated protocol
-    updated_protocol <- reactive({
+    updated_protocol <- shiny::reactive({
       overview_df <- overview$overview_inputs()
       model_df <- model_results$model_inputs()
       if (overview$o_objective_1() == "Model and prediction") {
         prediction_df <- prediction_results$prediction_inputs()
-        df <- rbind(overview_df, model_df) |> rbind(prediction_df)
+        df <- rbind(overview_df, model_df) |> dplyr::bind_rows(prediction_df)
       } else {
         df <- rbind(overview_df, model_df)
       }

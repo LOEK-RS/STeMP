@@ -7,10 +7,10 @@
 #' @param id Module namespace ID
 #' @return UI output container for prediction inputs inside collapsible panels
 mod_prediction_panel_ui <- function(id) {
-  ns <- NS(id)
+  ns <- shiny::NS(id)
   
-  fluidPage(
-    uiOutput(ns("prediction_collapse_ui"))
+  shiny::fluidPage(
+    shiny::uiOutput(ns("prediction_collapse_ui"))
   )
 }
 
@@ -32,8 +32,8 @@ mod_prediction_panel_ui <- function(id) {
 #'   \item{prediction_inputs}{Reactive data.frame with current input values for prediction section elements}
 #' }
 mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, geo_metadata = NULL,
-                                        uploaded_values = reactive(NULL)) {
-  moduleServer(id, function(input, output, session) {
+                                        uploaded_values = shiny::reactive(NULL)) {
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Validate spatial metadata for samples and prediction area
@@ -42,20 +42,20 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
     valid_geo_all_metadata <- validate_geo_metadata(geo_metadata, c("has_samples", "has_prediction_area"))
     
     # Reactive filtered protocol data for Prediction section
-    prediction_data <- reactive({
-      req(protocol_data())
+    prediction_data <- shiny::reactive({
+      shiny::req(protocol_data())
       df <- protocol_data()
       df[df$section == "Prediction", ]
     })
     
     # Unique subsections within Prediction data
-    subsections <- reactive({
+    subsections <- shiny::reactive({
       unique(prediction_data()$subsection)
     })
     
     # Server-side rendering for geodist_plot_prediction plot, active only if objective is "Model and prediction"
-    observe({
-      req(o_objective_1_val() == "Model and prediction")
+    shiny::observe({
+      shiny::req(o_objective_1_val() == "Model and prediction")
       df <- prediction_data()
       meta_geo_all_list <- valid_geo_all_metadata()
       if (is.null(meta_geo_all_list)) return()
@@ -72,14 +72,14 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
     })
     
     # Render UI collapsible panels for each subsection in Prediction data
-    output$prediction_collapse_ui <- renderUI({
-      req(o_objective_1_val() == "Model and prediction")
+    output$prediction_collapse_ui <- shiny::renderUI({
+      shiny::req(o_objective_1_val() == "Model and prediction")
       
       df <- prediction_data()
       subs <- subsections()
       
       if (nrow(df) == 0) {
-        return(tags$p("No prediction data available"))
+        return(shiny::tags$p("No prediction data available"))
       }
       
       meta_geo_prediction_area_list <- valid_geo_prediction_area_metadata()
@@ -138,15 +138,15 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
           }
         })
         
-        bsCollapsePanel(title = subsec, do.call(tagList, inputs), style = "primary")
+        shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
       })
       
-      do.call(bsCollapse, panels)
+      do.call(shinyBS::bsCollapse, panels)
     })
     
     # Server-side rendering for prediction_area_plot (if any), reactive on objective == "Model and prediction"
-    observe({
-      req(o_objective_1_val() == "Model and prediction")
+    shiny::observe({
+      shiny::req(o_objective_1_val() == "Model and prediction")
       df <- prediction_data()
       meta_geo_prediction_area_list <- valid_geo_prediction_area_metadata()
       if (is.null(meta_geo_prediction_area_list)) return()
@@ -163,7 +163,7 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
     })
     
     # Reactive collection of prediction input values, with NA for empty or null
-    inputs_reactive <- reactive({
+    inputs_reactive <- shiny::reactive({
       df <- prediction_data()
       vals <- lapply(df$element_id, function(id) {
         val <- input[[id]]
@@ -184,7 +184,7 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
     })
     
     return(list(
-      prediction_inputs = reactive(inputs_reactive())
+      prediction_inputs = shiny::reactive(inputs_reactive())
     ))
   })
 }

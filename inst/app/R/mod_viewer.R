@@ -5,12 +5,12 @@
 #' @param id Module namespace ID
 #' @return UI elements including a header, action button, and PDF preview output
 mod_viewer_ui <- function(id) {
-  ns <- NS(id)
-  tagList(
-    h4("Protocol PDF Preview"),
-    actionButton(ns("preview_pdf"), "Generate / Refresh PDF Preview"),
-    br(), br(),
-    uiOutput(ns("pdf_preview_ui"))
+  ns <- shiny::NS(id)
+  shiny::tagList(
+    shiny::h4("Protocol PDF Preview"),
+    shiny::actionButton(ns("preview_pdf"), "Generate / Refresh PDF Preview"),
+    shiny::br(), shiny::br(),
+    shiny::uiOutput(ns("pdf_preview_ui"))
   )
 }
 
@@ -24,7 +24,7 @@ mod_viewer_ui <- function(id) {
 #' @param o_objective_1_val Reactive returning a string controlling which plots to include
 #' @return None; creates reactive outputs and handles side effects
 mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Cleanup any protocol preview PDFs in www/ when session ends
@@ -34,10 +34,10 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
       if (length(pdf_files) > 0) file.remove(pdf_files)
     })
     
-    pdf_preview_path <- reactiveVal(NULL)
+    pdf_preview_path <- shiny::reactiveVal(NULL)
     
-    observeEvent(input$preview_pdf, {
-      req(protocol_data())
+    shiny::observeEvent(input$preview_pdf, {
+      shiny::req(protocol_data())
       df <- protocol_data()
       
       # Directory with plot PNG files
@@ -99,7 +99,7 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
         x
       }
       
-      df_sanitized <- df |> dplyr::mutate(across(everything(), sanitize_latex))
+      df_sanitized <- df |> dplyr::mutate(dplyr::across(dplyr::everything(), sanitize_latex))
       
       # Render the Rmarkdown to PDF quietly
       rmarkdown::render(
@@ -117,8 +117,8 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
       pdf_preview_path(temp_pdf_file)
     })
     
-    output$pdf_preview_ui <- renderUI({
-      req(pdf_preview_path())
+    output$pdf_preview_ui <- shiny::renderUI({
+      shiny::req(pdf_preview_path())
       
       # Copy PDF to www/ folder for serving
       preview_www_path <- file.path("www", paste0("protocol_preview_", session$token, ".pdf"))
@@ -129,7 +129,7 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val) {
       
       file.copy(pdf_preview_path(), preview_www_path, overwrite = TRUE)
       
-      tags$iframe(
+      shiny::tags$iframe(
         src = paste0("protocol_preview_", session$token, ".pdf"),
         style = "width:100%; height:700px;",
         frameborder = 0
