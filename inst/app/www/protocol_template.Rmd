@@ -1,0 +1,63 @@
+---
+title: "STeMP: Spatio-TEmporal Modelling Protocol"
+output:
+  pdf_document:
+    toc: false
+    number_sections: false
+    latex_engine: xelatex
+    extra_dependencies: ["longtable", "booktabs"]
+header-includes:
+  - \usepackage[table]{xcolor}
+  - \usepackage{makecell}  # for better multi-line cells
+params:
+  data: NULL
+  plot_files: NULL
+---
+
+<!--
+  This R Markdown template generates the STeMP protocol PDF report.
+  
+  It renders:
+  - A formatted table of protocol data (params$data) with line wrapping and multi-line LaTeX cells.
+  - Figures included from the provided plot file paths (params$plot_files).
+  
+  The document is compiled using XeLaTeX with specific LaTeX packages for styling.
+  
+  Usage:
+  - Pass a data.frame to `params$data` with columns expected by the table renderer.
+  - Provide vector of plot file paths to `params$plot_files` to include figures.
+-->
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Table
+```{r echo=FALSE, message=FALSE}
+df <- params$data
+
+# Wrap the 'value' column at width 30 characters
+df$value <- stringr::str_wrap(df$value, width = 30)
+
+# Replace newline with LaTeX line break wrapped in \makecell{}
+df$value <- paste0("\\makecell[l]{", gsub("\n", " \\\\ ", df$value), "}")
+row.names(df) <- NULL
+
+knitr::kable(df, format = "latex", booktabs = TRUE, longtable = TRUE, escape = FALSE) |> 
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position"), font_size = 6) |>
+  kableExtra::column_spec(1, width = "2cm") |>      # Adjust widths as you like
+  kableExtra::column_spec(2, width = "4cm") |>
+  kableExtra::column_spec(3, width = "4cm") |>
+  kableExtra::column_spec(4, width = "6cm")
+
+
+```
+
+# Figures
+```{r echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics(params$plot_files)
+```
+
+
