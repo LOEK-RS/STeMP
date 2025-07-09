@@ -23,8 +23,8 @@ To run the app, you need to have the following R packages installed:
 
 ```R
 install.packages(c("shiny", "shinyjs", "shinythemes", "shinyWidgets", "shinyBS", "htmltools", 
-                   "stringr", "knitr", "kableExtra", "dplyr", "utils", "workflows", 
-                   "purrr", "data.table", "sf", "ggplot2", "CAST", "stats"))
+                   "knitr", "dplyr", "utils", "workflows", "purrr", "data.table", 
+                   "sf", "ggplot2", "CAST", "stats", "rmarkdown", "golem", "config"))
 ```
 
 ### Run
