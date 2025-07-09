@@ -1,0 +1,42 @@
+---
+title: "STeMP"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{STeMP}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+## Introduction
+
+## Run the app
+
+```{r setup}
+library(STeMP)
+```
+
+
+## How to use the app (detailed, with screenshots etc.)
+
+
+## Export the protocol
+
+
+## Example use case
+
+
+## Contribute
+
+
+## Acknowledgements
+
+
+## Ressources

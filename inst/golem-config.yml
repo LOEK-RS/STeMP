@@ -1,0 +1,8 @@
+default:
+  golem_name: STeMP
+  golem_version: '0.9'
+  app_prod: no
+production:
+  app_prod: yes
+dev:
+  golem_wd: !expr golem::pkg_path()

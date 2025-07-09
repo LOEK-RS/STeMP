@@ -1,11 +1,38 @@
 Package: STeMP
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: STeMP: Spatio-Temporal Modelling Protocol
+Version: 0.9
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: GPL (>= 3) + file LICENSE
+    person("Jan", "Linnenbrink", , "jan.linnenbrink@uni-muenster.de", role = c("aut", "cre"))
+Description: PKG_DESC.
+License: GPL (>= 3)
+URL: https://github.com/LOEK-RS/STeMP
+BugReports: https://github.com/LOEK-RS/STeMP/issues
+Imports: 
+    CAST,
+    config,
+    data.table,
+    dplyr,
+    ggplot2,
+    golem,
+    htmltools,
+    purrr,
+    rmarkdown,
+    sf,
+    shiny,
+    shinyBS,
+    shinyjs,
+    shinythemes,
+    shinyWidgets,
+    stats,
+    utils,
+    workflows
+Suggests: 
+    knitr,
+    spelling,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Encoding: UTF-8
-Imports: shiny, shinyjs, shinyWidgets, shinythemes, shinyBS, ggplot2, sf, CAST, htmltools, stringr, knitr, kableExtra, dplyr, utils, workflows, purrr, data.table, stats
-Roxygen: list(markdown = TRUE)
+Language: en-US
+LazyData: true
 RoxygenNote: 7.3.2
+VignetteBuilder: knitr
