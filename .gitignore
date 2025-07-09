@@ -3,6 +3,6 @@
 .RData
 .Ruserdata
 .RProj
-.md
-www/.xlsx
-protocol_preview.md
+inst/doc
+/doc/
+/Meta/

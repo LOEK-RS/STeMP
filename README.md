@@ -23,17 +23,24 @@ To run the app, you need to have the following R packages installed:
 
 ```R
 install.packages(c("shiny", "shinyjs", "shinythemes", "shinyWidgets", "shinyBS", "htmltools", 
-                   "stringr", "knitr", "kableExtra", "dplyr", "utils", "workflows", 
-                   "purrr", "data.table", "sf", "ggplot2", "CAST", "stats"))
+                   "knitr", "dplyr", "utils", "workflows", "purrr", "data.table", 
+                   "sf", "ggplot2", "CAST", "stats", "rmarkdown", "golem", "config"))
 ```
 
 ### Run
 
-You can run the app locally by cloning this repository and running the following command in R:
+You can run the app locally by installing the development version with
 
 ```R
-library(shiny)
-runGitHub("LOEK-RS/STeMP")
+library(remotes)
+install_github("LOEK-RS/STeMP")
+``` 
+
+Then, you can start the app using the following command in R:
+
+```R
+library(STeMP)
+run_app()
 ```
 
 <!--
