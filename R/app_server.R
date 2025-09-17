@@ -25,7 +25,9 @@ app_server <- function(input, output, session) {
 
   # Initialize upload module to handle file uploads (CSV, RDS, GeoPackage)
   upload_mod <- mod_upload_server("upload", output_dir = temp_dir)
-
+  model_deleted <- shiny::reactive({ is.null(upload_mod$model()) })
+  csv_deleted <- shiny::reactive({ is.null(upload_mod$csv()) })
+  
   # Initialize metadata modules for model and geodata
   model_metadata <- mod_model_metadata_server("model_metadata", input_model_object = upload_mod$model)
   geo_metadata <- mod_gpkg_metadata_server(
@@ -48,7 +50,9 @@ app_server <- function(input, output, session) {
     uploaded_csv = upload_mod$csv,
     model_metadata = model_metadata,
     geo_metadata = geo_metadata,
-    output_dir = temp_dir
+    output_dir = temp_dir,
+    model_deleted = model_deleted,
+    csv_deleted = csv_deleted
   )
 
   # 3. Pass updated protocol data to sidebar and viewer modules for UI rendering

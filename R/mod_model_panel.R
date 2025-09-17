@@ -40,7 +40,8 @@ mod_model_panel_ui <- function(id) {
 mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo_metadata = NULL, o_objective_1_val,
                                    geodist_sel = shiny::reactive(NULL),
                                    uploaded_values = shiny::reactive(NULL),
-                                   output_dir = NULL) {
+                                   output_dir = NULL,
+                                   model_deleted = shiny::reactive(FALSE)) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -52,7 +53,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
 
-    # Validate availability of model and geographic metadata subsets
+   # Validate availability of model and geographic metadata subsets
     valid_model_metadata <- validate_model_metadata(model_metadata, "has_model")
     valid_geo_samples_metadata <- validate_geo_metadata(geo_metadata, "has_samples")
     valid_geo_training_area_metadata <- validate_geo_metadata(geo_metadata, "has_training_area")
@@ -63,6 +64,17 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       shiny::req(protocol_data())
       df <- protocol_data()
       df[df$section == "Model", ]
+    })
+
+     # Track currently rendered model input IDs
+    current_model_ids <- shiny::reactiveVal(NULL)
+    
+    # Update IDs whenever model_data changes
+    shiny::observe({
+      df <- model_data()
+      if (!is.null(df) && nrow(df) > 0) {
+        current_model_ids(df$element_id)
+      }
     })
 
     # Identify unique subsections within model data
@@ -254,6 +266,35 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
     sampling_design <- shiny::reactive({ input[["sampling_design"]] })
     uncertainty_quantification <- shiny::reactive({ input[["uncertainty_quantification"]] })
     predictor_types <- shiny::reactive({ input[["predictor_types"]] })
+
+    # Reset all input fields when model is deleted
+    shiny::observeEvent(model_deleted(), {
+      if (model_deleted()) {
+        # Get the element IDs directly from model_data()
+        df <- model_data()
+        ids <- df$element_id
+        if (!is.null(ids) && length(ids) > 0) {
+          for (element_id in ids) {
+            # Reset numeric inputs
+            if (grepl("num|classes", element_id)) {
+              shiny::updateNumericInput(session, element_id, value = NA)
+            } 
+            # Reset select inputs
+            else if (element_id %in% c("model_type","model_algorithm","sampling_design",
+                                      "validation_strategy","predictor_types","uncertainty_quantification")) {
+              shiny::updateSelectInput(session, element_id, selected = "")
+            } 
+            # Reset text inputs
+            else {
+              shiny::updateTextInput(session, element_id, value = "")
+            }
+          }
+        }
+      }
+    })
+
+
+
 
     # Return reactive values for use by calling modules
     return(list(

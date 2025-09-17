@@ -39,7 +39,7 @@ mod_create_protocol_ui <- function(id) {
 #'   \item{o_objective_1}{Reactive expression returning the selected modeling objective}
 #'   \item{protocol_updated}{Reactive data frame of the combined, updated protocol values}
 #' }
-mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata, output_dir) {
+mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata, output_dir, model_deleted, csv_deleted) {
   shiny::moduleServer(id, function(input, output, session) {
 
 
@@ -99,7 +99,8 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       uploaded_values = shiny::reactive({
         uploaded_values()[["Model"]]
       }),
-      output_dir = output_dir
+      output_dir = output_dir,
+      model_deleted = model_deleted
     )
 
     # 6) Combine data frames from Overview, Model, and (conditionally) Prediction panels into updated protocol
@@ -125,6 +126,40 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       uncertainty_quantification = model_results$uncertainty_quantification,
       predictor_types = model_results$predictor_types
     )
+
+
+    # 8) Re-set fields filled by uploaded protocol if the delete-uploaded-protocol button is activated
+    current_model_ids <- shiny::reactiveVal(NULL)
+
+    # Track current Overview input IDs
+    current_overview_ids <- shiny::reactiveVal(NULL)
+
+    # Update active IDs whenever a new CSV is uploaded
+    shiny::observe({
+      vals <- uploaded_values()[["Overview"]]
+      if (!is.null(vals)) {
+        current_overview_ids(vals$element_id)
+      }
+    })
+
+    # Observe CSV deletion and reset all current Overview inputs
+    shiny::observeEvent(csv_deleted(), {
+      if (csv_deleted()) {
+        ids <- current_overview_ids()
+        if (!is.null(ids)) {
+          for (element_id in ids) {
+            if (!is.null(input[[element_id]])) {
+              shiny::updateTextInput(session, element_id, value = "")
+              shiny::updateNumericInput(session, element_id, value = NA)
+              shiny::updateSelectInput(session, element_id, selected = "")
+            }
+          }
+        }
+        # Clear the tracked IDs
+        current_overview_ids(NULL)
+      }
+    })
+
 
     # 8) Return reactive expressions for selected objective and updated protocol data frame
     return(list(
