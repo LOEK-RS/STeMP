@@ -23,8 +23,15 @@ To run the app, you need to have the following R packages installed:
 
 ```R
 install.packages(c("shiny", "shinyjs", "shinythemes", "shinyWidgets", "shinyBS", "htmltools", 
-                   "knitr", "dplyr", "utils", "workflows", "purrr", "data.table", 
-                   "sf", "ggplot2", "CAST", "stats", "rmarkdown", "golem", "config"))
+                   "knitr", "dplyr", "utils", "workflows", "purrr", "data.table", "stringr",
+                   "sf", "ggplot2", "CAST", "stats", "rmarkdown", "golem", "config", "kableExtra"))
+```
+
+The app uses TinyTeX to compile PDFs. To install TinyTeX, run:
+
+```R
+install.packages("tinytex")
+tinytex::install_tinytex()
 ```
 
 ### Run
