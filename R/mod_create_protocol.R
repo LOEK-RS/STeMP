@@ -123,7 +123,7 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       id = "warnings",
       sampling_design = model_results$sampling_design,
       validation_method = model_results$validation_method,
-      uncertainty_quantification = model_results$uncertainty_quantification,
+      uncertainty_quantification = prediction_results$uncertainty_quantification,
       predictor_types = model_results$predictor_types,
       show_warnings = show_warnings
     )

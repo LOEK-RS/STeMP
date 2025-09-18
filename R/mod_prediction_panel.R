@@ -32,6 +32,7 @@ mod_prediction_panel_ui <- function(id) {
 #' @return A list containing:
 #' \itemize{
 #'   \item{prediction_inputs}{Reactive data.frame with current input values for prediction section elements}
+#'   \item{uncertainty_quantification}{Selected uncertainty quantification approach}
 #' }
 #' @noRd
 mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, geo_metadata = NULL,
@@ -190,8 +191,12 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
       )
     })
 
+    # Reactive getters for selected uncertainty quantification method
+    uncertainty_quantification <- shiny::reactive({ input[["uncertainty_quantification"]] })
+    
     return(list(
-      prediction_inputs = shiny::reactive(inputs_reactive())
+      "prediction_inputs" = shiny::reactive(inputs_reactive()),
+      "uncertainty_quantification" = uncertainty_quantification
     ))
   })
 }

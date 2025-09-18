@@ -49,8 +49,13 @@ mod_warnings_server <- function(id, sampling_design, validation_method, uncertai
 
       check_and_warn(
         condition = shiny::reactive({ is_problematic }),
-        message = "Random CV might yield overly optimistic results with clustered samples",
-        flag_name = "clustered_random_cv"
+        message = shiny::HTML(
+          "Random CV might yield overly optimistic results with clustered samples. " ,
+         'See <a href="https://doi.org/10.1111/ecog.02881" target="_blank">Roberts et al., 2017</a>,
+         <a href="https://doi.org/10.1038/s41467-020-18321-y" target="_blank">Ploton et al., 2020</a>,
+         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Milà et al., 2022</a>.'
+        ),
+    flag_name = "clustered_random_cv"
       )
     })
 
@@ -63,7 +68,12 @@ mod_warnings_server <- function(id, sampling_design, validation_method, uncertai
 
       check_and_warn(
         condition = shiny::reactive({ is_problematic }),
-        message = "Spatial CV might yield overly pessimistic results with clustered samples",
+        message = shiny::HTML(          
+          "Spatial CV might yield overly pessimistic results with clustered samples. ",
+         'See <a href="https://doi.org/10.1016/j.ecolmodel.2021.109692" target="_blank">Wadoux et al., 2021</a>,
+         <a href="https://doi.org/10.1016/j.ecoinf.2022.101665" target="_blank">de Bruin et al., 2022</a>,
+         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Milà et al., 2022</a>.'
+        ),
         flag_name = "random_clustered_cv"
       )
     })
@@ -77,7 +87,12 @@ mod_warnings_server <- function(id, sampling_design, validation_method, uncertai
 
       check_and_warn(
         condition = shiny::reactive({ is_problematic }),
-        message = "Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\nConsider using physically relevant predictors instead.",
+        message = shiny::HTML(
+          "Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\n
+          Consider using physically relevant predictors instead. ",
+          'See <a href="https://doi.org/10.1016/j.ecolmodel.2019.108815" target="_blank">Meyer et al., 2019,
+          <a href="https://doi.org/10.5194/gmd-17-6007-2024" target="_blank">Milà et al., 2024'
+        ),
         flag_name = "clustered_proxies"
       )
     })
@@ -87,16 +102,19 @@ mod_warnings_server <- function(id, sampling_design, validation_method, uncertai
       shiny::req(sampling_design(), uncertainty_quantification())
 
       is_problematic <- sampling_design() == "clustered" &&
-        uncertainty_quantification() == "none"
+        uncertainty_quantification() == "None"
 
       check_and_warn(
         condition = shiny::reactive({ is_problematic }),
-        message = paste0(
-          "Warning: Clustered samples often lead to extrapolation when the model is applied to feature combinations not present in the training data.\n",
-          "Identifying areas of extrapolation/uncertainty and communicating them to the user of the prediction is recommended."
+        message = shiny::HTML(
+          "Warning: Clustered samples often lead to extrapolation when the model is applied to feature combinations not present in the training data.<br>
+          Identifying areas of extrapolation/uncertainty and communicating them to the user of the prediction is recommended.<br>
+          See <a href='https://doi.org/10.1111/2041-210X.13650' target='_blank'>Meyer & Pebesma, 2021</a>,
+          <a href='https://doi.org/10.1111/j.2041-210X.2010.00036.x' target='_blank'>Elith et al., 2010</a>."
         ),
         flag_name = "clustered_noAssessment"
       )
     })
+
   })
 }
