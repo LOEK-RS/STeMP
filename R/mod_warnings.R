@@ -23,19 +23,22 @@ mod_warnings_ui <- function(id) {
 #' @param uncertainty_quantification Reactive returning uncertainty quantification method (e.g., "none")
 #' @param predictor_types Reactive returning a vector of predictor types (e.g., contains "Spatial Proxies")
 #' @noRd
-mod_warnings_server <- function(id, sampling_design, validation_method, uncertainty_quantification, predictor_types) {
+mod_warnings_server <- function(id, sampling_design, validation_method, uncertainty_quantification, predictor_types,
+                                show_warnings = shiny::reactive(TRUE)) {
   shiny::moduleServer(id, function(input, output, session) {
     warning_flags <- shiny::reactiveValues()
 
     # Utility to check condition and show notification only once
     check_and_warn <- function(condition, message, flag_name) {
-      if (isTRUE(condition()) && is.null(warning_flags[[flag_name]])) {
+      if (isTRUE(show_warnings()) && isTRUE(condition()) && is.null(warning_flags[[flag_name]])) {
         shiny::showNotification(message, type = "warning", duration = 10)
         warning_flags[[flag_name]] <- TRUE
-      } else if (!isTRUE(condition()) && !is.null(warning_flags[[flag_name]])) {
+      } else if ((!isTRUE(condition()) || !isTRUE(show_warnings())) && !is.null(warning_flags[[flag_name]])) {
         warning_flags[[flag_name]] <- NULL
       }
     }
+
+
 
     # Warning: Random CV with clustered samples can be optimistic
     shiny::observe({

@@ -14,6 +14,16 @@ mod_sidebar_ui <- function(id) {
     shiny::h5("Hide optional fields", style = "font-weight: bold"),
     shinyWidgets::materialSwitch(ns("hide_optional"), label = NULL, status = "danger"),
 
+    # Add "Show warnings" toggle
+    shiny::h5("Display warnings", style = "font-weight: bold"),
+    shinyWidgets::materialSwitch(
+      ns("show_warnings"),
+      label = NULL,
+      status = "warning",
+      value = TRUE  # default to showing warnings
+    ),
+
+
     shinyjs::useShinyjs(),
 
     shiny::h5("Download protocol", style = "font-weight: bold"),
@@ -190,7 +200,8 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
     # Return reactive values for use in app
     list(
       filtered_protocol_data = filtered_protocol_data,
-      hide_optional = shiny::reactive(input$hide_optional)
+      hide_optional = shiny::reactive(input$hide_optional),
+      show_warnings = shiny::reactive(input$show_warnings)
     )
 
   })

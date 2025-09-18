@@ -39,7 +39,7 @@ mod_create_protocol_ui <- function(id) {
 #'   \item{o_objective_1}{Reactive expression returning the selected modeling objective}
 #'   \item{protocol_updated}{Reactive data frame of the combined, updated protocol values}
 #' }
-mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata, output_dir, model_deleted, csv_deleted) {
+mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata, output_dir, model_deleted, csv_deleted, show_warnings) {
   shiny::moduleServer(id, function(input, output, session) {
 
 
@@ -124,9 +124,9 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       sampling_design = model_results$sampling_design,
       validation_method = model_results$validation_method,
       uncertainty_quantification = model_results$uncertainty_quantification,
-      predictor_types = model_results$predictor_types
+      predictor_types = model_results$predictor_types,
+      show_warnings = show_warnings
     )
-
 
     # 8) Re-set fields filled by uploaded protocol if the delete-uploaded-protocol button is activated
     current_model_ids <- shiny::reactiveVal(NULL)
@@ -161,7 +161,7 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
     })
 
 
-    # 8) Return reactive expressions for selected objective and updated protocol data frame
+    # 9) Return reactive expressions for selected objective and updated protocol data frame
     return(list(
       o_objective_1 = overview$o_objective_1,
       protocol_updated = updated_protocol
