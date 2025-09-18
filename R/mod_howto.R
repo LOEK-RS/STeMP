@@ -16,26 +16,32 @@ mod_howto_ui <- function(id) {
                       shiny::p("How to create an STeMP protocol",
                                style = "padding-top: 10px; font-size: 30px; font-weight: bold;")
                     ),
-                    shiny::p("Enter all relevant information into the fields provided under 'Create a protocol'. Your progress in individual sections is displayed in the
-             side bar at the left. The 'Hide optional fields' switch on the left allows you to only display mandatory fields, which depend on the model objective chosen.
-             A preview of your current protocol is available in the 'Protocol Viewer'.",
+                    shiny::p("Enter all relevant information into the fields provided under ", shiny::em("Create a protocol"), ".
+                    Progress bars for the overall, as well as the progress made in individual sections is shown in the sidebar.
+                    The ", shiny::em("Hide optional fields"), " switch on the left allows you to only display mandatory fields, 
+                    which depend on the model objective chosen. A preview of your current protocol is available in the ", 
+                    shiny::em("Protocol viewer"), ".",
                              style = "font-size: 18px;"),
 
-                    shiny::p("You can always save your progress by clicking the download button on the left. We recommend always downloading the csv file as this will allow you to resume your work later. After downloading your protocol as csv, it is safe to close the Shiny app. For a better layout, you can also download the ODMAP protocol as word document. Please note that word documents cannot be uploaded again to the Shiny app.",
+                    shiny::p("You can always save your progress by clicking the ", shiny::em("download"), " button on the left. 
+                    It is possible to download a .csv table containing the elements and their values, as well as a .pdf file containing the 
+                    table and the figures, or just the figures as .zip folder",
                              style = "font-size: 18px;"),
 
-                    shiny::p("You will be able to resume working on your protocol by choosing the Upload tab above and uploading your previously saved STeMP csv file.
-             In addition, you can import objects generated with the ",
-                             shiny::a(href = 'https://cran.r-project.org/web/packages/rangeModelMetadata/index.html',
-                                      'rangeModelsMetaData', target = "_blank", .noWS = "outside"),
-                             " R-package to autofill your STeMP protocol.",
+                    shiny::p("It is possible to resume your work by uploading your previously saved STeMP .csv file in the ", 
+                    shiny::em("Upload/Import"), " tab. There, you can also upload model objects (currently only .RDS files) to automatically
+                    fill some of the protocol fields based on the model metadata. Also, it is possible to upload the sampling locations,
+                    the training area and the prediction area as .gpkg files and generate plots from them. If sampling locations and the prediction
+                    area (if the objective is ", shiny::em("Model and prediction"), "), or sampling locations (if the objective is ", 
+                    shiny::em("Model only"), ") are uploaded, the ", shiny::em("sampling design"), "is automatically calculated 
+                    and a geodistance plot is generated.",
                              style = "font-size: 18px;"),
 
-                    shiny::p("Should you have any conceptual questions or feedback regarding the STeMP protocol, or any technical questions and feedback regarding the Shiny app, please do not hesitate to visit our ",
-                             shiny::a(href = 'https://github.com/LOEK-RS/STeMP',
-                                      'Github repository', target = "_blank", .noWS = "outside"),
+                    shiny::p("For questions, reporting bugs, or proposing/discussing new features/elements, please visit the Github page
+                     of the protocol ", shiny::a(href = 'https://github.com/LOEK-RS/STeMP', 
+                     "https://github.com/LOEK-RS/STeMP", target = "_blank", .noWS = "outside"),
                              " or contact us directly at ",
-                             shiny::a(href = 'mailto:', '', .noWS = "outside"), ".",
+                             shiny::a(href = 'mailto:', 'jan.linnenbrink@uni-muenster.de', .noWS = "outside"), ".",
                              style = "font-size: 18px;")
       ),
       shiny::column(2)  # Right spacer column
