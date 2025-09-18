@@ -40,6 +40,49 @@ mod_sidebar_ui <- function(id) {
 mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir) {
   shiny::moduleServer(id, function(input, output, session) {
 
+    ## Progress bar
+    output$progress_bars <- shiny::renderUI({
+      df <- protocol_data()
+      shiny::req(df)
+
+      make_bar <- function(data, label, id, bold = FALSE, status = "info") {
+        total <- nrow(data)
+        if (total == 0) return(NULL)
+
+        completed <- sum(data$value != "" & !is.na(data$value))
+        percent <- round(100 * completed / total)
+
+        shiny::div(
+          style = if (bold) "font-weight: bold; margin-bottom: 6px;" else "margin-bottom: 6px;",
+          shinyWidgets::progressBar(
+            id = session$ns(id),
+            value = percent,
+            total = 100,
+            display_pct = TRUE,
+            title = label,
+            status = if (percent < 100) status else "success"
+          )
+        )
+      }
+
+      # Overall (bold label)
+      overall <- make_bar(df, "Overall", "progress_overall", bold = TRUE, status = "primary")
+
+      # Sections (normal labels)
+      section_bars <- lapply(unique(df$section), function(s) {
+        make_bar(
+          df[df$section == s, , drop = FALSE],
+          paste("Section:", s),
+          paste0("progress_", s),
+          bold = FALSE,
+          status = "info"
+        )
+      })
+
+      shiny::tagList(overall, section_bars)
+    })
+
+    
     ## Reactive timer for figure existence check, updates every second
     autoInvalidate <- shiny::reactiveTimer(1000)
 
