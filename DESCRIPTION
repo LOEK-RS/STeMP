@@ -25,7 +25,9 @@ Imports:
     shinyWidgets,
     stats,
     utils,
-    workflows
+    workflows,
+    kableExtra,
+    stringr
 Suggests: 
     knitr,
     spelling,
