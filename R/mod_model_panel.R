@@ -120,7 +120,8 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
                 element_id = ns(row$element_id),
                 element = row$element,
                 geo_metadata = meta_geo_samples_list,
-                ns = ns
+                ns = ns,
+                info_text = row$info_text
               )
             } else NULL
 
@@ -130,7 +131,8 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
                 element_id = ns(row$element_id),
                 element = row$element,
                 geo_metadata = meta_geo_training_area_list,
-                ns = ns
+                ns = ns,
+                info_text = row$info_text
               )
             } else NULL
 
@@ -139,7 +141,8 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
               render_geodist_plot(
                 element_id = ns(row$element_id),
                 element = row$element,
-                ns = ns
+                ns = ns,
+                info_text = row$info_text
               )
             } else NULL
 

@@ -86,12 +86,39 @@ golem_add_external_resources <- function() {
     # tooltip CSS placeholder
     tags$style(HTML("/* tooltip CSS placeholder */")),
 
-    # enable Bootstrap tooltips
+    # enable Bootstrap tooltips for dynamic elements and HTML content
     tags$script(HTML("
-      $(document).ready(function() {
-        $('[data-toggle=\"tooltip\"]').tooltip({ container: 'body' });
+      $(function() {
+        // Initialize popovers
+        $('body').popover({
+          selector: '[data-toggle=\"popover\"]',
+          html: true,
+          trigger: 'manual',       // manual trigger
+          container: 'body'
+        });
+
+        // Show popover on hover
+        $('body').on('mouseenter', '[data-toggle=\"popover\"]', function() {
+          var _this = this;
+          $(_this).popover('show');
+
+          // Hide when mouse leaves both icon and popover
+          $('.popover').on('mouseleave', function() {
+            $(_this).popover('hide');
+          });
+        }).on('mouseleave', '[data-toggle=\"popover\"]', function() {
+          var _this = this;
+          setTimeout(function() {
+            if (!$('.popover:hover').length) {
+              $(_this).popover('hide');
+            }
+          }, 200);
+        });
       });
     ")),
+
+
+
 
     # info-icon hover styles
     tags$style(HTML("

@@ -115,7 +115,8 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
                 element_id = ns(row$element_id),
                 element = row$element,
                 geo_metadata = meta_geo_prediction_area_list,
-                ns = ns
+                ns = ns,
+                info_text = row$info_text
               )
             } else {
               NULL
@@ -125,7 +126,8 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
               render_geodist_plot(
                 element_id = ns(row$element_id),
                 element = row$element,
-                ns = ns
+                ns = ns,
+                info_text = row$info_text
               )
             } else {
               NULL
