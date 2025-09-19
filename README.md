@@ -9,7 +9,7 @@ This makes it difficult for practitioners and reviewers to assess the limitation
 To address this, we introduce the **Spatio-Temporal Modelling Protocol (STeMP)**: a structured reporting framework. 
 STeMP outlines a standard set of information that should be provided for each stage of a typical spatio-temporal modelling workflow, from response variable definition to model training and prediction. By completing this protocol, researchers can more clearly communicate the assumptions, choices, and context behind their models.
 
-<img src="www/workflow.png" alt="ODMAP workflow" width="700">
+<img src="inst/app/www/workflow.png" alt="STeMP workflow" width="700">
 
 <!--
 This [Shiny web application](https://odmap.wsl.ch/) helps to implement the ODMAP approach and produces well formatted protocols that can be exported for further usage. For further explanation please refer to the original publication [(Zurell et al., 2020)](https://onlinelibrary.wiley.com/doi/full/10.1111/ecog.04960). 
