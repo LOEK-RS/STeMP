@@ -244,8 +244,10 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       df <- model_data()
       vals <- lapply(df$element_id, function(id) {
         val <- input[[id]]
-        if (is.null(val) || (is.character(val) && val == "")) {
+        if (is.null(val) || (is.character(val) && all(val == ""))) {
           NA
+        } else if (length(val) > 1) {
+          paste(val, collapse = ", ")  # join multiple values into a single string
         } else {
           val
         }
@@ -259,6 +261,9 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
         stringsAsFactors = FALSE
       )
     })
+
+
+
 
     # Reactive getters for selected model options
     validation_method <- shiny::reactive({ input[["validation_strategy"]] })

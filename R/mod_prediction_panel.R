@@ -175,8 +175,10 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
       df <- prediction_data()
       vals <- lapply(df$element_id, function(id) {
         val <- input[[id]]
-        if (is.null(val) || (is.character(val) && val == "")) {
+        if (is.null(val) || (is.character(val) && all(val == ""))) {
           NA
+        } else if (length(val) > 1) {
+          paste(val, collapse = ", ")
         } else {
           val
         }
@@ -190,6 +192,8 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
         stringsAsFactors = FALSE
       )
     })
+
+
 
     # Reactive getters for selected uncertainty quantification method
     uncertainty_quantification <- shiny::reactive({ input[["uncertainty_quantification"]] })

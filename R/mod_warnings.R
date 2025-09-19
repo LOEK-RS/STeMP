@@ -89,7 +89,7 @@ mod_warnings_server <- function(id, sampling_design, validation_method, uncertai
         condition = shiny::reactive({ is_problematic }),
         message = shiny::HTML(
           "Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\n
-          Consider using physically relevant predictors instead. ",
+          Consider using physically relevant predictors instead.\n",
           'See <a href="https://doi.org/10.1016/j.ecolmodel.2019.108815" target="_blank">Meyer et al., 2019,
           <a href="https://doi.org/10.5194/gmd-17-6007-2024" target="_blank">Milà et al., 2024'
         ),

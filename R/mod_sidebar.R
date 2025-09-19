@@ -56,24 +56,29 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
       shiny::req(df)
 
       make_bar <- function(data, label, id, bold = FALSE, status = "info") {
-        total <- nrow(data)
-        if (total == 0) return(NULL)
+          total <- nrow(data)
+          if (total == 0) return(NULL)
 
-        completed <- sum(data$value != "" & !is.na(data$value))
-        percent <- round(100 * completed / total)
+          # treat as filled if not NA and not empty string
+          filled <- !is.na(data$value) & data$value != ""
+          completed <- sum(filled, na.rm = TRUE)
 
-        shiny::div(
-          style = if (bold) "font-weight: bold; margin-bottom: 6px;" else "margin-bottom: 6px;",
-          shinyWidgets::progressBar(
-            id = session$ns(id),
-            value = percent,
-            total = 100,
-            display_pct = TRUE,
-            title = label,
-            status = if (percent < 100) status else "success"
+          percent <- round(100 * completed / total)
+
+          shiny::div(
+            style = if (bold) "font-weight: bold; margin-bottom: 6px;" else "margin-bottom: 6px;",
+            shinyWidgets::progressBar(
+              id = session$ns(id),
+              value = percent,
+              total = 100,
+              display_pct = TRUE,
+              title = label,
+              status = if (percent < 100) status else "success"
+            )
           )
-        )
-      }
+        }
+
+
 
       # Overall (bold label)
       overall <- make_bar(df, "Overall", "progress_overall", bold = TRUE, status = "primary")
