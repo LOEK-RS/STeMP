@@ -12,10 +12,6 @@ geo_map <- function(output, element_id, geo_metadata = NULL,
   what <- match.arg(what)
 
   output[[element_id]] <- shiny::renderPlot({
-    title <- switch(what,
-                    "samples_sf" = "Sampling locations",
-                    "training_area_sf" = "Training area",
-                    "prediction_area_sf" = "Prediction area")
 
     samples_data <- tryCatch(
       geo_metadata[[what]](),
@@ -29,8 +25,7 @@ geo_map <- function(output, element_id, geo_metadata = NULL,
 
     p <- ggplot2::ggplot() +
       ggplot2::geom_sf(data = samples_data) +
-      ggplot2::theme_minimal() +
-      ggplot2::labs(title = title)
+      ggplot2::theme_minimal() 
 
     save_figure(p, element_id, output_dir)
     p

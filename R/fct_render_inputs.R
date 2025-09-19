@@ -251,28 +251,63 @@ render_design_server <- function(input, output, session, element_id, geodist_sel
 
 # --- Plot renderers ---
 
+#' Generic renderer for plots with wrapper consistent with rest of protocol
+#' @noRd
+#' Generic renderer for plots with protocol-style wrapper
+#' Ensures consistent label + info tooltip, same as input fields.
+#' @noRd
+render_plot_field <- function(element_id, label, plot_ui, info_text = NULL) {
+  inputTag <- shiny::div(
+    class = "form-group shiny-input-container",
+    shiny::tags$label(`for` = element_id, class = "control-label", label),
+    plot_ui
+  )
+  with_tooltip(inputTag, info_text)
+}
+
+
 #' Render placeholder for samples plot output
 #' @noRd
-render_samples_plot <- function(element_id, element, geo_metadata = NULL, ns = identity) {
-  shiny::plotOutput(outputId = ns(element_id), height = "300px")
+render_samples_plot <- function(element_id, element, geo_metadata = NULL, ns = identity, info_text = NULL) {
+  render_plot_field(
+    element_id,
+    element,
+    shiny::plotOutput(outputId = ns(element_id), height = "300px"),
+    info_text
+  )
 }
 
 #' Render placeholder for training area plot output
 #' @noRd
-render_training_area_plot <- function(element_id, element, geo_metadata = NULL, ns = identity) {
-  shiny::plotOutput(outputId = ns(element_id), height = "300px")
+render_training_area_plot <- function(element_id, element, geo_metadata = NULL, ns = identity, info_text = NULL) {
+  render_plot_field(
+    element_id,
+    element,
+    shiny::plotOutput(outputId = ns(element_id), height = "300px"),
+    info_text
+  )
 }
 
 #' Render placeholder for prediction area plot output
 #' @noRd
-render_prediction_area_plot <- function(element_id, element, geo_metadata = NULL, ns = identity) {
-  shiny::plotOutput(outputId = ns(element_id), height = "300px")
+render_prediction_area_plot <- function(element_id, element, geo_metadata = NULL, ns = identity, info_text = NULL) {
+  render_plot_field(
+    element_id,
+    element,
+    shiny::plotOutput(outputId = ns(element_id), height = "300px"),
+    info_text
+  )
 }
 
 #' Render placeholder for geographic distance plot output
 #' @noRd
-render_geodist_plot <- function(element_id, element, ns = identity) {
-  shiny::plotOutput(outputId = ns(element_id), height = "300px")
+render_geodist_plot <- function(element_id, element, ns = identity, info_text = NULL) {
+  render_plot_field(
+    element_id,
+    element,
+    shiny::plotOutput(outputId = ns(element_id), height = "300px"),
+    info_text
+  )
 }
 
 # --- Plot server helpers ---

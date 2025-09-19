@@ -15,16 +15,19 @@ inputWithHoverInfo <- function(inputTag, info_text) {
   if (length(labelIndex) == 1 && !is.null(info_text) && nchar(info_text) > 0) {
     originalLabel <- children[[labelIndex]]
 
-    wrappedLabel <- htmltools::tags$div(class = "input-label-icon",
-                                        originalLabel,
-                                        htmltools::tags$span(
-                                          shiny::icon("info-circle"),
-                                          class = "info-hover-icon",
-                                          `data-toggle` = "tooltip",
-                                          `data-placement` = "right",
-                                          `data-html` = "true",
-                                          title = htmltools::HTML(info_text)
-                                        )
+    wrappedLabel <- htmltools::tags$div(
+      class = "input-label-icon",
+      originalLabel,
+      htmltools::tags$span(
+        shiny::icon("info-circle"),
+        class = "info-hover-icon",
+        `data-toggle` = "popover",
+        `data-html` = "true",
+        `data-trigger` = "focus",
+        `tabindex` = "0",  # makes it focusable
+        title = "",
+        `data-content` = htmltools::HTML(info_text)
+      )
     )
 
     inputTag$children[[labelIndex]] <- wrappedLabel
