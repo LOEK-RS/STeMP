@@ -65,3 +65,8 @@ table.dataTable tbody tr {
 table.dataTable tbody td {
   padding: 10px 18px;
 }
+
+/* Hide optional Overview/Prediction fields dynamically */
+.hide_optional .optional_field {
+  display: none !important;
+}

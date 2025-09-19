@@ -28,6 +28,7 @@ mod_prediction_panel_ui <- function(id) {
 #' @param geo_metadata Spatial metadata reactive list (optional)
 #' @param uploaded_values Reactive data frame (optional) with uploaded element_id/value pairs to override defaults
 #' @param output_dir temporary output directory
+#' @param hide_optional Reactive boolean to control whether optional inputs should be hidden
 #'
 #' @return A list containing:
 #' \itemize{
@@ -37,7 +38,8 @@ mod_prediction_panel_ui <- function(id) {
 #' @noRd
 mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, geo_metadata = NULL,
                                         uploaded_values = shiny::reactive(NULL),
-                                        output_dir = NULL) {
+                                        output_dir = NULL,
+                                        hide_optional = shiny::reactive(FALSE)) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -58,7 +60,7 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
       unique(prediction_data()$subsection)
     })
 
-    # Server-side rendering for geodist_plot_prediction plot, active only if objective is "Model and prediction"
+    # Server-side rendering for geodist_plot_prediction plot
     shiny::observe({
       shiny::req(o_objective_1_val() == "Model and prediction")
       df <- prediction_data()
@@ -67,7 +69,6 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
 
       pid <- df$element_id[df$element_type == "geodist_plot_prediction"]
       if (length(pid) == 1) {
-
         render_geodist_plot_server(
           output = output,
           element_id = ns(pid),
@@ -78,7 +79,7 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
       }
     })
 
-    # Render UI collapsible panels for each subsection in Prediction data
+    # Render UI collapsible panels for each subsection
     output$prediction_collapse_ui <- shiny::renderUI({
       shiny::req(o_objective_1_val() == "Model and prediction")
 
@@ -108,8 +109,11 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
             }
           }
 
-          # Render specific plots or inputs based on element_type
-          if (row$element_type == "prediction_area_plot") {
+          # Wrap optional fields
+          div_class <- if (!is.null(row$optional) && as.integer(row$optional) == 1) "optional_field" else NULL
+
+          # Render specific plots or inputs
+          content <- if (row$element_type == "prediction_area_plot") {
             if (!is.null(valid_geo_prediction_area_metadata())) {
               render_prediction_area_plot(
                 element_id = ns(row$element_id),
@@ -145,6 +149,8 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
               row = row
             )
           }
+
+          shiny::tags$div(class = div_class, content)
         })
 
         shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
@@ -153,7 +159,16 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
       do.call(shinyBS::bsCollapse, panels)
     })
 
-    # Server-side rendering for prediction_area_plot (if any), reactive on objective == "Model and prediction"
+    # Toggle CSS visibility for optional fields
+    shiny::observe({
+      if (isTRUE(hide_optional())) {
+        shinyjs::addClass(selector = "body", class = "hide_optional")
+      } else {
+        shinyjs::removeClass(selector = "body", class = "hide_optional")
+      }
+    })
+
+    # Server-side rendering for prediction_area_plot
     shiny::observe({
       shiny::req(o_objective_1_val() == "Model and prediction")
       df <- prediction_data()
@@ -172,7 +187,7 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
       }
     })
 
-    # Reactive collection of prediction input values, with NA for empty or null
+    # Reactive collection of prediction input values
     inputs_reactive <- shiny::reactive({
       df <- prediction_data()
       vals <- lapply(df$element_id, function(id) {
@@ -195,9 +210,7 @@ mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, ge
       )
     })
 
-
-
-    # Reactive getters for selected uncertainty quantification method
+    # Reactive getter for uncertainty quantification
     uncertainty_quantification <- shiny::reactive({ input[["uncertainty_quantification"]] })
     
     return(list(

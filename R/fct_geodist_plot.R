@@ -24,7 +24,8 @@ geodist_plot <- function(output, element_id, geo_metadata = NULL,
 
     samples_data <- sf::st_transform(samples_data, sf::st_crs(area_data))
     geod <- CAST::geodist(samples_data, modeldomain = area_data)
-    p <- plot(geod)
+    p <- plot(geod) +
+      ggplot2::theme(aspect.ratio = 0.8)
 
     save_figure(p, element_id, output_dir)
     p

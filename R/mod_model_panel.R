@@ -27,6 +27,8 @@ mod_model_panel_ui <- function(id) {
 #' @param geodist_sel Reactive returning selected geographic distance classification; defaults to reactive(NULL)
 #' @param uploaded_values Reactive data frame with uploaded element_id and value pairs to override defaults; optional
 #' @param output_dir temporary output directory
+#' @param model_deleted Reactive boolean, resets inputs when TRUE
+#' @param hide_optional Reactive boolean, hides optional fields when TRUE
 #'
 #' @return A list of reactive expressions:
 #' \itemize{
@@ -36,15 +38,22 @@ mod_model_panel_ui <- function(id) {
 #'   \item{predictor_types}{Selected predictor types}
 #' }
 #' @noRd
-mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo_metadata = NULL, o_objective_1_val,
-                                   geodist_sel = shiny::reactive(NULL),
-                                   uploaded_values = shiny::reactive(NULL),
-                                   output_dir = NULL,
-                                   model_deleted = shiny::reactive(FALSE)) {
+mod_model_panel_server <- function(
+  id,
+  protocol_data,
+  model_metadata = NULL,
+  geo_metadata = NULL,
+  o_objective_1_val,
+  geodist_sel = shiny::reactive(NULL),
+  uploaded_values = shiny::reactive(NULL),
+  output_dir = NULL,
+  model_deleted = shiny::reactive(FALSE),
+  hide_optional = shiny::reactive(FALSE)   # <-- NEW
+) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Update sampling_design input when geodist_sel changes and is not NULL
+    # Update sampling_design input when geodist_sel changes
     shiny::observe({
       selected_val <- geodist_sel()
       if (!is.null(selected_val)) {
@@ -52,23 +61,21 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
 
-   # Validate availability of model and geographic metadata subsets
+    # Validate metadata subsets
     valid_model_metadata <- validate_model_metadata(model_metadata, "has_model")
     valid_geo_samples_metadata <- validate_geo_metadata(geo_metadata, "has_samples")
     valid_geo_training_area_metadata <- validate_geo_metadata(geo_metadata, "has_training_area")
     valid_geo_all_metadata <- validate_geo_metadata(geo_metadata, c("has_samples", "has_training_area"))
 
-    # Filter protocol data for model section
+    # Filter protocol data for Model section
     model_data <- shiny::reactive({
       shiny::req(protocol_data())
       df <- protocol_data()
       df[df$section == "Model", ]
     })
 
-     # Track currently rendered model input IDs
+    # Track currently rendered model input IDs
     current_model_ids <- shiny::reactiveVal(NULL)
-    
-    # Update IDs whenever model_data changes
     shiny::observe({
       df <- model_data()
       if (!is.null(df) && nrow(df) > 0) {
@@ -76,12 +83,12 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
 
-    # Identify unique subsections within model data
+    # Subsections
     subsections <- shiny::reactive({
       unique(model_data()$subsection)
     })
 
-    # Render collapsible UI panels grouped by subsections with inputs and plots
+    # Render collapsible UI
     output$model_collapse_ui <- shiny::renderUI({
       df <- model_data()
       subs <- subsections()
@@ -90,12 +97,9 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
         return(shiny::tags$p("No model data available"))
       }
 
-      meta_model_list <- valid_model_metadata()
-      if (is.null(meta_model_list)) meta_model_list <- list()
-      meta_geo_samples_list <- valid_geo_samples_metadata()
-      if (is.null(meta_geo_samples_list)) meta_geo_samples_list <- list()
-      meta_geo_training_area_list <- valid_geo_training_area_metadata()
-      if (is.null(meta_geo_training_area_list)) meta_geo_training_area_list <- list()
+      meta_model_list <- valid_model_metadata() %||% list()
+      meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
+      meta_geo_training_area_list <- valid_geo_training_area_metadata() %||% list()
 
       uploaded_df <- uploaded_values()
 
@@ -105,7 +109,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
         inputs <- lapply(seq_len(nrow(sub_df)), function(i) {
           row <- sub_df[i, ]
 
-          # Override default value if uploaded value exists for this element_id
+          # Override default value if uploaded
           if (!is.null(uploaded_df)) {
             uploaded_val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
             if (length(uploaded_val) == 1 && !is.null(uploaded_val) && nzchar(uploaded_val)) {
@@ -113,9 +117,12 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
             }
           }
 
-          # Render specialized input or plot based on element_type
-          if (row$element_type == "sample_plot") {
-            if(!is.null(valid_geo_samples_metadata())) {
+          # Decide if this row is optional
+          div_class <- if (row$optional == 1) "optional_field" else NULL
+
+          # Render field
+          content <- if (row$element_type == "sample_plot") {
+            if (!is.null(valid_geo_samples_metadata())) {
               render_samples_plot(
                 element_id = ns(row$element_id),
                 element = row$element,
@@ -123,10 +130,9 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
                 ns = ns,
                 info_text = row$info_text
               )
-            } else NULL
-
+            }
           } else if (row$element_type == "training_area_plot") {
-            if(!is.null(valid_geo_training_area_metadata())) {
+            if (!is.null(valid_geo_training_area_metadata())) {
               render_training_area_plot(
                 element_id = ns(row$element_id),
                 element = row$element,
@@ -134,8 +140,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
                 ns = ns,
                 info_text = row$info_text
               )
-            } else NULL
-
+            }
           } else if (row$element_type == "geodist_plot_training") {
             if (o_objective_1_val() == "Model only" && !is.null(valid_geo_all_metadata())) {
               render_geodist_plot(
@@ -144,8 +149,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
                 ns = ns,
                 info_text = row$info_text
               )
-            } else NULL
-
+            }
           } else if (row$element_type == "sampling_design") {
             selected_val <- NULL
             try({
@@ -159,7 +163,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
               selected = selected_val,
               info_text = row$info_text
             )
-
           } else {
             render_input_field(
               element_type = row$element_type,
@@ -171,9 +174,12 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
               model_metadata = meta_model_list,
               geo_metadata = meta_geo_samples_list,
               ns = ns,
-              row = row  # row$value now contains uploaded override if any
+              row = row
             )
           }
+
+          # Wrap with optional class if flagged
+          shiny::tags$div(class = div_class, content)
         })
 
         shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
@@ -182,36 +188,28 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       do.call(shinyBS::bsCollapse, panels)
     })
 
-    # Server-side rendering for sample plots
+    # Observers for plots
     shiny::observe({
       df <- model_data()
-      meta_geo_samples_list <- valid_geo_samples_metadata()
-      if (is.null(meta_geo_samples_list)) meta_geo_samples_list <- list()
-
+      meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
       sample_plot_ids <- df$element_id[df$element_type == "sample_plot"]
-      render_samples_plot_server(output, ns(sample_plot_ids), meta_geo_samples_list, what = "samples_sf",
-                                 output_dir = output_dir)
+      render_samples_plot_server(output, ns(sample_plot_ids), meta_geo_samples_list,
+                                 what = "samples_sf", output_dir = output_dir)
     })
 
-    # Server-side rendering for training area plots
     shiny::observe({
       df <- model_data()
-      meta_geo_training_area_list <- valid_geo_training_area_metadata()
-      if (is.null(meta_geo_training_area_list)) meta_geo_training_area_list <- list()
-
+      meta_geo_training_area_list <- valid_geo_training_area_metadata() %||% list()
       training_area_plot_ids <- df$element_id[df$element_type == "training_area_plot"]
-      render_training_area_plot_server(output, ns(training_area_plot_ids), meta_geo_training_area_list, what = "training_area_sf",
-                                       output_dir = output_dir)
+      render_training_area_plot_server(output, ns(training_area_plot_ids), meta_geo_training_area_list,
+                                       what = "training_area_sf", output_dir = output_dir)
     })
 
-    # Server-side rendering for geodist plots when objective is "Model only"
     shiny::observe({
       shiny::req(o_objective_1_val())
       if (o_objective_1_val() == "Model only") {
         df <- model_data()
-        meta_geo_all_list <- valid_geo_all_metadata()
-        if (is.null(meta_geo_all_list)) meta_geo_all_list <- list()
-
+        meta_geo_all_list <- valid_geo_all_metadata() %||% list()
         pid <- df$element_id[df$element_type == "geodist_plot_training"]
         if (length(pid) == 1) {
           render_geodist_plot_server(
@@ -225,7 +223,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
 
-    # Reactive updating of sampling_design inputs
+    # Sampling design server
     shiny::observe({
       shiny::req(model_data())
       df <- model_data()
@@ -242,7 +240,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
 
-    # Reactive collection of all model input values
+    # Collect input values
     inputs_reactive <- shiny::reactive({
       df <- model_data()
       vals <- lapply(df$element_id, function(id) {
@@ -250,7 +248,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
         if (is.null(val) || (is.character(val) && all(val == ""))) {
           NA
         } else if (length(val) > 1) {
-          paste(val, collapse = ", ")  # join multiple values into a single string
+          paste(val, collapse = ", ")
         } else {
           val
         }
@@ -265,33 +263,24 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       )
     })
 
-
-
-
-    # Reactive getters for selected model options
+    # Reactive getters
     validation_method <- shiny::reactive({ input[["validation_strategy"]] })
     sampling_design <- shiny::reactive({ input[["sampling_design"]] })
     predictor_types <- shiny::reactive({ input[["predictor_types"]] })
 
-    # Reset all input fields when model is deleted
+    # Reset inputs when model is deleted
     shiny::observeEvent(model_deleted(), {
       if (model_deleted()) {
-        # Get the element IDs directly from model_data()
         df <- model_data()
         ids <- df$element_id
         if (!is.null(ids) && length(ids) > 0) {
           for (element_id in ids) {
-            # Reset numeric inputs
             if (grepl("num|classes", element_id)) {
               shiny::updateNumericInput(session, element_id, value = NA)
-            } 
-            # Reset select inputs
-            else if (element_id %in% c("model_type","model_algorithm","sampling_design",
-                                      "validation_strategy","predictor_types")) {
+            } else if (element_id %in% c("model_type","model_algorithm",
+                                         "sampling_design","validation_strategy","predictor_types")) {
               shiny::updateSelectInput(session, element_id, selected = "")
-            } 
-            # Reset text inputs
-            else {
+            } else {
               shiny::updateTextInput(session, element_id, value = "")
             }
           }
@@ -299,10 +288,16 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       }
     })
 
+    # Hide/show optional fields dynamically
+    shiny::observe({
+      if (isTRUE(hide_optional())) {
+        shinyjs::addClass(selector = "body", class = "hide_optional")
+      } else {
+        shinyjs::removeClass(selector = "body", class = "hide_optional")
+      }
+    })
 
-
-
-    # Return reactive values for use by calling modules
+    # Return values
     return(list(
       "model_inputs" = inputs_reactive,
       "validation_method" = validation_method,

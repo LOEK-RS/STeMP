@@ -39,7 +39,7 @@ mod_create_protocol_ui <- function(id) {
 #'   \item{o_objective_1}{Reactive expression returning the selected modeling objective}
 #'   \item{protocol_updated}{Reactive data frame of the combined, updated protocol values}
 #' }
-mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata, output_dir, model_deleted, csv_deleted, show_warnings) {
+  mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_metadata, geo_metadata, output_dir, model_deleted, csv_deleted, show_warnings, hide_optional = shiny::reactive(FALSE)) {
   shiny::moduleServer(id, function(input, output, session) {
 
 
@@ -57,10 +57,13 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       sections_list
     })
 
-    # 2) Initialize Overview panel submodule, pass protocol_data and uploaded Overview values
-    overview <- mod_overview_panel_server("overview", protocol_data, uploaded_values = shiny::reactive({
-      uploaded_values()[["Overview"]]
-    }))
+    # 2) Initialize Overview panel submodule
+    overview <- mod_overview_panel_server(
+      "overview",
+      protocol_data,
+      uploaded_values = shiny::reactive({ uploaded_values()[["Overview"]] }),
+      hide_optional = hide_optional   # <- pass here
+    )
 
     # 3) Reactive selection classification based on geographic metadata and modeling objective
     geodist_sel <- shiny::reactive({
@@ -76,16 +79,15 @@ mod_create_protocol_server <- function(id, protocol_data, uploaded_csv, model_me
       calculate_geodist_classification(samples_sf, area_sf)
     })
 
-    # 4) Initialize Prediction panel submodule, pass reactive inputs and uploaded Prediction values
+    # 4) Initialize Prediction panel submodule
     prediction_results <- mod_prediction_panel_server(
       "prediction",
       overview$o_objective_1,
       protocol_data,
       geo_metadata = geo_metadata,
-      uploaded_values = shiny::reactive({
-        uploaded_values()[["Prediction"]]
-      }),
-      output_dir = output_dir
+      uploaded_values = shiny::reactive({ uploaded_values()[["Prediction"]] }),
+      output_dir = output_dir,
+      hide_optional = hide_optional   # <- pass here
     )
 
     # 5) Initialize Model panel submodule, pass protocol_data, metadata, reactive selections and uploaded Model values
