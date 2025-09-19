@@ -46,6 +46,6 @@
 "45",2,"Prediction","p","Evaluation and Uncertainty","p_uncertainty","Evaluation strategy*","evaluation_strategy","Details on the evaluation of the prediction","suggestion","Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Target-Oriented Cross-Validation, bootstrap",0,1,1
 "46",2,"Prediction","p","Evaluation and Uncertainty","p_uncertainty","Performance metrics","performance_metrics","Performance metrics used","suggestion","RMSE, MAE, Rsquared, adjusted Rsquared, Kappa, Accuracy, Confusion Matrix, AUC",0,1,1
 "47",2,"Prediction","p","Evaluation and Uncertainty","p_uncertainty","Map accuracy*","map_accuracy","Final map accuracy","text","",0,1,1
-"48",4,"Prediction","p","Evaluation and Uncertainty","p_uncertainty","Uncertainty qunatification*","uncertainty_qunatification","Details on the uncertainty quantification method","suggestion","AOA, MESS, None",0,1,1
+"48",4,"Prediction","p","Evaluation and Uncertainty","p_uncertainty","Uncertainty quantification*","uncertainty_quantification","Details on the uncertainty quantification method","suggestion","AOA, MESS, None",0,1,1
 "49",6,"Prediction","p","Post-Processing","p_post","Threshold selection","threshold_selection","Details on threshold selection, if applicable: transforming continuous predictions into binary predictions","text","",1,0,1
 "50",7,"Prediction","p","Post-Processing","p_post","Post-processing","post_processing","Post-processing, e.g. Filter","text","",1,0,1

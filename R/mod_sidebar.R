@@ -14,6 +14,16 @@ mod_sidebar_ui <- function(id) {
     shiny::h5("Hide optional fields", style = "font-weight: bold"),
     shinyWidgets::materialSwitch(ns("hide_optional"), label = NULL, status = "danger"),
 
+    # Add "Show warnings" toggle
+    shiny::h5("Display warnings", style = "font-weight: bold"),
+    shinyWidgets::materialSwitch(
+      ns("show_warnings"),
+      label = NULL,
+      status = "warning",
+      value = TRUE  # default to showing warnings
+    ),
+
+
     shinyjs::useShinyjs(),
 
     shiny::h5("Download protocol", style = "font-weight: bold"),
@@ -46,24 +56,29 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
       shiny::req(df)
 
       make_bar <- function(data, label, id, bold = FALSE, status = "info") {
-        total <- nrow(data)
-        if (total == 0) return(NULL)
+          total <- nrow(data)
+          if (total == 0) return(NULL)
 
-        completed <- sum(data$value != "" & !is.na(data$value))
-        percent <- round(100 * completed / total)
+          # treat as filled if not NA and not empty string
+          filled <- !is.na(data$value) & data$value != ""
+          completed <- sum(filled, na.rm = TRUE)
 
-        shiny::div(
-          style = if (bold) "font-weight: bold; margin-bottom: 6px;" else "margin-bottom: 6px;",
-          shinyWidgets::progressBar(
-            id = session$ns(id),
-            value = percent,
-            total = 100,
-            display_pct = TRUE,
-            title = label,
-            status = if (percent < 100) status else "success"
+          percent <- round(100 * completed / total)
+
+          shiny::div(
+            style = if (bold) "font-weight: bold; margin-bottom: 6px;" else "margin-bottom: 6px;",
+            shinyWidgets::progressBar(
+              id = session$ns(id),
+              value = percent,
+              total = 100,
+              display_pct = TRUE,
+              title = label,
+              status = if (percent < 100) status else "success"
+            )
           )
-        )
-      }
+        }
+
+
 
       # Overall (bold label)
       overall <- make_bar(df, "Overall", "progress_overall", bold = TRUE, status = "primary")
@@ -190,7 +205,8 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
     # Return reactive values for use in app
     list(
       filtered_protocol_data = filtered_protocol_data,
-      hide_optional = shiny::reactive(input$hide_optional)
+      hide_optional = shiny::reactive(input$hide_optional),
+      show_warnings = shiny::reactive(input$show_warnings)
     )
 
   })

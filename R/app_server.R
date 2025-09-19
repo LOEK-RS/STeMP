@@ -52,7 +52,8 @@ app_server <- function(input, output, session) {
     geo_metadata = geo_metadata,
     output_dir = temp_dir,
     model_deleted = model_deleted,
-    csv_deleted = csv_deleted
+    csv_deleted = csv_deleted,
+    show_warnings = sidebar$show_warnings
   )
 
   # 3. Pass updated protocol data to sidebar and viewer modules for UI rendering

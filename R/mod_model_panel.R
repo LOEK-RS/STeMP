@@ -33,7 +33,6 @@ mod_model_panel_ui <- function(id) {
 #'   \item{model_inputs}{Data frame of current input values for model section elements}
 #'   \item{validation_method}{Selected validation strategy}
 #'   \item{sampling_design}{Selected sampling design}
-#'   \item{uncertainty_quantification}{Selected uncertainty quantification approach}
 #'   \item{predictor_types}{Selected predictor types}
 #' }
 #' @noRd
@@ -245,8 +244,10 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       df <- model_data()
       vals <- lapply(df$element_id, function(id) {
         val <- input[[id]]
-        if (is.null(val) || (is.character(val) && val == "")) {
+        if (is.null(val) || (is.character(val) && all(val == ""))) {
           NA
+        } else if (length(val) > 1) {
+          paste(val, collapse = ", ")  # join multiple values into a single string
         } else {
           val
         }
@@ -261,10 +262,12 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       )
     })
 
+
+
+
     # Reactive getters for selected model options
     validation_method <- shiny::reactive({ input[["validation_strategy"]] })
     sampling_design <- shiny::reactive({ input[["sampling_design"]] })
-    uncertainty_quantification <- shiny::reactive({ input[["uncertainty_quantification"]] })
     predictor_types <- shiny::reactive({ input[["predictor_types"]] })
 
     # Reset all input fields when model is deleted
@@ -281,7 +284,7 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
             } 
             # Reset select inputs
             else if (element_id %in% c("model_type","model_algorithm","sampling_design",
-                                      "validation_strategy","predictor_types","uncertainty_quantification")) {
+                                      "validation_strategy","predictor_types")) {
               shiny::updateSelectInput(session, element_id, selected = "")
             } 
             # Reset text inputs
@@ -301,7 +304,6 @@ mod_model_panel_server <- function(id, protocol_data, model_metadata = NULL, geo
       "model_inputs" = inputs_reactive,
       "validation_method" = validation_method,
       "sampling_design" = sampling_design,
-      "uncertainty_quantification" = uncertainty_quantification,
       "predictor_types" = predictor_types
     ))
   })
