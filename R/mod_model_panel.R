@@ -48,7 +48,7 @@ mod_model_panel_server <- function(
   uploaded_values = shiny::reactive(NULL),
   output_dir = NULL,
   model_deleted = shiny::reactive(FALSE),
-  hide_optional = shiny::reactive(FALSE)   # <-- NEW
+  hide_optional = shiny::reactive(FALSE)
 ) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
