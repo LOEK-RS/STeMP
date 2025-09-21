@@ -14,17 +14,13 @@ mod_sidebar_ui <- function(id) {
     shiny::h5("Hide optional fields", style = "font-weight: bold"),
     shinyWidgets::materialSwitch(ns("hide_optional"), label = NULL, status = "danger"),
 
-    # Add "Show warnings" toggle
     shiny::h5("Display warnings", style = "font-weight: bold"),
     shinyWidgets::materialSwitch(
       ns("show_warnings"),
       label = NULL,
       status = "warning",
-      value = TRUE  # default to showing warnings
+      value = TRUE
     ),
-
-
-    shinyjs::useShinyjs(),
 
     shiny::h5("Download protocol", style = "font-weight: bold"),
     shiny::radioButtons(ns("document_format"), label = NULL, choices = c("csv", "pdf", "figures")),
@@ -45,59 +41,71 @@ mod_sidebar_ui <- function(id) {
 #' \describe{
 #'   \item{filtered_protocol_data}{Reactive filtered protocol data frame based on toggle}
 #'   \item{hide_optional}{Reactive logical for hide optional toggle}
+#'   \item{show_warnings}{Reactive logical for warnings toggle}
 #' }
 #' @noRd
 mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir) {
   shiny::moduleServer(id, function(input, output, session) {
 
-    ## Progress bar
-    output$progress_bars <- shiny::renderUI({
+    ## Reactive filtered protocol data based on "hide optional" toggle
+    filtered_protocol_data <- shiny::reactive({
+      shiny::req(protocol_data())
       df <- protocol_data()
-      shiny::req(df)
-
-      make_bar <- function(data, label, id, bold = FALSE, status = "info") {
-          total <- nrow(data)
-          if (total == 0) return(NULL)
-
-          # treat as filled if not NA and not empty string
-          filled <- !is.na(data$value) & data$value != ""
-          completed <- sum(filled, na.rm = TRUE)
-
-          percent <- round(100 * completed / total)
-
-          shiny::div(
-            style = if (bold) "font-weight: bold; margin-bottom: 6px;" else "margin-bottom: 6px;",
-            shinyWidgets::progressBar(
-              id = session$ns(id),
-              value = percent,
-              total = 100,
-              display_pct = TRUE,
-              title = label,
-              status = if (percent < 100) status else "success"
-            )
-          )
-        }
-
-
-
-      # Overall (bold label)
-      overall <- make_bar(df, "Overall", "progress_overall", bold = TRUE, status = "primary")
-
-      # Sections (normal labels)
-      section_bars <- lapply(unique(df$section), function(s) {
-        make_bar(
-          df[df$section == s, , drop = FALSE],
-          paste("Section:", s),
-          paste0("progress_", s),
-          bold = FALSE,
-          status = "info"
-        )
-      })
-
-      shiny::tagList(overall, section_bars)
+      # Keep all rows, but optionally mark optional rows
+      df$visible <- TRUE
+      if (isTRUE(input$hide_optional)) {
+        df$visible[df$optional == 1] <- FALSE
+      }
+      df
     })
 
-    
+
+    ## Progress bar (reactive to filtered data)
+    output$progress_bars <- shiny::renderUI({
+    # Use filtered_protocol_data reactive
+    df <- filtered_protocol_data()
+    shiny::req(df)
+
+    make_bar <- function(data, label, id, bold = FALSE, status = "info") {
+      total <- sum(data$visible)   # count only visible rows
+      if (total == 0) return(NULL)
+
+      filled <- !is.na(data$value) & data$value != "" & data$visible
+      completed <- sum(filled, na.rm = TRUE)
+      percent <- round(100 * completed / total)
+
+      shiny::div(
+        style = if (bold) "font-weight: bold; margin-bottom: 6px;" else "margin-bottom: 6px;",
+        shinyWidgets::progressBar(
+          id = session$ns(id),
+          value = percent,
+          total = 100,
+          display_pct = TRUE,
+          title = label,
+          status = if (percent < 100) status else "success"
+        )
+      )
+    }
+
+
+    # Overall progress (bold)
+    overall <- make_bar(df, "Overall", "progress_overall", bold = TRUE, status = "primary")
+
+    # Section progress bars
+    section_bars <- lapply(unique(df$section), function(s) {
+      make_bar(
+        df[df$section == s, , drop = FALSE],
+        paste("Section:", s),
+        paste0("progress_", s),
+        bold = FALSE,
+        status = "info"
+      )
+    })
+
+    shiny::tagList(overall, section_bars)
+  })
+
+
     ## Reactive timer for figure existence check, updates every second
     autoInvalidate <- shiny::reactiveTimer(1000)
 
@@ -125,7 +133,6 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
       }
     })
 
-
     ## Download handler for protocol data (csv/pdf/figures zip)
     output$protocol_download <- shiny::downloadHandler(
       filename = function() {
@@ -136,15 +143,11 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
         paste0("protocol_", Sys.Date(), ".", ext)
       },
       content = function(file) {
-
         if (input$document_format == "csv") {
-          utils::write.csv(protocol_data(), file, row.names = FALSE)
+          utils::write.csv(filtered_protocol_data(), file, row.names = FALSE)
 
         } else if (input$document_format == "pdf") {
-
-          # define subdirectory for pdf download figures
           subdir_pdf <- "figures_for_pdf"
-
           allowed_ids <- get_allowed_element_ids(o_objective_1_val())
           plot_files_rel <- get_selected_plot_files(output_dir, allowed_ids, copy_subdir = subdir_pdf)
 
@@ -152,8 +155,8 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
           template_path <- app_sys("app/www/protocol_template.Rmd")
           file.copy(template_path, temp_rmd, overwrite = TRUE)
 
-          df <- protocol_data()
-          df_sanitized <- df |> dplyr::mutate(dplyr::across(dplyr::everything(), sanitize_latex))
+          df_sanitized <- filtered_protocol_data() |> 
+            dplyr::mutate(dplyr::across(dplyr::everything(), sanitize_latex))
 
           rmarkdown::render(
             input = temp_rmd,
@@ -170,37 +173,19 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
           unlink(file.path(output_dir, subdir_pdf), recursive = TRUE)
 
         } else if (input$document_format == "figures") {
-
-          # define subdirectory for pdf download figures
           subdir_zip <- "figures_for_zip"
-
           allowed_ids <- get_allowed_element_ids(o_objective_1_val())
           figures_to_zip <- get_selected_plot_files(output_dir, allowed_ids, copy_subdir = subdir_zip, return_relative = FALSE)
 
           zipfile <- file.path(output_dir, "figures.zip")
-          utils::zip(
-            zipfile = zipfile,
-            files = figures_to_zip,
-            flags = "-j"
-          )
+          utils::zip(zipfile = zipfile, files = figures_to_zip, flags = "-j")
 
           file.copy(zipfile, file)
           unlink(file.path(output_dir, subdir_zip), recursive = TRUE)
           unlink(zipfile)
-
         }
       }
     )
-
-    ## Reactive filtered protocol data based on "hide optional" toggle
-    filtered_protocol_data <- shiny::reactive({
-      shiny::req(protocol_data())
-      df <- protocol_data()
-      if (isTRUE(input$hide_optional)) {
-        df <- df[df$optional == 0, ]
-      }
-      df
-    })
 
     # Return reactive values for use in app
     list(
@@ -208,6 +193,5 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
       hide_optional = shiny::reactive(input$hide_optional),
       show_warnings = shiny::reactive(input$show_warnings)
     )
-
   })
 }

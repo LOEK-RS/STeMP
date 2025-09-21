@@ -37,37 +37,46 @@ app_server <- function(input, output, session) {
     prediction_area = upload_mod$prediction_area
   )
 
-  # 1. Initialize sidebar module with raw protocol data.
-  #    Sidebar manages visibility toggling of optional fields and filters protocol data accordingly.
-  sidebar <- mod_sidebar_server("sidebar", protocol_data = protocol_data,
-                                output_dir = temp_dir)
-
-  # 2. Initialize protocol creation module,
-  #    providing filtered protocol data from the sidebar module plus uploaded data and metadata.
+  # 1. Initialize protocol creation module first
   protocol <- mod_create_protocol_server(
     "protocol",
-    protocol_data = sidebar$filtered_protocol_data,
+    protocol_data = protocol_data,   # raw protocol definition
     uploaded_csv = upload_mod$csv,
     model_metadata = model_metadata,
     geo_metadata = geo_metadata,
     output_dir = temp_dir,
     model_deleted = model_deleted,
     csv_deleted = csv_deleted,
-    show_warnings = sidebar$show_warnings
+    show_warnings = shiny::reactive(FALSE),          # temporarily pass NULL (will rewire below)
+    hide_optional = shiny::reactive(FALSE)           # temporarily pass NULL (will rewire below)
   )
 
-  # 3. Pass updated protocol data to sidebar and viewer modules for UI rendering
-  #    Sidebar UI reflects changes and handles downloads (.csv, .pdf, .zip).
-
-  ## needs to be checked for output_dir. Also, remove debug statements from viewer
-  mod_sidebar_server(
+  # 2. Initialize sidebar module with UPDATED protocol data
+  sidebar <- mod_sidebar_server(
     "sidebar",
-    protocol_data = protocol$protocol_updated,
+    protocol_data = protocol$protocol_updated,   # <--- use live updated inputs
     o_objective_1_val = protocol$o_objective_1,
     output_dir = temp_dir
   )
 
-  # Viewer module renders the protocol PDF preview based on updated data.
+
+  # 2. Initialize protocol creation module - PASS THE UNFILTERED protocol_data
+  #    and give it the hide_optional reactive so submodules can toggle visibility.
+  protocol <- mod_create_protocol_server(
+    "protocol",
+    protocol_data = protocol_data,
+    uploaded_csv = upload_mod$csv,
+    model_metadata = model_metadata,
+    geo_metadata = geo_metadata,
+    output_dir = temp_dir,
+    model_deleted = model_deleted,
+    csv_deleted = csv_deleted,
+    show_warnings = sidebar$show_warnings,    # rewire from sidebar
+    hide_optional = sidebar$hide_optional     # rewire from sidebar
+  )
+
+
+  # 3. Render viewer from the updated protocol (leave as-is)
   mod_viewer_server(
     "viewer",
     protocol_data = protocol$protocol_updated,

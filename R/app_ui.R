@@ -10,6 +10,8 @@ app_ui <- function(request) {
     # add external resources (CSS/JS, favicon, etc.)
     golem_add_external_resources(),
 
+    shinyjs::useShinyjs(),
+
     # now your UI
     navbarPage(
       id = "navbar",
