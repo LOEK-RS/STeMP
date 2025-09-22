@@ -59,7 +59,7 @@ mod_warnings_server <- function(
 					"Random CV might yield overly optimistic results with clustered samples. ",
 					'See <a href="https://doi.org/10.1111/ecog.02881" target="_blank">Roberts et al., 2017</a>,
          <a href="https://doi.org/10.1038/s41467-020-18321-y" target="_blank">Ploton et al., 2020</a>,
-         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Milà et al., 2022</a>.'
+         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
 				),
 				flag_name = "clustered_random_cv"
 			)
@@ -80,7 +80,7 @@ mod_warnings_server <- function(
 					"Spatial CV might yield overly pessimistic results with clustered samples. ",
 					'See <a href="https://doi.org/10.1016/j.ecolmodel.2021.109692" target="_blank">Wadoux et al., 2021</a>,
          <a href="https://doi.org/10.1016/j.ecoinf.2022.101665" target="_blank">de Bruin et al., 2022</a>,
-         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Milà et al., 2022</a>.'
+         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
 				),
 				flag_name = "random_clustered_cv"
 			)
@@ -100,7 +100,7 @@ mod_warnings_server <- function(
 					"Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\n
           Consider using physically relevant predictors instead.\n",
 					'See <a href="https://doi.org/10.1016/j.ecolmodel.2019.108815" target="_blank">Meyer et al., 2019,
-          <a href="https://doi.org/10.5194/gmd-17-6007-2024" target="_blank">Milà et al., 2024'
+          <a href="https://doi.org/10.5194/gmd-17-6007-2024" target="_blank">Mil\u00E0 et al., 2024'
 				),
 				flag_name = "clustered_proxies"
 			)
