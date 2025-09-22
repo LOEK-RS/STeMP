@@ -151,15 +151,29 @@ mod_model_panel_server <- function(
 							)
 						}
 					} else if (row$element_type == "sampling_design") {
-						selected_val <- NULL
+						# 1. Look for uploaded CSV value
+						uploaded_val <- NULL
+						if (!is.null(uploaded_df)) {
+							val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
+							if (length(val) == 1 && nzchar(val)) {
+								uploaded_val <- val
+							}
+						}
+
+						# 2. Fallback to auto-derived value (geodist_sel)
+						auto_val <- NULL
 						try(
 							{
 								if (!is.null(geodist_sel())) {
-									selected_val <- geodist_sel()
+									auto_val <- geodist_sel()
 								}
 							},
 							silent = TRUE
 						)
+
+						# 3. Final selected value: uploaded CSV takes precedence
+						selected_val <- uploaded_val %||% auto_val
+
 						render_design(
 							element_id = ns(row$element_id),
 							element = row$element,
