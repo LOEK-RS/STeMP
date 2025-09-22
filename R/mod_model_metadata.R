@@ -240,7 +240,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
 						if (!is.null(model$state$model_performance)) {
 							rmse_val <- tryCatch(model$state$model_performance$score("rmse"), error = function(e) NA)
 							r2_val <- tryCatch(model$state$model_performance$score("rsq"), error = function(e) NA)
-							validation_results(sprintf("RMSE = %.3f, R^2 = %.3f", rmse_val, r2_val))
+							validation_results(sprintf("RMSE = %.3f, $R^2$ = %.3f", rmse_val, r2_val))
 						}
 					}
 				}
