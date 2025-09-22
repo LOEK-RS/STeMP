@@ -7,8 +7,8 @@
 #' @return An empty tagList (no UI)
 #' @noRd
 mod_gpkg_metadata_ui <- function(id) {
-  ns <- shiny::NS(id)
-  shiny::tagList()  # no UI elements required for this module
+	ns <- shiny::NS(id)
+	shiny::tagList() # no UI elements required for this module
 }
 
 #' GPKG Metadata Module Server
@@ -36,62 +36,61 @@ mod_gpkg_metadata_ui <- function(id) {
 #' }
 #' @noRd
 mod_gpkg_metadata_server <- function(id, samples, training_area, prediction_area) {
-  shiny::moduleServer(id, function(input, output, session) {
+	shiny::moduleServer(id, function(input, output, session) {
+		# Check if samples data exists and passes validation
+		has_samples <- shiny::reactive({
+			!is.null(samples$data()) && samples$valid()
+		})
 
-    # Check if samples data exists and passes validation
-    has_samples <- shiny::reactive({
-      !is.null(samples$data()) && samples$valid()
-    })
+		# Check if training area data exists and passes validation
+		has_training_area <- shiny::reactive({
+			!is.null(training_area$data()) && training_area$valid()
+		})
 
-    # Check if training area data exists and passes validation
-    has_training_area <- shiny::reactive({
-      !is.null(training_area$data()) && training_area$valid()
-    })
+		# Check if prediction area data exists and passes validation
+		has_prediction_area <- shiny::reactive({
+			!is.null(prediction_area$data()) && prediction_area$valid()
+		})
 
-    # Check if prediction area data exists and passes validation
-    has_prediction_area <- shiny::reactive({
-      !is.null(prediction_area$data()) && prediction_area$valid()
-    })
+		# Extract CRS info from samples data:
+		# Prefer EPSG code if available, otherwise return proj4 string
+		samples_crs <- shiny::reactive({
+			shiny::req(has_samples())
+			crs_obj <- sf::st_crs(samples$data())
+			if (!is.na(crs_obj$epsg)) {
+				paste0("EPSG:", crs_obj$epsg)
+			} else {
+				crs_obj$proj4string
+			}
+		})
 
-    # Extract CRS info from samples data:
-    # Prefer EPSG code if available, otherwise return proj4 string
-    samples_crs <- shiny::reactive({
-      shiny::req(has_samples())
-      crs_obj <- sf::st_crs(samples$data())
-      if (!is.na(crs_obj$epsg)) {
-        paste0("EPSG:", crs_obj$epsg)
-      } else {
-        crs_obj$proj4string
-      }
-    })
+		# Reactive for the samples spatial object (sf)
+		samples_sf <- shiny::reactive({
+			shiny::req(has_samples())
+			samples$data()
+		})
 
-    # Reactive for the samples spatial object (sf)
-    samples_sf <- shiny::reactive({
-      shiny::req(has_samples())
-      samples$data()
-    })
+		# Reactive for the training area spatial object (sf)
+		training_area_sf <- shiny::reactive({
+			shiny::req(has_training_area())
+			training_area$data()
+		})
 
-    # Reactive for the training area spatial object (sf)
-    training_area_sf <- shiny::reactive({
-      shiny::req(has_training_area())
-      training_area$data()
-    })
+		# Reactive for the prediction area spatial object (sf)
+		prediction_area_sf <- shiny::reactive({
+			shiny::req(has_prediction_area())
+			prediction_area$data()
+		})
 
-    # Reactive for the prediction area spatial object (sf)
-    prediction_area_sf <- shiny::reactive({
-      shiny::req(has_prediction_area())
-      prediction_area$data()
-    })
-
-    # Return a list of reactives for use elsewhere in app
-    return(list(
-      has_samples = has_samples,
-      has_training_area = has_training_area,
-      has_prediction_area = has_prediction_area,
-      samples_crs = samples_crs,
-      samples_sf = samples_sf,
-      training_area_sf = training_area_sf,
-      prediction_area_sf = prediction_area_sf
-    ))
-  })
+		# Return a list of reactives for use elsewhere in app
+		return(list(
+			has_samples = has_samples,
+			has_training_area = has_training_area,
+			has_prediction_area = has_prediction_area,
+			samples_crs = samples_crs,
+			samples_sf = samples_sf,
+			training_area_sf = training_area_sf,
+			prediction_area_sf = prediction_area_sf
+		))
+	})
 }

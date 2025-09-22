@@ -6,8 +6,8 @@
 #' @return Character vector with first letter capitalized.
 #' @noRd
 firstup <- function(x) {
-  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
-  x
+	substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+	x
 }
 
 #' If x is `NULL`, return y, otherwise return x
@@ -16,11 +16,11 @@ firstup <- function(x) {
 #'
 #' @noRd
 "%||%" <- function(x, y) {
-  if (is.null(x)) {
-    y
-  } else {
-    x
-  }
+	if (is.null(x)) {
+		y
+	} else {
+		x
+	}
 }
 
 #' Normalize Text to ID Format
@@ -31,7 +31,7 @@ firstup <- function(x) {
 #' @return Normalized character string suitable for IDs.
 #' @noRd
 normalize_id <- function(x) {
-  gsub("[^a-zA-Z0-9]", "_", tolower(gsub("\\*", "", x)))
+	gsub("[^a-zA-Z0-9]", "_", tolower(gsub("\\*", "", x)))
 }
 
 
@@ -42,13 +42,13 @@ normalize_id <- function(x) {
 #' @return The uploaded value, fallback function result, or NULL.
 #' @noRd
 get_value <- function(uploaded_value, fallback_fn) {
-  if (!is.null(uploaded_value)) {
-    return(uploaded_value)
-  } else if (!is.null(fallback_fn)) {
-    return(fallback_fn())
-  } else {
-    return(NULL)
-  }
+	if (!is.null(uploaded_value)) {
+		return(uploaded_value)
+	} else if (!is.null(fallback_fn)) {
+		return(fallback_fn())
+	} else {
+		return(NULL)
+	}
 }
 
 
@@ -57,23 +57,27 @@ get_value <- function(uploaded_value, fallback_fn) {
 #' @param figure ggplot object.
 #' @param element_id Character ID to determine filename.
 #' @noRd
-save_figure <- function(figure, element_id, temp_dir=NULL) {
-  fig_dir <- file.path(temp_dir)
-  if (!dir.exists(fig_dir)) dir.create(fig_dir, recursive = TRUE)
+save_figure <- function(figure, element_id, temp_dir = NULL) {
+	fig_dir <- file.path(temp_dir)
+	if (!dir.exists(fig_dir)) {
+		dir.create(fig_dir, recursive = TRUE)
+	}
 
-  fig_name <- switch(element_id,
-                     "protocol-prediction-geodistance_plot_prediction_area" = "geodist_prediction_area",
-                     "protocol-prediction-prediction_map" = "prediction_area",
-                     "protocol-model-sampling_area_map" = "sampling_area",
-                     "protocol-model-sampling_locations" = "sampling_locations",
-                     "protocol-model-geodistance_plot_sampling_area" = "geodist_sampling_area",
-                     element_id)
+	fig_name <- switch(
+		element_id,
+		"protocol-prediction-geodistance_plot_prediction_area" = "geodist_prediction_area",
+		"protocol-prediction-prediction_map" = "prediction_area",
+		"protocol-model-sampling_area_map" = "sampling_area",
+		"protocol-model-sampling_locations" = "sampling_locations",
+		"protocol-model-geodistance_plot_sampling_area" = "geodist_sampling_area",
+		element_id
+	)
 
-  plot_path <- file.path(fig_dir, paste0(fig_name, ".png"))
+	plot_path <- file.path(fig_dir, paste0(fig_name, ".png"))
 
-  ggplot2::ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
+	ggplot2::ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
 
-  return(plot_path)
+	return(plot_path)
 }
 
 #' Delete plot PNG by element ID
@@ -84,10 +88,10 @@ save_figure <- function(figure, element_id, temp_dir=NULL) {
 #' @param output_dir Directory where plot PNGs are stored
 #' @noRd
 delete_plot_png <- function(element_id, output_dir) {
-  file_path <- file.path(output_dir, paste0(element_id, ".png"))
-  if (file.exists(file_path)) {
-    file.remove(file_path)
-  }
+	file_path <- file.path(output_dir, paste0(element_id, ".png"))
+	if (file.exists(file_path)) {
+		file.remove(file_path)
+	}
 }
 
 
@@ -107,9 +111,8 @@ delete_plot_png <- function(element_id, output_dir) {
 #'
 #' @noRd
 sanitize_latex <- function(x) {
-  x <- gsub("\\\\", "\\textbackslash{}", x)
-  x <- gsub("([_%&$#{}])", "\\\\\\1", x)
-  x <- gsub("\n", " ", x)
-  x
+	x <- gsub("\\\\", "\\textbackslash{}", x)
+	x <- gsub("([_%&$#{}])", "\\\\\\1", x)
+	x <- gsub("\n", " ", x)
+	x
 }
-

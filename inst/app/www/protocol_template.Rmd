@@ -45,12 +45,12 @@ df$value <- stringr::str_wrap(df$value, width = 30)
 df$value <- paste0("\\makecell[l]{", gsub("\n", " \\\\ ", df$value), "}")
 row.names(df) <- NULL
 
-knitr::kable(df, format = "latex", booktabs = TRUE, longtable = TRUE, escape = FALSE) |> 
-  kableExtra::kable_styling(latex_options = c("striped", "hold_position"), font_size = 6) |>
-  kableExtra::column_spec(1, width = "2cm") |>      # Adjust widths as you like
-  kableExtra::column_spec(2, width = "4cm") |>
-  kableExtra::column_spec(3, width = "4cm") |>
-  kableExtra::column_spec(4, width = "6cm")
+knitr::kable(df, format = "latex", booktabs = TRUE, longtable = TRUE, escape = FALSE) |>
+	kableExtra::kable_styling(latex_options = c("striped", "hold_position"), font_size = 6) |>
+	kableExtra::column_spec(1, width = "2cm") |>
+	kableExtra::column_spec(2, width = "4cm") |>
+	kableExtra::column_spec(3, width = "4cm") |>
+	kableExtra::column_spec(4, width = "6cm")
 
 
 ```
