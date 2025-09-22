@@ -8,11 +8,11 @@
 #' @return UI output container for prediction inputs inside collapsible panels
 #' @noRd
 mod_prediction_panel_ui <- function(id) {
-  ns <- shiny::NS(id)
+	ns <- shiny::NS(id)
 
-  shiny::fluidPage(
-    shiny::uiOutput(ns("prediction_collapse_ui"))
-  )
+	shiny::fluidPage(
+		shiny::uiOutput(ns("prediction_collapse_ui"))
+	)
 }
 
 #' Prediction Panel Server Module
@@ -36,186 +36,199 @@ mod_prediction_panel_ui <- function(id) {
 #'   \item{uncertainty_quantification}{Selected uncertainty quantification approach}
 #' }
 #' @noRd
-mod_prediction_panel_server <- function(id, o_objective_1_val, protocol_data, geo_metadata = NULL,
-                                        uploaded_values = shiny::reactive(NULL),
-                                        output_dir = NULL,
-                                        hide_optional = shiny::reactive(FALSE)) {
-  shiny::moduleServer(id, function(input, output, session) {
-    ns <- session$ns
+mod_prediction_panel_server <- function(
+	id,
+	o_objective_1_val,
+	protocol_data,
+	geo_metadata = NULL,
+	uploaded_values = shiny::reactive(NULL),
+	output_dir = NULL,
+	hide_optional = shiny::reactive(FALSE)
+) {
+	shiny::moduleServer(id, function(input, output, session) {
+		ns <- session$ns
 
-    # Validate spatial metadata for samples and prediction area
-    valid_geo_samples_metadata <- validate_geo_metadata(geo_metadata, "has_samples")
-    valid_geo_prediction_area_metadata <- validate_geo_metadata(geo_metadata, "has_prediction_area")
-    valid_geo_all_metadata <- validate_geo_metadata(geo_metadata, c("has_samples", "has_prediction_area"))
+		# Validate spatial metadata for samples and prediction area
+		valid_geo_samples_metadata <- validate_geo_metadata(geo_metadata, "has_samples")
+		valid_geo_prediction_area_metadata <- validate_geo_metadata(geo_metadata, "has_prediction_area")
+		valid_geo_all_metadata <- validate_geo_metadata(geo_metadata, c("has_samples", "has_prediction_area"))
 
-    # Reactive filtered protocol data for Prediction section
-    prediction_data <- shiny::reactive({
-      shiny::req(protocol_data())
-      df <- protocol_data()
-      df[df$section == "Prediction", ]
-    })
+		# Reactive filtered protocol data for Prediction section
+		prediction_data <- shiny::reactive({
+			shiny::req(protocol_data())
+			df <- protocol_data()
+			df[df$section == "Prediction", ]
+		})
 
-    # Unique subsections within Prediction data
-    subsections <- shiny::reactive({
-      unique(prediction_data()$subsection)
-    })
+		# Unique subsections within Prediction data
+		subsections <- shiny::reactive({
+			unique(prediction_data()$subsection)
+		})
 
-    # Server-side rendering for geodist_plot_prediction plot
-    shiny::observe({
-      shiny::req(o_objective_1_val() == "Model and prediction")
-      df <- prediction_data()
-      meta_geo_all_list <- valid_geo_all_metadata()
-      if (is.null(meta_geo_all_list)) return()
+		# Server-side rendering for geodist_plot_prediction plot
+		shiny::observe({
+			shiny::req(o_objective_1_val() == "Model and prediction")
+			df <- prediction_data()
+			meta_geo_all_list <- valid_geo_all_metadata()
+			if (is.null(meta_geo_all_list)) {
+				return()
+			}
 
-      pid <- df$element_id[df$element_type == "geodist_plot_prediction"]
-      if (length(pid) == 1) {
-        render_geodist_plot_server(
-          output = output,
-          element_id = ns(pid),
-          geo_metadata = meta_geo_all_list,
-          objective = "Model and prediction",
-          output_dir = output_dir
-        )
-      }
-    })
+			pid <- df$element_id[df$element_type == "geodist_plot_prediction"]
+			if (length(pid) == 1) {
+				render_geodist_plot_server(
+					output = output,
+					element_id = ns(pid),
+					geo_metadata = meta_geo_all_list,
+					objective = "Model and prediction",
+					output_dir = output_dir
+				)
+			}
+		})
 
-    # Render UI collapsible panels for each subsection
-    output$prediction_collapse_ui <- shiny::renderUI({
-      shiny::req(o_objective_1_val() == "Model and prediction")
+		# Render UI collapsible panels for each subsection
+		output$prediction_collapse_ui <- shiny::renderUI({
+			shiny::req(o_objective_1_val() == "Model and prediction")
 
-      df <- prediction_data()
-      subs <- subsections()
+			df <- prediction_data()
+			subs <- subsections()
 
-      if (nrow(df) == 0) {
-        return(shiny::tags$p("No prediction data available"))
-      }
+			if (nrow(df) == 0) {
+				return(shiny::tags$p("No prediction data available"))
+			}
 
-      meta_geo_prediction_area_list <- valid_geo_prediction_area_metadata()
-      if (is.null(meta_geo_prediction_area_list)) meta_geo_prediction_area_list <- list()
+			meta_geo_prediction_area_list <- valid_geo_prediction_area_metadata()
+			if (is.null(meta_geo_prediction_area_list)) {
+				meta_geo_prediction_area_list <- list()
+			}
 
-      uploaded_df <- uploaded_values()
+			uploaded_df <- uploaded_values()
 
-      panels <- lapply(subs, function(subsec) {
-        sub_df <- df[df$subsection == subsec, ]
+			panels <- lapply(subs, function(subsec) {
+				sub_df <- df[df$subsection == subsec, ]
 
-        inputs <- lapply(seq_len(nrow(sub_df)), function(i) {
-          row <- sub_df[i, ]
+				inputs <- lapply(seq_len(nrow(sub_df)), function(i) {
+					row <- sub_df[i, ]
 
-          # Override default value with uploaded value if present
-          if (!is.null(uploaded_df)) {
-            uploaded_val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
-            if (length(uploaded_val) == 1 && !is.null(uploaded_val) && nzchar(uploaded_val)) {
-              row$value <- uploaded_val
-            }
-          }
+					# Override default value with uploaded value if present
+					if (!is.null(uploaded_df)) {
+						uploaded_val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
+						if (length(uploaded_val) == 1 && !is.null(uploaded_val) && nzchar(uploaded_val)) {
+							row$value <- uploaded_val
+						}
+					}
 
-          # Wrap optional fields
-          div_class <- if (!is.null(row$optional) && as.integer(row$optional) == 1) "optional_field" else NULL
+					# Wrap optional fields
+					div_class <- if (!is.null(row$optional) && as.integer(row$optional) == 1) "optional_field" else NULL
 
-          # Render specific plots or inputs
-          content <- if (row$element_type == "prediction_area_plot") {
-            if (!is.null(valid_geo_prediction_area_metadata())) {
-              render_prediction_area_plot(
-                element_id = ns(row$element_id),
-                element = row$element,
-                geo_metadata = meta_geo_prediction_area_list,
-                ns = ns,
-                info_text = row$info_text
-              )
-            } else {
-              NULL
-            }
-          } else if (row$element_type == "geodist_plot_prediction") {
-            if (o_objective_1_val() == "Model and prediction" && !is.null(valid_geo_all_metadata())) {
-              render_geodist_plot(
-                element_id = ns(row$element_id),
-                element = row$element,
-                ns = ns,
-                info_text = row$info_text
-              )
-            } else {
-              NULL
-            }
-          } else {
-            render_input_field(
-              element_type = row$element_type,
-              element_id = ns(row$element_id),
-              label = row$element,
-              o_objective_1 = o_objective_1_val(),
-              suggestions = row$suggestions,
-              info_text = row$info_text,
-              geo_metadata = geo_metadata,
-              ns = ns,
-              row = row
-            )
-          }
+					# Render specific plots or inputs
+					content <- if (row$element_type == "prediction_area_plot") {
+						if (!is.null(valid_geo_prediction_area_metadata())) {
+							render_prediction_area_plot(
+								element_id = ns(row$element_id),
+								element = row$element,
+								geo_metadata = meta_geo_prediction_area_list,
+								ns = ns,
+								info_text = row$info_text
+							)
+						} else {
+							NULL
+						}
+					} else if (row$element_type == "geodist_plot_prediction") {
+						if (o_objective_1_val() == "Model and prediction" && !is.null(valid_geo_all_metadata())) {
+							render_geodist_plot(
+								element_id = ns(row$element_id),
+								element = row$element,
+								ns = ns,
+								info_text = row$info_text
+							)
+						} else {
+							NULL
+						}
+					} else {
+						render_input_field(
+							element_type = row$element_type,
+							element_id = ns(row$element_id),
+							label = row$element,
+							o_objective_1 = o_objective_1_val(),
+							suggestions = row$suggestions,
+							info_text = row$info_text,
+							geo_metadata = geo_metadata,
+							ns = ns,
+							row = row
+						)
+					}
 
-          shiny::tags$div(class = div_class, content)
-        })
+					shiny::tags$div(class = div_class, content)
+				})
 
-        shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
-      })
+				shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
+			})
 
-      do.call(shinyBS::bsCollapse, panels)
-    })
+			do.call(shinyBS::bsCollapse, panels)
+		})
 
-    # Toggle CSS visibility for optional fields
-    shiny::observe({
-      if (isTRUE(hide_optional())) {
-        shinyjs::addClass(selector = "body", class = "hide_optional")
-      } else {
-        shinyjs::removeClass(selector = "body", class = "hide_optional")
-      }
-    })
+		# Toggle CSS visibility for optional fields
+		shiny::observe({
+			if (isTRUE(hide_optional())) {
+				shinyjs::addClass(selector = "body", class = "hide_optional")
+			} else {
+				shinyjs::removeClass(selector = "body", class = "hide_optional")
+			}
+		})
 
-    # Server-side rendering for prediction_area_plot
-    shiny::observe({
-      shiny::req(o_objective_1_val() == "Model and prediction")
-      df <- prediction_data()
-      meta_geo_prediction_area_list <- valid_geo_prediction_area_metadata()
-      if (is.null(meta_geo_prediction_area_list)) return()
+		# Server-side rendering for prediction_area_plot
+		shiny::observe({
+			shiny::req(o_objective_1_val() == "Model and prediction")
+			df <- prediction_data()
+			meta_geo_prediction_area_list <- valid_geo_prediction_area_metadata()
+			if (is.null(meta_geo_prediction_area_list)) {
+				return()
+			}
 
-      pid <- df$element_id[df$element_type == "prediction_area_plot"]
-      if (length(pid) == 1) {
-        render_prediction_area_plot_server(
-          output = output,
-          element_id = ns(pid),
-          geo_metadata = meta_geo_prediction_area_list,
-          what = "prediction_area_sf",
-          output_dir = output_dir
-        )
-      }
-    })
+			pid <- df$element_id[df$element_type == "prediction_area_plot"]
+			if (length(pid) == 1) {
+				render_prediction_area_plot_server(
+					output = output,
+					element_id = ns(pid),
+					geo_metadata = meta_geo_prediction_area_list,
+					what = "prediction_area_sf",
+					output_dir = output_dir
+				)
+			}
+		})
 
-    # Reactive collection of prediction input values
-    inputs_reactive <- shiny::reactive({
-      df <- prediction_data()
-      vals <- lapply(df$element_id, function(id) {
-        val <- input[[id]]
-        if (is.null(val) || (is.character(val) && all(val == ""))) {
-          NA
-        } else if (length(val) > 1) {
-          paste(val, collapse = ", ")
-        } else {
-          val
-        }
-      })
+		# Reactive collection of prediction input values
+		inputs_reactive <- shiny::reactive({
+			df <- prediction_data()
+			vals <- lapply(df$element_id, function(id) {
+				val <- input[[id]]
+				if (is.null(val) || (is.character(val) && all(val == ""))) {
+					NA
+				} else if (length(val) > 1) {
+					paste(val, collapse = ", ")
+				} else {
+					val
+				}
+			})
 
-      data.frame(
-        section = df$section,
-        subsection = df$subsection,
-        element = df$element,
-        value = unlist(vals, use.names = FALSE),
-        stringsAsFactors = FALSE
-      )
-    })
+			data.frame(
+				section = df$section,
+				subsection = df$subsection,
+				element = df$element,
+				value = unlist(vals, use.names = FALSE),
+				stringsAsFactors = FALSE
+			)
+		})
 
-    # Reactive getter for uncertainty quantification
-    uncertainty_quantification <- shiny::reactive({ input[["uncertainty_quantification"]] })
-    
-    return(list(
-      "prediction_inputs" = shiny::reactive(inputs_reactive()),
-      "uncertainty_quantification" = uncertainty_quantification
-    ))
-  })
+		# Reactive getter for uncertainty quantification
+		uncertainty_quantification <- shiny::reactive({
+			input[["uncertainty_quantification"]]
+		})
+
+		return(list(
+			"prediction_inputs" = shiny::reactive(inputs_reactive()),
+			"uncertainty_quantification" = uncertainty_quantification
+		))
+	})
 }

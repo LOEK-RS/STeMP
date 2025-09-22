@@ -7,38 +7,47 @@
 #' @return UI elements for file uploads and status messages
 #' @noRd
 mod_upload_ui <- function(id) {
-  ns <- shiny::NS(id)
-  shiny::fluidPage(
-    shinyjs::useShinyjs(),
-    shiny::fluidRow(
-      shiny::column(2),
-      shiny::column(8,
-                    shiny::p(shiny::tags$b("(1) Upload STeMP protocol (.csv)")),
-                    shiny::fileInput(ns("csv_upload"), label = NULL, accept = c(".csv")),
-                    shiny::uiOutput(ns("csv_status")),
-                    shiny::actionButton(ns("delete_csv"), "Delete uploaded protocol", style = "margin-bottom: 15px;"),
-                    shiny::tags$hr(),
+	ns <- shiny::NS(id)
+	shiny::fluidPage(
+		shinyjs::useShinyjs(),
+		shiny::fluidRow(
+			shiny::column(2),
+			shiny::column(
+				8,
+				shiny::p(shiny::tags$b("(1) Upload STeMP protocol (.csv)")),
+				shiny::fileInput(ns("csv_upload"), label = NULL, accept = c(".csv")),
+				shiny::uiOutput(ns("csv_status")),
+				shiny::actionButton(ns("delete_csv"), "Delete uploaded protocol", style = "margin-bottom: 15px;"),
+				shiny::tags$hr(),
 
-                    shiny::p(shiny::tags$b("(2) Upload model (.RDS)")),
-                    shiny::fileInput(ns("model_upload"), "Upload model object (.RDS)", accept = ".rds"),
-                    shiny::uiOutput(ns("model_status")),
-                    shiny::actionButton(ns("delete_model"), "Delete uploaded model", style = "margin-bottom: 15px;"),
-                    shiny::tags$hr(),
+				shiny::p(shiny::tags$b("(2) Upload model (.RDS)")),
+				shiny::fileInput(ns("model_upload"), "Upload model object (.RDS)", accept = ".rds"),
+				shiny::uiOutput(ns("model_status")),
+				shiny::actionButton(ns("delete_model"), "Delete uploaded model", style = "margin-bottom: 15px;"),
+				shiny::tags$hr(),
 
-                    shiny::p(shiny::tags$b("(3) Upload geospatial data (.gpkg)")),
-                    mod_gpkg_upload_ui(ns("samples"), label = "Upload sampling locations"),
-                    shiny::uiOutput(ns("sample_status")),
-                    shiny::actionButton(ns("delete_samples"), "Delete uploaded samples", style = "margin-bottom: 15px;"),
-                    mod_gpkg_upload_ui(ns("training_area"), label = "Upload training area"),
-                    shiny::uiOutput(ns("training_area_status")),
-                    shiny::actionButton(ns("delete_training_area"), "Delete uploaded training area", style = "margin-bottom: 15px;"),
-                    mod_gpkg_upload_ui(ns("prediction_area"), label = "Upload prediction area"),
-                    shiny::uiOutput(ns("prediction_area_status")),
-                    shiny::actionButton(ns("delete_prediction_area"), "Delete uploaded prediction area", style = "margin-bottom: 15px;")
-      ),
-      shiny::column(2)
-    )
-  )
+				shiny::p(shiny::tags$b("(3) Upload geospatial data (.gpkg)")),
+				mod_gpkg_upload_ui(ns("samples"), label = "Upload sampling locations"),
+				shiny::uiOutput(ns("sample_status")),
+				shiny::actionButton(ns("delete_samples"), "Delete uploaded samples", style = "margin-bottom: 15px;"),
+				mod_gpkg_upload_ui(ns("training_area"), label = "Upload training area"),
+				shiny::uiOutput(ns("training_area_status")),
+				shiny::actionButton(
+					ns("delete_training_area"),
+					"Delete uploaded training area",
+					style = "margin-bottom: 15px;"
+				),
+				mod_gpkg_upload_ui(ns("prediction_area"), label = "Upload prediction area"),
+				shiny::uiOutput(ns("prediction_area_status")),
+				shiny::actionButton(
+					ns("delete_prediction_area"),
+					"Delete uploaded prediction area",
+					style = "margin-bottom: 15px;"
+				)
+			),
+			shiny::column(2)
+		)
+	)
 }
 
 #' Upload Module - Server
@@ -57,122 +66,125 @@ mod_upload_ui <- function(id) {
 #' }
 #' @noRd
 mod_upload_server <- function(id, output_dir) {
-  shiny::moduleServer(id, function(input, output, session) {
-    ns <- session$ns
+	shiny::moduleServer(id, function(input, output, session) {
+		ns <- session$ns
 
-    # to use dplyr:
-    element <- NULL
+		# to use dplyr:
+		element <- NULL
 
-    # Reactive for protocol CSV data
-    csv_data <- shiny::reactiveVal(NULL)
-    csv_deleted <- shiny::reactiveVal(FALSE)
+		# Reactive for protocol CSV data
+		csv_data <- shiny::reactiveVal(NULL)
+		csv_deleted <- shiny::reactiveVal(FALSE)
 
-    shiny::observeEvent(input$csv_upload, {
-      shiny::req(input$csv_upload)
-      tryCatch({
-        df <- utils::read.csv(input$csv_upload$datapath) |>
-          dplyr::mutate(element_id = normalize_id(element))
-        csv_data(df)
+		shiny::observeEvent(input$csv_upload, {
+			shiny::req(input$csv_upload)
+			tryCatch(
+				{
+					df <- utils::read.csv(input$csv_upload$datapath) |>
+						dplyr::mutate(element_id = normalize_id(element))
+					csv_data(df)
 
-        output$csv_status <- shiny::renderUI({
-          shiny::tags$p("CSV loaded successfully", style = "color: blue;")
-        })
-      }, error = function(e) {
-        output$csv_status <- shiny::renderUI({
-          shiny::tags$p("Error loading CSV file", style = "color: red;")
-        })
-      })
-    })
+					output$csv_status <- shiny::renderUI({
+						shiny::tags$p("CSV loaded successfully", style = "color: blue;")
+					})
+				},
+				error = function(e) {
+					output$csv_status <- shiny::renderUI({
+						shiny::tags$p("Error loading CSV file", style = "color: red;")
+					})
+				}
+			)
+		})
 
-    # Delete button for CSV upload
-    shiny::observeEvent(input$delete_csv, {
-      csv_data(NULL)                        
-      shinyjs::reset("csv_upload")
-      csv_deleted(TRUE)
-      output$csv_status <- shiny::renderUI({ 
-        shiny::tags$p("Protocol upload deleted.", style = "color: orange;")
-      })
-    })
+		# Delete button for CSV upload
+		shiny::observeEvent(input$delete_csv, {
+			csv_data(NULL)
+			shinyjs::reset("csv_upload")
+			csv_deleted(TRUE)
+			output$csv_status <- shiny::renderUI({
+				shiny::tags$p("Protocol upload deleted.", style = "color: orange;")
+			})
+		})
 
-    
-    # Reactive for model RDS object
-    model_object <- shiny::reactiveVal(NULL)
-    model_deleted <- shiny::reactiveVal(FALSE)
+		# Reactive for model RDS object
+		model_object <- shiny::reactiveVal(NULL)
+		model_deleted <- shiny::reactiveVal(FALSE)
 
-    shiny::observeEvent(input$model_upload, {
-      shiny::req(input$model_upload)
-      tryCatch({
-        obj <- readRDS(input$model_upload$datapath)
-        model_object(obj)
-        model_deleted(FALSE)  # model now exists
-        output$model_status <- shiny::renderUI({
-          shiny::tags$p("Model loaded successfully", style = "color: blue;")
-        })
-      }, error = function(e) {
-        output$model_status <- shiny::renderUI({
-          shiny::tags$p("Error loading RDS file", style = "color: red;")
-        })
-      })
-    })
+		shiny::observeEvent(input$model_upload, {
+			shiny::req(input$model_upload)
+			tryCatch(
+				{
+					obj <- readRDS(input$model_upload$datapath)
+					model_object(obj)
+					model_deleted(FALSE) # model now exists
+					output$model_status <- shiny::renderUI({
+						shiny::tags$p("Model loaded successfully", style = "color: blue;")
+					})
+				},
+				error = function(e) {
+					output$model_status <- shiny::renderUI({
+						shiny::tags$p("Error loading RDS file", style = "color: red;")
+					})
+				}
+			)
+		})
 
-    # Delete button for model input  
-    shiny::observeEvent(input$delete_model, {
-      model_object(NULL)
-      shinyjs::reset("model_upload")
-      model_deleted(TRUE)  # signal model deletion
+		# Delete button for model input
+		shiny::observeEvent(input$delete_model, {
+			model_object(NULL)
+			shinyjs::reset("model_upload")
+			model_deleted(TRUE) # signal model deletion
 
-      output$model_status <- shiny::renderUI({ 
-        shiny::tags$p("Model upload deleted.", style = "color: orange;")
-      })
-    })
+			output$model_status <- shiny::renderUI({
+				shiny::tags$p("Model upload deleted.", style = "color: orange;")
+			})
+		})
 
+		# Geospatial uploads via nested modules
+		samples <- mod_gpkg_upload_server("samples", geom_types_expected = c("POINT", "MULTIPOINT"))
+		training_area <- mod_gpkg_upload_server("training_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
+		prediction_area <- mod_gpkg_upload_server("prediction_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
 
-    # Geospatial uploads via nested modules
-    samples <- mod_gpkg_upload_server("samples", geom_types_expected = c("POINT", "MULTIPOINT"))
-    training_area <- mod_gpkg_upload_server("training_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
-    prediction_area <- mod_gpkg_upload_server("prediction_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
+		# Delete buttons to clear geospatial uploads and reset UI
+		shiny::observeEvent(input$delete_samples, {
+			samples$data(NULL)
+			shinyjs::reset("samples-upload")
+			delete_plot_png("sampling_locations", output_dir)
+			delete_plot_png("geodist_sampling_area", output_dir)
+			delete_plot_png("geodist_prediction_area", output_dir)
+			output$sample_status <- shiny::renderUI({
+				shiny::tags$p("Sample upload deleted.", style = "color: orange;")
+			})
+		})
 
-    # Delete buttons to clear geospatial uploads and reset UI
-    shiny::observeEvent(input$delete_samples, {
-      samples$data(NULL)
-      shinyjs::reset("samples-upload")
-      delete_plot_png("sampling_locations", output_dir)
-      delete_plot_png("geodist_sampling_area", output_dir)
-      delete_plot_png("geodist_prediction_area", output_dir)
-      output$sample_status <- shiny::renderUI({
-        shiny::tags$p("Sample upload deleted.", style = "color: orange;")
-      })
-    })
+		shiny::observeEvent(input$delete_training_area, {
+			training_area$data(NULL)
+			shinyjs::reset("training_area-upload")
+			delete_plot_png("sampling_area", output_dir)
+			delete_plot_png("geodist_sampling_area", output_dir)
+			output$training_area_status <- shiny::renderUI({
+				shiny::tags$p("Training area upload deleted.", style = "color: orange;")
+			})
+		})
 
+		shiny::observeEvent(input$delete_prediction_area, {
+			prediction_area$data(NULL)
+			shinyjs::reset("prediction_area-upload")
+			delete_plot_png("prediction_area", output_dir)
+			delete_plot_png("geodist_prediction_area", output_dir)
+			output$prediction_area_status <- shiny::renderUI({
+				shiny::tags$p("Prediction area upload deleted.", style = "color: orange;")
+			})
+		})
 
-    shiny::observeEvent(input$delete_training_area, {
-      training_area$data(NULL)
-      shinyjs::reset("training_area-upload")
-      delete_plot_png("sampling_area", output_dir)
-      delete_plot_png("geodist_sampling_area", output_dir)
-      output$training_area_status <- shiny::renderUI({
-        shiny::tags$p("Training area upload deleted.", style = "color: orange;")
-      })
-    })
-
-    shiny::observeEvent(input$delete_prediction_area, {
-      prediction_area$data(NULL)
-      shinyjs::reset("prediction_area-upload")
-      delete_plot_png("prediction_area", output_dir)
-      delete_plot_png("geodist_prediction_area", output_dir)
-      output$prediction_area_status <- shiny::renderUI({
-        shiny::tags$p("Prediction area upload deleted.", style = "color: orange;")
-      })
-    })
-
-    # Return reactives for use outside module
-    list(
-      csv = csv_data,
-      model = model_object,
-      model_deleted = model_deleted,
-      samples = samples,
-      training_area = training_area,
-      prediction_area = prediction_area
-    )
-  })
+		# Return reactives for use outside module
+		list(
+			csv = csv_data,
+			model = model_object,
+			model_deleted = model_deleted,
+			samples = samples,
+			training_area = training_area,
+			prediction_area = prediction_area
+		)
+	})
 }

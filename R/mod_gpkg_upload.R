@@ -7,11 +7,11 @@
 #' @return UI elements for file input
 #' @noRd
 mod_gpkg_upload_ui <- function(id, label = "Upload file") {
-  ns <- shiny::NS(id)
+	ns <- shiny::NS(id)
 
-  shiny::tagList(
-    shiny::fileInput(ns("upload"), label, accept = c(".gpkg"))
-  )
+	shiny::tagList(
+		shiny::fileInput(ns("upload"), label, accept = c(".gpkg"))
+	)
 }
 
 #' GPKG Upload Module Server
@@ -31,42 +31,45 @@ mod_gpkg_upload_ui <- function(id, label = "Upload file") {
 #' }
 #' @noRd
 mod_gpkg_upload_server <- function(id, geom_types_expected = c("POINT", "MULTIPOINT")) {
-  shiny::moduleServer(id, function(input, output, session) {
-    uploaded_data <- shiny::reactiveVal(NULL)
-    valid <- shiny::reactiveVal(FALSE)
+	shiny::moduleServer(id, function(input, output, session) {
+		uploaded_data <- shiny::reactiveVal(NULL)
+		valid <- shiny::reactiveVal(FALSE)
 
-    shiny::observeEvent(input$upload, {
-      shiny::req(input$upload)
-      valid(FALSE)
-      uploaded_data(NULL)
+		shiny::observeEvent(input$upload, {
+			shiny::req(input$upload)
+			valid(FALSE)
+			uploaded_data(NULL)
 
-      # Attempt to read the uploaded GeoPackage file quietly
-      sp_data <- tryCatch({
-        sf::st_read(input$upload$datapath, quiet = TRUE)
-      }, error = function(e) {
-        shiny::showNotification("Could not read .gpkg file.", type = "error")
-        NULL
-      })
+			# Attempt to read the uploaded GeoPackage file quietly
+			sp_data <- tryCatch(
+				{
+					sf::st_read(input$upload$datapath, quiet = TRUE)
+				},
+				error = function(e) {
+					shiny::showNotification("Could not read .gpkg file.", type = "error")
+					NULL
+				}
+			)
 
-      # If reading succeeded, check geometry types
-      if (!is.null(sp_data)) {
-        geom_type <- unique(sf::st_geometry_type(sp_data))
-        if (!all(geom_type %in% geom_types_expected)) {
-          shiny::showNotification(
-            paste0("Geometry must be one of: ", paste(geom_types_expected, collapse = ", ")),
-            type = "error"
-          )
-          valid(FALSE)
-        } else {
-          uploaded_data(sp_data)
-          valid(TRUE)
-        }
-      }
-    })
+			# If reading succeeded, check geometry types
+			if (!is.null(sp_data)) {
+				geom_type <- unique(sf::st_geometry_type(sp_data))
+				if (!all(geom_type %in% geom_types_expected)) {
+					shiny::showNotification(
+						paste0("Geometry must be one of: ", paste(geom_types_expected, collapse = ", ")),
+						type = "error"
+					)
+					valid(FALSE)
+				} else {
+					uploaded_data(sp_data)
+					valid(TRUE)
+				}
+			}
+		})
 
-    return(list(
-      data = uploaded_data,
-      valid = valid
-    ))
-  })
+		return(list(
+			data = uploaded_data,
+			valid = valid
+		))
+	})
 }
