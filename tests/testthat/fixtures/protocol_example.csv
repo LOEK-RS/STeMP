@@ -1,0 +1,49 @@
+"section","subsection","element","value","visible"
+"Overview","Authorship","Model title*","abc",TRUE
+"Overview","Authorship","Author names*",NA,TRUE
+"Overview","Authorship","Contact*",NA,TRUE
+"Overview","Authorship","Study title",NA,TRUE
+"Overview","Authorship","Study link",NA,TRUE
+"Overview","Target variable","Target variable*",NA,TRUE
+"Overview","Scientific Field","Scientific Field*",NA,TRUE
+"Model","Response","Sampling locations",NA,TRUE
+"Model","Response","Sampling area map",NA,TRUE
+"Model","Response","Training domain",NA,TRUE
+"Model","Response","Sample acquisition*",NA,TRUE
+"Model","Response","Sample geometry",NA,TRUE
+"Model","Response","Sample size*","150",TRUE
+"Model","Response","Classes","3",TRUE
+"Model","Response","Samples per class","setosa: 50, versicolor: 50, virginica: 50",TRUE
+"Model","Response","Range",NA,TRUE
+"Model","Response","Sampling design*","random",TRUE
+"Model","Response","Coordinate Reference System","EPSG:23030",TRUE
+"Model","Response","Data sources",NA,TRUE
+"Model","Predictors","Predictor types",NA,TRUE
+"Model","Predictors","Number of predictors*","4",TRUE
+"Model","Predictors","Names of predictors","Sepal.Length, Sepal.Width, Petal.Length, Petal.Width",TRUE
+"Model","Predictors","Preprocessing",NA,TRUE
+"Model","Predictors","Data sources",NA,TRUE
+"Model","Learning method","Model type*","Classification",TRUE
+"Model","Learning method","Learning method*","ranger",TRUE
+"Model","Learning method","Architecture",NA,TRUE
+"Model","Parameter uncertainty and biases","Potential biases*",NA,TRUE
+"Model","Parameter uncertainty and biases","Limitations*",NA,TRUE
+"Model","Model validation and selection","Validation strategy*","None",TRUE
+"Model","Model validation and selection","Performance metrics*",NA,TRUE
+"Model","Model validation and selection","Validation results*","Accuracy = 0.960, Kappa = 0.940",TRUE
+"Model","Model validation and selection","Hyperparameter tuning","mtry=2, splitrule=1, min.node.size=1",TRUE
+"Model","Model validation and selection","Predictor selection*",NA,TRUE
+"Model","Model interpretation","Explainability",NA,TRUE
+"Model","Model interpretation","Scientific interpretation",NA,TRUE
+"Model","Software","Software*",NA,TRUE
+"Model","Software","Code availability*",NA,TRUE
+"Model","Software","Data availability*",NA,TRUE
+"Prediction","Parameter uncertainty and biases","Sensitivity assessment",NA,TRUE
+"Prediction","Prediction domain","Prediction map",NA,TRUE
+"Prediction","Prediction domain","Prediction domain*",NA,TRUE
+"Prediction","Evaluation and Uncertainty","Evaluation strategy*",NA,TRUE
+"Prediction","Evaluation and Uncertainty","Performance metrics",NA,TRUE
+"Prediction","Evaluation and Uncertainty","Map accuracy*",NA,TRUE
+"Prediction","Evaluation and Uncertainty","Uncertainty quantification*",NA,TRUE
+"Prediction","Post-Processing","Threshold selection",NA,TRUE
+"Prediction","Post-Processing","Post-processing",NA,TRUE

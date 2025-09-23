@@ -38,11 +38,36 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r echo=FALSE, message=FALSE}
 df <- params$data
 
-# Wrap the 'value' column at width 30 characters
-df$value <- stringr::str_wrap(df$value, width = 30)
+# Create empty data frame if no rows are given
+if (is.null(df) || nrow(df) == 0) {
+	df <- data.frame(
+		section = character(0),
+		subsection = character(0),
+		element = character(0),
+		value = character(0),
+		stringsAsFactors = FALSE
+	)
+}
 
-# Replace newline with LaTeX line break wrapped in \makecell{}
-df$value <- paste0("\\makecell[l]{", gsub("\n", " \\\\ ", df$value), "}")
+# Wrap and escape only if there are rows
+if (nrow(df) > 0) {
+	# Ensure 'value' column exists
+	if (!"value" %in% names(df)) {
+		df$value <- character(nrow(df))
+	}
+
+	# Convert to character before wrapping
+	df$value <- stringr::str_wrap(as.character(df$value), width = 30)
+
+	# Replace newline with LaTeX line break wrapped in \makecell{}
+	df$value <- paste0("\\makecell[l]{", gsub("\n", " \\\\ ", df$value), "}")
+}
+
+# Remove 'visible' column if exists
+if ("visible" %in% names(df)) {
+	df$visible <- NULL
+}
+
 row.names(df) <- NULL
 
 knitr::kable(df, format = "latex", booktabs = TRUE, longtable = TRUE, escape = FALSE) |>
@@ -57,7 +82,9 @@ knitr::kable(df, format = "latex", booktabs = TRUE, longtable = TRUE, escape = F
 
 # Figures
 ```{r echo=FALSE, out.width="80%", fig.align='center'}
-knitr::include_graphics(params$plot_files)
+if (!is.null(params$plot_files) && length(params$plot_files) > 0) {
+	knitr::include_graphics(as.character(params$plot_files))
+}
 ```
 
 
