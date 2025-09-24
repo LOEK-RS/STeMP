@@ -28,12 +28,10 @@ Imports:
     workflows
 Suggests: 
     knitr,
-    spelling,
     testthat (>= 3.0.0),
     shinytest2,
     kableExtra,
-    stringr,
-    caret
+    stringr
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US

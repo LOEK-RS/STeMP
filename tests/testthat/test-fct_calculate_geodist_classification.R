@@ -1,9 +1,23 @@
-test_that("geodist classification correctly classfies clustered sampling designs", {
-	aoi <- sf::st_as_sfc("POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0))", crs = "epsg:25832")
-	tpoints <- sf::st_as_sfc("MULTIPOINT ((1 1), (1 2), (2 2), (2 3), (1 4), (5 4))", crs = "epsg:25832") |>
-		sf::st_cast("POINT")
+test_that("geodist classification correctly classfies random sampling designs", {
+	poly_path <- test_path("fixtures", "polygon.gpkg")
+	samples_path <- test_path("fixtures", "random_points.gpkg")
 
-	sampling_design <- calculate_geodist_classification(tpoints, aoi)
+	aoi <- sf::st_read(poly_path)
+	samples <- sf::st_read(samples_path)
+
+	sampling_design <- calculate_geodist_classification(samples, aoi)
+
+	expect_equal(sampling_design, "random")
+})
+
+test_that("geodist classification correctly classfies clustered sampling designs", {
+	poly_path <- test_path("fixtures", "polygon.gpkg")
+	samples_path <- test_path("fixtures", "clustered_points.gpkg")
+
+	aoi <- sf::st_read(poly_path)
+	samples <- sf::st_read(samples_path)
+
+	sampling_design <- calculate_geodist_classification(samples, aoi)
 
 	expect_equal(sampling_design, "clustered")
 })
