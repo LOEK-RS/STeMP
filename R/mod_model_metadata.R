@@ -183,8 +183,12 @@ mod_model_metadata_server <- function(id, input_model_object) {
 				model_algorithm(model$label %||% "")
 				model_type(if (grepl("classif", model$id)) "Classification" else "Regression")
 
-				if (!is.null(model$param_set$values)) {
-					model_hyperparams(paste0(names(model$param_set$values), "=", unlist(model$param_set$values), collapse = ", "))
+				# Safely extract hyperparameters from mlr3 model
+				ps <- tryCatch(model$param_set$values, error = function(e) NULL)
+				if (!is.null(ps) && length(ps) > 0) {
+					model_hyperparams(paste0(names(ps), "=", unlist(ps), collapse = ", "))
+				} else {
+					model_hyperparams("") # always character
 				}
 
 				# Try to extract training data from stored backend
@@ -240,7 +244,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
 						if (!is.null(model$state$model_performance)) {
 							rmse_val <- tryCatch(model$state$model_performance$score("rmse"), error = function(e) NA)
 							r2_val <- tryCatch(model$state$model_performance$score("rsq"), error = function(e) NA)
-							validation_results(sprintf("RMSE = %.3f, R^2 = %.3f", rmse_val, r2_val))
+							validation_results(sprintf("RMSE = %.3f, $R^2$ = %.3f", rmse_val, r2_val))
 						}
 					}
 				}

@@ -1,0 +1,49 @@
+"section","subsection","element","element_id","value","visible"
+"Overview","Authorship","Model title*","model_title","Test Model",TRUE
+"Overview","Authorship","Author names*","author_names","Author A",TRUE
+"Overview","Authorship","Contact*","contact","author_a@xy",TRUE
+"Overview","Authorship","Study title","study_title",NA,TRUE
+"Overview","Authorship","Study link","study_link",NA,TRUE
+"Overview","Target variable","Target variable*","target_variable","Plant traits",TRUE
+"Overview","Scientific Field","Scientific Field*","scientific_field","Biogeosciences",TRUE
+"Model","Response","Sampling locations","sampling_locations",NA,TRUE
+"Model","Response","Sampling area map","sampling_area_map",NA,TRUE
+"Model","Response","Training domain","training_domain","landscape",TRUE
+"Model","Response","Sample acquisition*","sample_acquisition","In-Situ",TRUE
+"Model","Response","Sample geometry","sample_geometry","Point",TRUE
+"Model","Response","Sample size*","sample_size","150",TRUE
+"Model","Response","Classes","classes","3",TRUE
+"Model","Response","Samples per class","samples_per_class","setosa: 50, versicolor: 50, virginica: 50",TRUE
+"Model","Response","Range","range",NA,TRUE
+"Model","Response","Sampling design*","sampling_design","clustered",TRUE
+"Model","Response","Coordinate Reference System","coordinate_reference_system","4326",TRUE
+"Model","Response","Data sources","data_sources",NA,TRUE
+"Model","Predictors","Predictor types","predictor_types","Remote Sensing Images",TRUE
+"Model","Predictors","Number of predictors*","number_of_predictors","4",TRUE
+"Model","Predictors","Names of predictors","names_of_predictors","Sepal.Length, Sepal.Width, Petal.Length, Petal.Width",TRUE
+"Model","Predictors","Preprocessing","preprocessing","Cloud removal",TRUE
+"Model","Predictors","Data sources","data_sources",NA,TRUE
+"Model","Learning method","Model type*","model_type","Classification",TRUE
+"Model","Learning method","Learning method*","learning_method","ranger",TRUE
+"Model","Learning method","Architecture","architecture",NA,TRUE
+"Model","Parameter uncertainty and biases","Potential biases*","potential_biases","Spatially clustered samples, might not be representative for entire prediction domain",TRUE
+"Model","Parameter uncertainty and biases","Limitations*","limitations","Low sample size",TRUE
+"Model","Model validation and selection","Validation strategy*","validation_strategy","Random Cross-Validation",TRUE
+"Model","Model validation and selection","Performance metrics*","performance_metrics","Kappa",TRUE
+"Model","Model validation and selection","Validation results*","validation_results","Accuracy = 0.960, Kappa = 0.940",TRUE
+"Model","Model validation and selection","Hyperparameter tuning","hyperparameter_tuning","mtry=2, splitrule=1, min.node.size=1",TRUE
+"Model","Model validation and selection","Predictor selection*","predictor_selection","None",TRUE
+"Model","Model interpretation","Explainability","explainability","PDP",TRUE
+"Model","Model interpretation","Scientific interpretation","scientific_interpretation",NA,TRUE
+"Model","Software","Software*","software","R 4.5.1",TRUE
+"Model","Software","Code availability*","code_availability","Github",TRUE
+"Model","Software","Data availability*","data_availability","Figshare",TRUE
+"Prediction","Parameter uncertainty and biases","Sensitivity assessment","sensitivity_assessment",NA,TRUE
+"Prediction","Prediction domain","Prediction map","prediction_map",NA,TRUE
+"Prediction","Prediction domain","Prediction domain*","prediction_domain","landscape",TRUE
+"Prediction","Evaluation and Uncertainty","Evaluation strategy*","evaluation_strategy","Independent probability sample",TRUE
+"Prediction","Evaluation and Uncertainty","Performance metrics","performance_metrics","Kappa",TRUE
+"Prediction","Evaluation and Uncertainty","Map accuracy*","map_accuracy","0.5",TRUE
+"Prediction","Evaluation and Uncertainty","Uncertainty quantification*","uncertainty_quantification","None",TRUE
+"Prediction","Post-Processing","Threshold selection","threshold_selection",NA,TRUE
+"Prediction","Post-Processing","Post-processing","post_processing","Spatial Filter",TRUE

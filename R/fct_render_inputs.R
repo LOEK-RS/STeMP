@@ -8,12 +8,19 @@
 #' @param info_text Optional tooltip/help text
 #' @return A selectizeInput with multiple selection enabled
 #' @noRd
-render_suggestion <- function(element_id, label, suggestions, info_text = NULL) {
+render_suggestion <- function(element_id, label, suggestions, info_text = NULL, selected = NULL) {
 	choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
+	selected_val <- selected
+	if (!is.null(selected_val) && is.character(selected_val)) {
+		# Convert comma-separated string from CSV to vector
+		selected_val <- trimws(unlist(strsplit(selected_val, ",")))
+	}
+
 	input <- shiny::selectizeInput(
 		inputId = element_id,
 		label = label,
 		choices = choices,
+		selected = selected_val,
 		multiple = TRUE,
 		options = list(create = TRUE, placeholder = "Choose or type")
 	)
@@ -27,18 +34,23 @@ render_suggestion <- function(element_id, label, suggestions, info_text = NULL) 
 #' @inheritParams render_suggestion
 #' @return A selectizeInput with single selection enabled
 #' @noRd
-render_suggestion_single <- function(element_id, label, suggestions, info_text = NULL) {
+render_suggestion_single <- function(element_id, label, suggestions, info_text = NULL, selected = NULL) {
 	choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
+
+	# If a selected value is passed (from CSV), use it; else default to "None"
+	selected_val <- selected %||% "None"
+
 	input <- shiny::selectizeInput(
 		inputId = element_id,
 		label = label,
 		choices = choices,
-		selected = "None",
+		selected = selected_val,
 		multiple = FALSE,
 		options = list(create = TRUE, placeholder = "Choose or type")
 	)
 	with_tooltip(input, info_text)
 }
+
 
 #' Render a simple text input
 #'
@@ -200,13 +212,14 @@ render_model_type <- function(element_id, element, model_metadata = NULL, info_t
 #' @noRd
 render_model_algorithm <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
 	default_algos <- c("rf", "gbm", "glm", "svmRadial", "nnet", "rpart")
-	selected_algo <- get_value(value, function() {
-		if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
-			model_metadata$model_algorithm()
-		} else {
-			""
-		}
-	})
+	selected_algo <- value %||%
+		get_value(NULL, function() {
+			if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
+				model_metadata$model_algorithm()
+			} else {
+				""
+			}
+		})
 
 	algo_choices <- if (selected_algo != "" && !(selected_algo %in% default_algos)) {
 		c(default_algos, selected_algo)
@@ -425,8 +438,14 @@ render_input_field <- function(
 		"text" = render_text_input(element_id, label, info_text, value = uploaded_value),
 		"author" = render_text_input(element_id, label, info_text, value = uploaded_value),
 		"hyperparams" = render_text_area(element_id, label, info_text, value = uploaded_value),
-		"suggestion" = render_suggestion(element_id, label, suggestions, info_text),
-		"suggestion_single" = render_suggestion_single(element_id, label, suggestions, info_text),
+		"suggestion" = render_suggestion(element_id, label, suggestions, info_text, selected = uploaded_value),
+		"suggestion_single" = render_suggestion_single(
+			element_id,
+			label,
+			suggestions,
+			info_text,
+			selected = uploaded_value
+		),
 		"num_training_samples" = render_n_samples(element_id, label, model_metadata, info_text, value = uploaded_value),
 		"num_predictors" = render_n_predictors(element_id, label, model_metadata, info_text, value = uploaded_value),
 		"num_classes" = render_n_classes(element_id, label, model_metadata, info_text, value = uploaded_value),
@@ -450,6 +469,7 @@ render_input_field <- function(
 			info_text,
 			value = uploaded_value
 		),
+		"design" = render_design(element_id, label, selected = uploaded_value, info_text = info_text),
 
 		# fallback to text input
 		render_text_input(element_id, label, info_text, value = uploaded_value)
