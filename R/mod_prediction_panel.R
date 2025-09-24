@@ -216,6 +216,7 @@ mod_prediction_panel_server <- function(
 				section = df$section,
 				subsection = df$subsection,
 				element = df$element,
+				element_id = df$element_id,
 				value = unlist(vals, use.names = FALSE),
 				stringsAsFactors = FALSE
 			)

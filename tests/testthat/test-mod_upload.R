@@ -1,4 +1,7 @@
-test_that("CSV upload and delete works", {
+# Tests for the basic functioning of the upload/delete buttons
+# Not testing for the automatic updating of protocol fields based on these uploads
+
+test_that("Protocol csv upload and delete works", {
 	protocol_test_path <- test_path("fixtures", "protocol_example.csv")
 
 	testServer(
