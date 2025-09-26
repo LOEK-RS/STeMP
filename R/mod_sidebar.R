@@ -139,7 +139,11 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
 			},
 			content = function(file) {
 				if (input$document_format == "csv") {
-					utils::write.csv(filtered_protocol_data(), file, row.names = FALSE)
+					df <- filtered_protocol_data()
+					if ("visible" %in% names(df)) {
+						df <- df[, setdiff(names(df), "visible"), drop = FALSE]
+					}
+					utils::write.csv(df, file, row.names = FALSE)
 				} else if (input$document_format == "pdf") {
 					subdir_pdf <- "figures_for_pdf"
 					allowed_ids <- get_allowed_element_ids(o_objective_1_val())

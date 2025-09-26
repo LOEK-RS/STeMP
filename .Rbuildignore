@@ -14,3 +14,7 @@ $run_dev.*
 ^Meta$
 ^[.]?air[.]toml$
 ^\.vscode$
+^codecov\.yml$
+^app\.R$
+^rsconnect$
+_\.new\.png$
