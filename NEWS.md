@@ -1,3 +1,3 @@
-# STeMP 0.9
+# STeMP 0.1
 
 * Initial experimental version of the Web App
