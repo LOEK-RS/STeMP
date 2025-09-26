@@ -10,3 +10,4 @@ library(testthat)
 library(STeMP)
 
 test_check("STeMP")
+#test_app()

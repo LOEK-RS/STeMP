@@ -28,6 +28,7 @@ Imports:
     workflows
 Suggests: 
     knitr,
+    pkgload,
     testthat (>= 3.0.0),
     shinytest2,
     kableExtra,

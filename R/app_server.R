@@ -40,7 +40,7 @@ app_server <- function(input, output, session) {
 		prediction_area = upload_mod$prediction_area
 	)
 
-	# 1. Initialize protocol creation module first
+	# Initialize protocol creation module
 	protocol <- mod_create_protocol_server(
 		"protocol",
 		protocol_data = protocol_data,
@@ -54,7 +54,7 @@ app_server <- function(input, output, session) {
 		hide_optional = shiny::reactive(FALSE)
 	)
 
-	# 2. Initialize sidebar module with UPDATED protocol data
+	# Initialize sidebar module with updated protocol data
 	sidebar <- mod_sidebar_server(
 		"sidebar",
 		protocol_data = protocol$protocol_updated,
@@ -62,7 +62,7 @@ app_server <- function(input, output, session) {
 		output_dir = temp_dir
 	)
 
-	# 2. Initialize protocol creation module and give it the hide_optional reactive so submodules can toggle visibility.
+	# Initialize protocol creation module and give it the hide_optional reactive so submodules can toggle visibility
 	protocol <- mod_create_protocol_server(
 		"protocol",
 		protocol_data = protocol_data,
@@ -76,7 +76,7 @@ app_server <- function(input, output, session) {
 		hide_optional = sidebar$hide_optional
 	)
 
-	# 3. Render viewer from the updated protocol (leave as-is)
+	# Render viewer from the updated protocol
 	mod_viewer_server(
 		"viewer",
 		protocol_data = protocol$protocol_updated,
