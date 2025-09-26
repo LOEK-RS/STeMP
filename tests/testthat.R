@@ -7,8 +7,7 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(shinytest2)
 library(STeMP)
 
-#test_check("STeMP")
-test_app()
+test_check("STeMP")
+#test_app()
