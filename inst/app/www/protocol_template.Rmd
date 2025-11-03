@@ -9,6 +9,8 @@ output:
 header-includes:
   - \usepackage[table]{xcolor}
   - \usepackage{makecell}  # for better multi-line cells
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
 params:
   data: NULL
   plot_files: NULL
