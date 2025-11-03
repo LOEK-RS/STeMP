@@ -109,7 +109,7 @@ delete_plot_png <- function(element_id, output_dir) {
 #' sanitize_latex("10% of $100 & more")
 #' sanitize_latex("Back\\slash and newline\nhere.")
 #'
-#' @noRd
+#' @export
 sanitize_latex <- function(x) {
 	if (is.null(x)) {
 		return("")
