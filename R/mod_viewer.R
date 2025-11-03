@@ -79,7 +79,9 @@ mod_viewer_server <- function(id, protocol_data, o_objective_1_val, output_dir) 
 
 			# load protocol data
 			df <- protocol_data()
-			df_sanitized <- df |> dplyr::mutate(dplyr::across(dplyr::everything(), sanitize_latex))
+			df_sanitized <- df |>
+				dplyr::mutate(dplyr::across(dplyr::everything(), sanitize_latex)) |>
+				dplyr::select(-"subsection", -"element_id")
 
 			rmarkdown::render(
 				input = temp_rmd,
