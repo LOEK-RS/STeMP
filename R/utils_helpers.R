@@ -111,8 +111,18 @@ delete_plot_png <- function(element_id, output_dir) {
 #'
 #' @noRd
 sanitize_latex <- function(x) {
-	x <- gsub("\\\\", "\\textbackslash{}", x)
-	x <- gsub("([_%&$#{}])", "\\\\\\1", x)
+	if (is.null(x)) {
+		return("")
+	}
+	x <- as.character(x)
+	# Escape backslashes first
+	x <- gsub("\\\\", "\\\\textbackslash{}", x)
+	# Escape LaTeX special chars: _ % & $ # { }
+	x <- gsub("([_%&$#{}])", "\\\\\\1", x, perl = TRUE)
+	# Handle ~ and ^ which are not caught above
+	x <- gsub("~", "\\\\textasciitilde{}", x, fixed = TRUE)
+	x <- gsub("\\^", "\\\\textasciicircum{}", x)
+	# Replace newlines with spaces
 	x <- gsub("\n", " ", x)
 	x
 }
