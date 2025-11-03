@@ -70,7 +70,7 @@ if ("visible" %in% names(df)) {
 
 row.names(df) <- NULL
 
-names(df) <- sapply(names(df), sanitize_latex)
+names(df) <- sapply(names(df), STeMP::sanitize_latex)
 
 knitr::kable(df, format = "latex", booktabs = TRUE, longtable = TRUE, escape = FALSE) |>
 	kableExtra::kable_styling(latex_options = c("striped", "hold_position"), font_size = 6) |>
