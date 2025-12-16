@@ -4,7 +4,6 @@ format:
   html:
     toc: false
     number-sections: false
-    css: stemp.css
     self-contained: true
 params:
   data: null
