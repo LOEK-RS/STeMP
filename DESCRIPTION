@@ -17,6 +17,7 @@ Imports:
     htmltools,
     purrr,
     rmarkdown,
+    quarto,
     sf,
     shiny,
     shinyBS,
