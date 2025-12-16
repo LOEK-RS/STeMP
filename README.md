@@ -22,17 +22,15 @@ This [Shiny web application](https://odmap.wsl.ch/) helps to implement the ODMAP
 To run the app, you need to have the following R packages installed:
 
 ```R
-install.packages(c("shiny", "shinyjs", "shinythemes", "shinyWidgets", "shinyBS", "htmltools", 
-                   "knitr", "dplyr", "utils", "workflows", "purrr", "data.table", "stringr",
-                   "sf", "ggplot2", "CAST", "stats", "rmarkdown", "golem", "config", "kableExtra"))
+install.packages(c(
+  "shiny", "shinyjs", "shinythemes", "shinyWidgets", "shinyBS", 
+  "htmltools", "knitr", "dplyr", "utils", "purrr", "data.table",
+  "stringr", "sf", "ggplot2", "CAST", "stats", "rmarkdown", "golem",
+  "config", "kableExtra", "pagedown"
+))
 ```
 
-The app uses TinyTeX to compile PDFs. To install TinyTeX, run:
-
-```R
-install.packages("tinytex")
-tinytex::install_tinytex()
-```
+The app uses Quarto to render HTMLs. To install Quarto, visit [https://quarto.org/docs/get-started/](https://quarto.org/docs/get-started/)
 
 ### Run
 

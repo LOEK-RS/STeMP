@@ -1,0 +1,122 @@
+---
+title: "STeMP: Spatio-TEmporal Modelling Protocol"
+format:
+  html:
+    toc: false
+    number-sections: false
+    self-contained: true
+params:
+  data: null
+  plot_files: null
+header-includes:
+  - '<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>'
+---
+
+
+<!--
+  This R Quarto template generates the STeMP protocol HTML report.
+  
+  It renders:
+  - A formatted table of protocol data (params$data).
+  - Figures included from the provided plot file paths (params$plot_files).
+  
+  Usage:
+  - Pass a data.frame to `params$data` with columns expected by the table renderer.
+  - Provide vector of plot file paths to `params$plot_files` to include figures.
+-->
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Table
+```{r echo=FALSE, message=FALSE}
+df <- params$data
+message(df)
+
+# Force data.frame if Quarto reconstructed a list
+if (is.list(df) && !is.data.frame(df)) {
+	df <- as.data.frame(df, stringsAsFactors = FALSE)
+}
+
+# Handle empty / missing
+if (!is.data.frame(df) || nrow(df) == 0) {
+	df <- data.frame(
+		section = character(0),
+		subsection = character(0),
+		element = character(0),
+		value = character(0),
+		stringsAsFactors = FALSE
+	)
+}
+
+# Replace NA safely
+df[] <- lapply(df, function(col) {
+	col[is.na(col)] <- ""
+	col
+})
+
+```
+
+```{r echo=FALSE, message=FALSE}
+
+# Wrap and escape only if there are rows
+if (nrow(df) > 0) {
+	# Ensure 'value' column exists
+	if (!"value" %in% names(df)) {
+		df$value <- character(nrow(df))
+	}
+
+	# Convert to character before wrapping
+	df$value <- stringr::str_wrap(as.character(df$value), width = 30)
+
+	# Replace newline with LaTeX line break wrapped in \makecell{}
+	df$value <- gsub("\n", "<br>", df$value)
+}
+
+# Remove 'visible' column if exists
+if ("visible" %in% names(df)) {
+	df$visible <- NULL
+}
+
+row.names(df) <- NULL
+
+names(df) <- sapply(names(df), STeMP::sanitize_text)
+
+tbl <- knitr::kable(
+	df,
+	format = "html",
+	escape = FALSE
+) |>
+	kableExtra::kable_styling(font_size = 12)
+
+n_cols <- ncol(df)
+
+if (n_cols >= 1) {
+	tbl <- kableExtra::column_spec(tbl, 1, width = "2cm")
+}
+if (n_cols >= 2) {
+	tbl <- kableExtra::column_spec(tbl, 2, width = "4cm")
+}
+if (n_cols >= 3) {
+	tbl <- kableExtra::column_spec(tbl, 3, width = "4cm")
+}
+if (n_cols >= 4) {
+	tbl <- kableExtra::column_spec(tbl, 4, width = "6cm")
+}
+
+tbl
+
+
+```
+
+# Figures
+```{r echo=FALSE, out.width="80%", fig.align='center'}
+if (!is.null(params$plot_files) && length(params$plot_files) > 0) {
+	knitr::include_graphics(as.character(params$plot_files), auto_pdf = FALSE, error = FALSE)
+}
+```
+
+
