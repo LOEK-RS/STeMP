@@ -16,7 +16,6 @@ Imports:
     golem,
     htmltools,
     purrr,
-    rmarkdown,
     quarto,
     sf,
     shiny,
@@ -26,7 +25,8 @@ Imports:
     shinyWidgets,
     stats,
     utils,
-    workflows
+    workflows,
+    pagedown
 Suggests: 
     knitr,
     pkgload,

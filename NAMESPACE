@@ -2,7 +2,7 @@
 
 export(analyze_stemp)
 export(run_app)
-export(sanitize_latex)
+export(sanitize_text)
 import(shiny)
 importFrom(golem,add_resource_path)
 importFrom(golem,bundle_resources)

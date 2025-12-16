@@ -54,12 +54,21 @@ app_server <- function(input, output, session) {
 		hide_optional = shiny::reactive(FALSE)
 	)
 
+	# Render HTML used for downloading a PDF and for previewing the protocol
+	render_protocol_html <- make_protocol_html(
+		protocol_data = protocol$protocol_updated,
+		o_objective_1_val = protocol$o_objective_1,
+		output_dir = temp_dir,
+		session_token = session$token
+	)
+
 	# Initialize sidebar module with updated protocol data
 	sidebar <- mod_sidebar_server(
 		"sidebar",
 		protocol_data = protocol$protocol_updated,
 		o_objective_1_val = protocol$o_objective_1,
-		output_dir = temp_dir
+		output_dir = temp_dir,
+		generate_html = render_protocol_html
 	)
 
 	# Initialize protocol creation module and give it the hide_optional reactive so submodules can toggle visibility
@@ -79,8 +88,7 @@ app_server <- function(input, output, session) {
 	# Render viewer from the updated protocol
 	mod_viewer_server(
 		"viewer",
-		protocol_data = protocol$protocol_updated,
-		o_objective_1_val = protocol$o_objective_1,
-		output_dir = temp_dir
+		generate_html = render_protocol_html,
+		temp_dir = temp_dir
 	)
 }

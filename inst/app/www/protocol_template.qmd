@@ -8,17 +8,17 @@ format:
 params:
   data: null
   plot_files: null
+header-includes:
+  - '<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>'
 ---
 
 
 <!--
-  This R Quarto template generates the STeMP protocol PDF report.
+  This R Quarto template generates the STeMP protocol HTML report.
   
   It renders:
-  - A formatted table of protocol data (params$data) with line wrapping and multi-line LaTeX cells.
+  - A formatted table of protocol data (params$data).
   - Figures included from the provided plot file paths (params$plot_files).
-  
-  The document is compiled using XeLaTeX with specific LaTeX packages for styling.
   
   Usage:
   - Pass a data.frame to `params$data` with columns expected by the table renderer.
@@ -83,7 +83,7 @@ if ("visible" %in% names(df)) {
 
 row.names(df) <- NULL
 
-names(df) <- sapply(names(df), STeMP::sanitize_latex)
+names(df) <- sapply(names(df), STeMP::sanitize_text)
 
 tbl <- knitr::kable(
 	df,

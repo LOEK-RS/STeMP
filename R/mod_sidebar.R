@@ -44,7 +44,7 @@ mod_sidebar_ui <- function(id) {
 #'   \item{show_warnings}{Reactive logical for warnings toggle}
 #' }
 #' @noRd
-mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir) {
+mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir, generate_html) {
 	shiny::moduleServer(id, function(input, output, session) {
 		## Reactive filtered protocol data based on "hide optional" toggle
 		filtered_protocol_data <- shiny::reactive({
@@ -145,30 +145,14 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir)
 					}
 					utils::write.csv(df, file, row.names = FALSE)
 				} else if (input$document_format == "pdf") {
-					subdir_pdf <- "figures_for_pdf"
-					allowed_ids <- get_allowed_element_ids(o_objective_1_val())
-					plot_files_rel <- get_selected_plot_files(output_dir, allowed_ids, copy_subdir = subdir_pdf)
+					# Always generate fresh HTML, independent of viewer
+					html_file <- generate_html()
+					html_file <- normalizePath(html_file)
 
-					temp_rmd <- file.path(output_dir, "protocol_temp.Rmd")
-					template_path <- app_sys("app/www/protocol_template.Rmd")
-					file.copy(template_path, temp_rmd, overwrite = TRUE)
-
-					df_sanitized <- filtered_protocol_data() |>
-						dplyr::mutate(dplyr::across(dplyr::everything(), sanitize_latex))
-
-					rmarkdown::render(
-						input = temp_rmd,
-						output_file = file,
-						params = list(
-							data = df_sanitized,
-							plot_files = plot_files_rel
-						),
-						envir = new.env(parent = globalenv()),
-						quiet = TRUE,
-						clean = TRUE
+					pagedown::chrome_print(
+						input = html_file,
+						output = file
 					)
-
-					unlink(file.path(output_dir, subdir_pdf), recursive = TRUE)
 				} else if (input$document_format == "figures") {
 					subdir_zip <- "figures_for_zip"
 					allowed_ids <- get_allowed_element_ids(o_objective_1_val())

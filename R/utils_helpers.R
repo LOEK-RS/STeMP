@@ -95,33 +95,25 @@ delete_plot_png <- function(element_id, output_dir) {
 }
 
 
-#' Sanitize Text for LaTeX
+#' Sanitize Text for HTML / PDF
 #'
-#' Escapes special characters in a string to make it safe for LaTeX rendering.
-#' This includes characters such as `%`, `_`, `&`, `$`, `#`, `{`, `}`, and backslashes.
-#' It also replaces newlines with spaces to maintain formatting consistency.
+#' Replaces newlines with spaces. No LaTeX escaping needed because HTML is converted to PDF.
 #'
-#' @param x A character string to sanitize.
-#'
-#' @return A character string with LaTeX special characters escaped and newlines replaced.
-#'
-#' @examples
-#' sanitize_latex("10% of $100 & more")
-#' sanitize_latex("Back\\slash and newline\nhere.")
-#'
+#' @param x A character string.
+#' @return A character string safe for HTML / PDF output.
 #' @export
-sanitize_latex <- function(x) {
+sanitize_text <- function(x) {
 	if (is.null(x)) {
 		return("")
 	}
 	x <- as.character(x)
-	# Escape backslashes first
-	x <- gsub("\\\\", "\\\\textbackslash{}", x)
-	# Escape LaTeX special chars: _ % & $ # { }
-	x <- gsub("([_%&$#{}])", "\\\\\\1", x, perl = TRUE)
-	# Handle ~ and ^ which are not caught above
-	x <- gsub("~", "\\\\textasciitilde{}", x, fixed = TRUE)
-	x <- gsub("\\^", "\\\\textasciicircum{}", x)
+	# Replace NA with empty string
+	x[is.na(x)] <- ""
+	# Escape HTML special characters
+	x <- gsub("&", "&amp;", x, fixed = TRUE)
+	x <- gsub("<", "&lt;", x, fixed = TRUE)
+	x <- gsub(">", "&gt;", x, fixed = TRUE)
+	x <- gsub('"', "&quot;", x, fixed = TRUE)
 	# Replace newlines with spaces
 	x <- gsub("\n", " ", x)
 	x
