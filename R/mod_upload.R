@@ -14,19 +14,13 @@ mod_upload_ui <- function(id) {
 			shiny::column(2),
 			shiny::column(
 				8,
-				shiny::p(shiny::tags$b("(1) Upload STeMP protocol (.csv)")),
-				shiny::fileInput(ns("csv_upload"), label = NULL, accept = c(".csv")),
-				shiny::uiOutput(ns("csv_status")),
-				shiny::actionButton(ns("delete_csv"), "Delete uploaded protocol", style = "margin-bottom: 15px;"),
-				shiny::tags$hr(),
-
-				shiny::p(shiny::tags$b("(2) Upload model (.RDS)")),
+				shiny::p(shiny::tags$b("Upload model (.RDS)")),
 				shiny::fileInput(ns("model_upload"), "Upload model object (.RDS)", accept = ".rds"),
 				shiny::uiOutput(ns("model_status")),
 				shiny::actionButton(ns("delete_model"), "Delete uploaded model", style = "margin-bottom: 15px;"),
 				shiny::tags$hr(),
 
-				shiny::p(shiny::tags$b("(3) Upload geospatial data (.gpkg)")),
+				shiny::p(shiny::tags$b("Upload geospatial data (.gpkg)")),
 				mod_gpkg_upload_ui(ns("samples"), label = "Upload sampling locations"),
 				shiny::uiOutput(ns("sample_status")),
 				shiny::actionButton(ns("delete_samples"), "Delete uploaded samples", style = "margin-bottom: 15px;"),
@@ -68,43 +62,6 @@ mod_upload_ui <- function(id) {
 mod_upload_server <- function(id, output_dir) {
 	shiny::moduleServer(id, function(input, output, session) {
 		ns <- session$ns
-
-		# to use dplyr:
-		element <- NULL
-
-		# Reactive for protocol CSV data
-		csv_data <- shiny::reactiveVal(NULL)
-		csv_deleted <- shiny::reactiveVal(FALSE)
-
-		shiny::observeEvent(input$csv_upload, {
-			shiny::req(input$csv_upload)
-			tryCatch(
-				{
-					df <- utils::read.csv(input$csv_upload$datapath) |>
-						dplyr::mutate(element_id = normalize_id(element))
-					csv_data(df)
-
-					output$csv_status <- shiny::renderUI({
-						shiny::tags$p("CSV loaded successfully", style = "color: blue;")
-					})
-				},
-				error = function(e) {
-					output$csv_status <- shiny::renderUI({
-						shiny::tags$p("Error loading CSV file", style = "color: red;")
-					})
-				}
-			)
-		})
-
-		# Delete button for CSV upload
-		shiny::observeEvent(input$delete_csv, {
-			csv_data(NULL)
-			shinyjs::reset("csv_upload")
-			csv_deleted(TRUE)
-			output$csv_status <- shiny::renderUI({
-				shiny::tags$p("Protocol upload deleted.", style = "color: orange;")
-			})
-		})
 
 		# Reactive for model RDS object
 		model_object <- shiny::reactiveVal(NULL)
@@ -179,7 +136,6 @@ mod_upload_server <- function(id, output_dir) {
 
 		# Return reactives for use outside module
 		list(
-			csv = csv_data,
 			model = model_object,
 			model_deleted = model_deleted,
 			samples = samples,
