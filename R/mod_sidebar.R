@@ -23,28 +23,38 @@ mod_sidebar_ui <- function(id) {
 		),
 
 		# upload existing protocol
-		shiny::h5("Upload protocol", style = "font-weight: bold"),
+		shiny::h5("Upload protocol", style = "font-weight: bold; margin-bottom: 5px;"),
 
-		# Row 1: Browse button
+		# Single row: Browse and Delete buttons
 		shiny::div(
-			shiny::fileInput(
-				ns("csv_upload"),
-				label = NULL,
-				accept = ".csv",
-				buttonLabel = "Browse",
-				placeholder = "",
-				width = "100%"
-			)
-		),
+			style = "display: flex; gap: 6px; align-items: center; margin-bottom: 6px;",
 
-		# Row 2: Delete button
-		shiny::div(
-			style = "margin-top: 6px;",
+			# Custom Browse button
+			shiny::actionButton(
+				ns("browse_trigger"),
+				label = "Browse",
+				class = "btn btn-sm btn-primary",
+				style = "flex: 1;"
+			),
+
+			# Delete button
 			shiny::actionButton(
 				ns("delete_csv"),
 				label = "Delete",
 				class = "btn btn-sm btn-danger",
-				style = "width: 25%;",
+				style = "width: 90px;"
+			)
+		),
+
+		# hidden native file input
+		shiny::div(
+			style = "display: none;",
+			shiny::fileInput(
+				ns("csv_upload"),
+				label = NULL,
+				accept = ".csv",
+				buttonLabel = "Hidden",
+				width = "0px"
 			)
 		),
 
@@ -147,7 +157,7 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir,
 		)
 
 		# Trigger hidden file input when custom upload button is clicked
-		shiny::observeEvent(input$upload_trigger, {
+		shiny::observeEvent(input$browse_trigger, {
 			shinyjs::click("csv_upload")
 		})
 
