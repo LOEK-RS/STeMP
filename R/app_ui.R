@@ -37,6 +37,9 @@ app_ui <- function(request) {
 			# How-to
 			tabPanel("How to use this app", value = "howto", mod_howto_ui("howto")),
 
+			# Upload/Import
+			tabPanel("Upload data", value = "import", mod_upload_ui("upload")),
+
 			# Create protocol
 			tabPanel(
 				"Create a protocol",
@@ -54,10 +57,7 @@ app_ui <- function(request) {
 			),
 
 			# Viewer
-			tabPanel("Protocol viewer", value = "viewer", mod_viewer_ui("viewer")),
-
-			# Upload/Import
-			tabPanel("Upload / Import", value = "import", mod_upload_ui("upload"))
+			tabPanel("Protocol viewer", value = "viewer", mod_viewer_ui("viewer"))
 		)
 	)
 }
