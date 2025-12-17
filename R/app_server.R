@@ -27,9 +27,6 @@ app_server <- function(input, output, session) {
 	model_deleted <- shiny::reactive({
 		is.null(upload_mod$model())
 	})
-	csv_deleted <- shiny::reactive({
-		is.null(upload_mod$csv())
-	})
 
 	# Initialize metadata modules for model and geodata
 	model_metadata <- mod_model_metadata_server("model_metadata", input_model_object = upload_mod$model)
@@ -38,20 +35,6 @@ app_server <- function(input, output, session) {
 		samples = upload_mod$samples,
 		training_area = upload_mod$training_area,
 		prediction_area = upload_mod$prediction_area
-	)
-
-	# Initialize protocol creation module
-	protocol <- mod_create_protocol_server(
-		"protocol",
-		protocol_data = protocol_data,
-		uploaded_csv = upload_mod$csv,
-		model_metadata = model_metadata,
-		geo_metadata = geo_metadata,
-		output_dir = temp_dir,
-		model_deleted = model_deleted,
-		csv_deleted = csv_deleted,
-		show_warnings = shiny::reactive(FALSE),
-		hide_optional = shiny::reactive(FALSE)
 	)
 
 	# Render HTML used for downloading a PDF and for previewing the protocol
@@ -71,11 +54,29 @@ app_server <- function(input, output, session) {
 		generate_html = render_protocol_html
 	)
 
+	csv_deleted <- shiny::reactive({
+		is.null(sidebar$csv())
+	})
+
+	# Initialize protocol creation module
+	protocol <- mod_create_protocol_server(
+		"protocol",
+		protocol_data = protocol_data,
+		uploaded_csv = sidebar$csv,
+		model_metadata = model_metadata,
+		geo_metadata = geo_metadata,
+		output_dir = temp_dir,
+		model_deleted = model_deleted,
+		csv_deleted = csv_deleted,
+		show_warnings = shiny::reactive(FALSE),
+		hide_optional = shiny::reactive(FALSE)
+	)
+
 	# Initialize protocol creation module and give it the hide_optional reactive so submodules can toggle visibility
 	protocol <- mod_create_protocol_server(
 		"protocol",
 		protocol_data = protocol_data,
-		uploaded_csv = upload_mod$csv,
+		uploaded_csv = sidebar$csv,
 		model_metadata = model_metadata,
 		geo_metadata = geo_metadata,
 		output_dir = temp_dir,

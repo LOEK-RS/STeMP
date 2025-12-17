@@ -22,6 +22,45 @@ mod_sidebar_ui <- function(id) {
 			value = TRUE
 		),
 
+		# upload existing protocol
+		shiny::h5("Upload protocol", style = "font-weight: bold; margin-bottom: 5px;"),
+
+		# Single row: Browse and Delete buttons
+		shiny::div(
+			style = "display: flex; gap: 6px; align-items: center; margin-bottom: 6px;",
+
+			# Custom Browse button
+			shiny::actionButton(
+				ns("browse_trigger"),
+				label = "Browse",
+				class = "btn btn-sm btn-primary",
+				style = "flex: 1;"
+			),
+
+			# Delete button
+			shiny::actionButton(
+				ns("delete_csv"),
+				label = "Delete",
+				class = "btn btn-sm btn-danger",
+				style = "width: 90px;"
+			)
+		),
+
+		# hidden native file input
+		shiny::div(
+			style = "display: none;",
+			shiny::fileInput(
+				ns("csv_upload"),
+				label = NULL,
+				accept = ".csv",
+				buttonLabel = "Hidden",
+				width = "0px"
+			)
+		),
+
+		shiny::tags$hr(),
+
+		# download protocol
 		shiny::h5("Download protocol", style = "font-weight: bold"),
 		shiny::radioButtons(ns("document_format"), label = NULL, choices = c("csv", "pdf", "figures")),
 		shiny::downloadButton(ns("protocol_download"))
@@ -104,7 +143,54 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir,
 			shiny::tagList(overall, section_bars)
 		})
 
-		## Reactive timer for figure existence check, updates every second
+		## CSV upload
+		# Reactive for protocol CSV data
+		csv_data <- shiny::reactiveVal(NULL)
+		csv_deleted <- shiny::reactiveVal(FALSE)
+
+		# Disable "Delete" button as long as no CSV is uploaded
+		shiny::observe({
+			if (is.null(csv_data())) {
+				shinyjs::disable("delete_csv")
+			} else {
+				shinyjs::enable("delete_csv")
+			}
+		})
+
+		# Trigger hidden file input when custom upload button is clicked
+		shiny::observeEvent(input$browse_trigger, {
+			shinyjs::click("csv_upload")
+		})
+
+		# Handle csv upload
+		shiny::observeEvent(input$csv_upload, {
+			shiny::req(input$csv_upload)
+			tryCatch(
+				{
+					df <- utils::read.csv(input$csv_upload$datapath)
+					df$element_id <- normalize_id(df$element)
+					csv_data(df)
+
+					shinyjs::enable("delete_csv")
+				},
+				error = function(e) {
+					output$csv_status <- shiny::renderUI({
+						shiny::tags$p("Error loading CSV file", style = "color: red;")
+					})
+				}
+			)
+		})
+
+		# Delete button for CSV upload
+		shiny::observeEvent(input$delete_csv, {
+			csv_data(NULL)
+			shinyjs::reset("csv_upload")
+			shinyjs::disable("delete_csv")
+			csv_deleted(TRUE)
+		})
+
+		## Download options
+		# Reactive timer for figure existence check, updates every second
 		autoInvalidate <- shiny::reactiveTimer(1000)
 
 		figures_exist <- shiny::reactive({
@@ -175,6 +261,7 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir,
 
 		# Return reactive values for use in app
 		list(
+			csv = csv_data,
 			filtered_protocol_data = filtered_protocol_data,
 			hide_optional = shiny::reactive(input$hide_optional),
 			show_warnings = shiny::reactive(input$show_warnings)

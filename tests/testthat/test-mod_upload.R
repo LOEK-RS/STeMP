@@ -1,33 +1,3 @@
-# Tests for the basic functioning of the upload/delete buttons
-# Not testing for the automatic updating of protocol fields based on these uploads
-
-test_that("Protocol csv upload and delete works", {
-	protocol_test_path <- test_path("fixtures", "protocol_example.csv")
-
-	testServer(
-		mod_upload_server,
-		args = list(id = "upload", output_dir = tempdir()),
-		{
-			# simulate CSV upload
-			session$setInputs(csv_upload = list(datapath = protocol_test_path, name = basename(protocol_test_path)))
-			session$flushReact()
-
-			# Check that CSV loaded
-			expect_s3_class(csv_data(), "data.frame")
-			expect_false(csv_deleted())
-
-			# simulate CSV deletion
-			session$setInputs(delete_csv = 1)
-			session$flushReact()
-
-			# Check deletion
-			expect_null(csv_data())
-			expect_true(csv_deleted())
-		}
-	)
-})
-
-
 test_that("caret model upload and delete works", {
 	model_path <- test_path("fixtures", "model_caret.RDS")
 
