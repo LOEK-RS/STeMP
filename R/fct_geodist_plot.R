@@ -26,8 +26,19 @@ geodist_plot <- function(
 
 		samples_data <- sf::st_transform(samples_data, sf::st_crs(area_data))
 		geod <- CAST::geodist(samples_data, modeldomain = area_data)
+
+		# Check wether log-scale is needed
+		dist_samples <- geod[geod$what == "sample-to-sample", ]$dist
+		dist_pred_samples <- geod[geod$what == "prediction-to-sample", ]$dist
+		log_needed <- abs(log10(stats::median(dist_samples)) - log10(stats::median(dist_pred_samples))) >= 1 # 10× difference between distribution medians
+
 		p <- plot(geod) +
 			ggplot2::theme(aspect.ratio = 0.8)
+
+		if (log_needed) {
+			p <- p +
+				ggplot2::scale_x_log10()
+		}
 
 		save_figure(p, element_id, output_dir)
 		p
