@@ -166,8 +166,8 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir,
 			shiny::req(input$csv_upload)
 			tryCatch(
 				{
-					df <- utils::read.csv(input$csv_upload$datapath) |>
-						dplyr::mutate(element_id = normalize_id(.data$element))
+					df <- utils::read.csv(input$csv_upload$datapath)
+					df$element_id <- normalize_id(df$element)
 					csv_data(df)
 
 					shinyjs::enable("delete_csv")
