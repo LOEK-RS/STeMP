@@ -148,13 +148,14 @@ mod_sidebar_server <- function(id, protocol_data, o_objective_1_val, output_dir,
 		csv_data <- shiny::reactiveVal(NULL)
 		csv_deleted <- shiny::reactiveVal(FALSE)
 
-		# Disable CSV deletion on start-up
-		session$onFlushed(
-			function() {
+		# Disable "Delete" button as long as no CSV is uploaded
+		shiny::observe({
+			if (is.null(csv_data())) {
 				shinyjs::disable("delete_csv")
-			},
-			once = TRUE
-		)
+			} else {
+				shinyjs::enable("delete_csv")
+			}
+		})
 
 		# Trigger hidden file input when custom upload button is clicked
 		shiny::observeEvent(input$browse_trigger, {
