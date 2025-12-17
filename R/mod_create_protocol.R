@@ -139,7 +139,27 @@ mod_create_protocol_server <- function(
 			df
 		})
 
-		# 7) Run warnings module to check for sampling design, validation method, uncertainty, predictor types
+		# 7) Show info message once
+		message_shown <- shiny::reactiveVal(FALSE)
+		shiny::observeEvent(
+			input$tabset,
+			{
+				if (input$tabset == "Model" && !message_shown()) {
+					shiny::showNotification(
+						ui = shiny::HTML(
+							"You can automatically fill fields using the <b>Upload data</b> tab"
+						),
+						type = "message", # blue info style
+						duration = 8
+					)
+					message_shown(TRUE)
+				}
+			},
+			ignoreNULL = TRUE,
+			ignoreInit = TRUE
+		)
+
+		# 8) Run warnings module to check for sampling design, validation method, uncertainty, predictor types
 		mod_warnings_server(
 			id = "warnings",
 			sampling_design = model_results$sampling_design,
@@ -149,7 +169,7 @@ mod_create_protocol_server <- function(
 			show_warnings = show_warnings
 		)
 
-		# 8) Re-set fields filled by uploaded protocol if the delete-uploaded-protocol button is activated
+		# 9) Re-set fields filled by uploaded protocol if the delete-uploaded-protocol button is activated
 		current_model_ids <- shiny::reactiveVal(NULL)
 
 		# Track current Overview input IDs
@@ -181,7 +201,7 @@ mod_create_protocol_server <- function(
 			}
 		})
 
-		# 9) Return reactive expressions for selected objective and updated protocol data frame
+		# 10) Return reactive expressions for selected objective and updated protocol data frame
 		return(list(
 			o_objective_1 = overview$o_objective_1,
 			protocol_updated = updated_protocol
