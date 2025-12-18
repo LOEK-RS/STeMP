@@ -24,7 +24,12 @@ mod_howto_ui <- function(id) {
                     The ",
 					shiny::em("Hide optional fields"),
 					" switch on the left allows you to only display mandatory fields, 
-                    which depend on the model objective chosen. A preview of your current protocol is available in the ",
+                    which depend on the model objective chosen. 
+										By switching the ",
+					shiny::em("Display warnings"),
+					"toggle you can decide if warnings indicating common pitfalls should be displayed.",
+
+					"A preview of your current protocol is available in the ",
 					shiny::em("Protocol viewer"),
 					".",
 					style = "font-size: 18px;"
@@ -35,15 +40,16 @@ mod_howto_ui <- function(id) {
 					shiny::em("download"),
 					" button on the left. 
                     It is possible to download a .csv table containing the elements and their values, as well as a .pdf file containing the 
-                    table and the figures, or just the figures as .zip folder",
+                    table and the figures, or just the figures as .zip folder. The downloaded .csv file can be re-uploaded in the sidebar
+										later to continue working on the protocol, even after closing and re-starting the app.",
 					style = "font-size: 18px;"
 				),
 
 				shiny::p(
-					"It is possible to resume your work by uploading your previously saved STeMP .csv file in the ",
+					"In the ",
 					shiny::em("Upload/Import"),
-					" tab. There, you can also upload model objects (currently only .RDS files) to automatically
-                    fill some of the protocol fields based on the model metadata. Also, it is possible to upload the sampling locations,
+					" tab, you can upload model objects (currently only .RDS files) to automatically
+                    fill some of the protocol fields based on the models' metadata. Also, it is possible to upload the sampling locations,
                     the training area and the prediction area as .gpkg files and generate plots from them. If sampling locations and the prediction
                     area (if the objective is ",
 					shiny::em("Model and prediction"),
