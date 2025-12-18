@@ -1,17 +1,17 @@
 #' Analyze STeMP output
 #'
-#' @param file Path to the downloaded .csv from the STeMP WebAPP.
-#' @return Table listing possible problems identified from the filled protocol.
+#' @param protocol A data.frame containing the downloaded STeMP object.
+#' @param render Should the resulting table be rendered? By default TRUE.
+#' @return A list containing the warnings as plain text, as well as the rendered table if `render` is TRUE.
 #' @export
-analyze_stemp <- function(file) {
-	protocol <- suppressMessages(readr::read_csv(file))
-
+analyze_protocol <- function(protocol, render = TRUE) {
+	# get values of relevant fields
 	vals <- stats::setNames(protocol$value, protocol$element_id)
-	sampling_design <- vals["sampling_design"]
-	validation_strategy <- vals["validation_strategy"]
-	evaluation_strategy <- vals["evaluation_strategy"]
-	predictor_types <- vals["predictor_types"]
-	uncertainty_quantification <- vals["uncertainty_quantification"]
+	sampling_design <- unname(vals["sampling_design"])
+	validation_strategy <- unname(vals["validation_strategy"])
+	evaluation_strategy <- unname(vals["evaluation_strategy"])
+	predictor_types <- unname(vals["predictor_types"])
+	uncertainty_quantification <- unname(vals["uncertainty_quantification"])
 
 	# list of possible problems:
 	# sampling_design == "random" + validation_strategy == "Spatial Cross-Validation"
@@ -30,7 +30,7 @@ analyze_stemp <- function(file) {
 
 	# Collect warnings
 	warnings <- list()
-	if (random_design_spatial_CV) {
+	if (isTRUE(random_design_spatial_CV)) {
 		warning_message <- shiny::HTML(
 			paste0(
 				protocol[protocol$element_id == "validation_strategy", "value"],
@@ -45,7 +45,7 @@ analyze_stemp <- function(file) {
 		warnings <- append(warnings, warning_message)
 	}
 
-	if (random_design_spatial_Err) {
+	if (isTRUE(random_design_spatial_Err)) {
 		warning_message <- shiny::HTML(
 			paste0(
 				protocol[protocol$element_id == "validation_strategy", "value"],
@@ -59,7 +59,7 @@ analyze_stemp <- function(file) {
 		warnings <- append(warnings, warning_message)
 	}
 
-	if (clustered_design_spatial_CV) {
+	if (isTRUE(clustered_design_spatial_CV)) {
 		warning_message <- shiny::HTML(
 			paste0(
 				protocol[protocol$element_id == "validation_strategy", "value"],
@@ -74,7 +74,7 @@ analyze_stemp <- function(file) {
 		warnings <- append(warnings, warning_message)
 	}
 
-	if (clustered_design_spatial_Err) {
+	if (isTRUE(clustered_design_spatial_Err)) {
 		warning_message <- shiny::HTML(
 			paste0(
 				protocol[protocol$element_id == "validation_strategy", "value"],
@@ -88,7 +88,7 @@ analyze_stemp <- function(file) {
 		warnings <- append(warnings, warning_message)
 	}
 
-	if (clustered_design_spatial_proxies) {
+	if (isTRUE(clustered_design_spatial_proxies)) {
 		warning_message <- shiny::HTML(
 			"Using spatial proxies with clustered samples likely leads to extrapolation situations.",
 			'See <a href="https://doi.org/10.1016/j.ecolmodel.2019.108815" target="_blank">Meyer et al., 2019,
@@ -97,7 +97,7 @@ analyze_stemp <- function(file) {
 		warnings <- append(warnings, warning_message)
 	}
 
-	if (clustered_design_no_uncert) {
+	if (isTRUE(clustered_design_no_uncert)) {
 		warning_message <- shiny::HTML(
 			"The samples were clustered relative to the prediction area, which often leads to extrapolation when the model is
 			 applied to feature combinations not present in the training data.<br>
@@ -108,6 +108,12 @@ analyze_stemp <- function(file) {
 		warnings <- append(warnings, warning_message)
 	}
 
-	## Return data table
-	DT::datatable(data.frame(Warnings = unlist(warnings)), escape = FALSE)
+	out <- list("warnings_text" = paste(warnings, sep = "."))
+	if (isTRUE(render)) {
+		## Return data table
+		out$rendered_table <- DT::datatable(data.frame(Warnings = unlist(warnings)), escape = FALSE)
+	}
+
+	class(out) <- "stemp_analysis"
+	out
 }
