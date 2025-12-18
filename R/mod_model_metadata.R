@@ -71,7 +71,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
 			model_object(model)
 
 			# ----------- Caret Model -----------
-			if ("train" %in% class(model)) {
+			if (inherits(model, "train")) {
 				data <- model$trainingData
 				if (!is.null(data)) {
 					response <- data$.outcome
@@ -111,16 +111,16 @@ mod_model_metadata_server <- function(id, input_model_object) {
 				}
 
 				# ----------- Tidymodels Model -----------
-			} else if ("workflow" %in% class(model) || "model_fit" %in% class(model)) {
+			} else if (inherits(model, "workflow") || inherits(model, "model_fit")) {
 				# needed for dplyr use:
 				.estimate <- .metric <- NULL
 
-				fit <- if ("workflow" %in% class(model)) workflows::extract_fit_parsnip(model) else model
+				fit <- if (inherits(model, "workflow")) workflows::extract_fit_parsnip(model) else model
 
 				# Try to extract mold (training data)
 				data <- tryCatch(
 					{
-						if ("workflow" %in% class(model)) workflows::extract_mold(model) else NULL
+						if (inherits(model, "workflow")) workflows::extract_mold(model) else NULL
 					},
 					error = function(e) NULL
 				)
@@ -181,7 +181,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
 				# ----------- mlr3 Model -----------
 			} else if (any(class(model) %in% c("Learner", "GraphLearner"))) {
 				model_algorithm(model$label %||% "")
-				model_type(if (grepl("classif", model$id)) "Classification" else "Regression")
+				model_type(if (grepl("classif", model$id, fixed = TRUE)) "Classification" else "Regression")
 
 				# Safely extract hyperparameters from mlr3 model
 				ps <- tryCatch(model$param_set$values, error = function(e) NULL)

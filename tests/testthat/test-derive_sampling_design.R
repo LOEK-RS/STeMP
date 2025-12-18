@@ -46,7 +46,7 @@ test_that("Sampling design is correctly derived from geo_metadata (both objectiv
 			session$flushReact()
 
 			df <- session$getReturned()$protocol_updated()
-			sd_value <- df$value[df$element == "Sampling design*"]
+			sd_value <- df$value[df$element == "Sampling design *"]
 			expect_equal(sd_value, "clustered")
 		}
 	)
@@ -79,7 +79,7 @@ test_that("Sampling design is correctly derived from geo_metadata (both objectiv
 			session$flushReact()
 
 			df <- session$getReturned()$protocol_updated()
-			sd_value <- df$value[df$element == "Sampling design*"]
+			sd_value <- df$value[df$element == "Sampling design *"]
 			expect_equal(sd_value, "random")
 		}
 	)

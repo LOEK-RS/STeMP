@@ -135,7 +135,7 @@ mod_create_protocol_server <- function(
 				df <- rbind(overview_df, model_df)
 			}
 			# Remove plot elements from combined protocol data
-			df <- df[!grepl("plot", df$element), ]
+			df <- df[!grepl("plot", df$element, fixed = TRUE), ]
 			df
 		})
 

@@ -30,9 +30,9 @@ test_that("Hide optional fields toggle filters out optional rows", {
 			df_hidden <- isolate(filtered_protocol_data())
 
 			# Rows with optional == 1 must have visible == FALSE
-			expect_true(all(df_hidden$visible[df_hidden$optional == 1] == FALSE))
+			expect_true(all(!df_hidden$visible[df_hidden$optional == 1]))
 			# Rows with optional == 0 must remain visible
-			expect_true(all(df_hidden$visible[df_hidden$optional == 0] == TRUE))
+			expect_true(all(df_hidden$visible[df_hidden$optional == 0]))
 
 			# Toggle OFF again: optional fields come back
 			session$setInputs(hide_optional = FALSE)

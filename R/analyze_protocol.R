@@ -5,6 +5,11 @@
 #' @return A list containing the warnings as plain text, as well as the rendered table if `render` is TRUE.
 #' @export
 analyze_protocol <- function(protocol, render = TRUE) {
+	# check if input is of class data.frame
+	if (!is.data.frame(protocol)) {
+		stop("input must be a data.frame")
+	}
+
 	# get values of relevant fields
 	vals <- stats::setNames(protocol$value, protocol$element_id)
 	sampling_design <- unname(vals["sampling_design"])
@@ -23,7 +28,8 @@ analyze_protocol <- function(protocol, render = TRUE) {
 	# sampling_design == "clustered" + validation_strategy == "Random Cross-Validation"
 	clustered_design_spatial_Err <- sampling_design == "clustered" && evaluation_strategy == "Random Cross-Validation"
 	# sampling_design == "clustered" + predictor_types %in% "Spatial Proxies"
-	clustered_design_spatial_proxies <- sampling_design == "clustered" && grepl("Spatial Proxies", predictor_types)
+	clustered_design_spatial_proxies <- sampling_design == "clustered" &&
+		grepl("Spatial Proxies", predictor_types, fixed = TRUE)
 	# sampling_design == "clustered" + uncertainty_quantification == 'None'"
 	clustered_design_no_uncert <- sampling_design == "clustered" &&
 		(uncertainty_quantification == "None" | is.na(uncertainty_quantification))
