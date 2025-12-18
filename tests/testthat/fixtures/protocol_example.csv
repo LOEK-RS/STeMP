@@ -15,7 +15,7 @@
 "Model","Response","Classes","classes","3"
 "Model","Response","Samples per class","samples_per_class","setosa: 50, versicolor: 50, virginica: 50"
 "Model","Response","Range","range",NA
-"Model","Response","Sampling design*","sampling_design","clustered"
+"Model","Response","Sampling design *","sampling_design","clustered"
 "Model","Response","Coordinate Reference System","coordinate_reference_system","4326"
 "Model","Response","Data sources","data_sources",NA
 "Model","Predictors","Predictor types","predictor_types","Remote Sensing Images"

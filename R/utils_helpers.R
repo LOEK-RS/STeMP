@@ -118,3 +118,52 @@ sanitize_text <- function(x) {
 	x <- gsub("\n", " ", x)
 	x
 }
+
+#' Create a Label with Optional Asterisk
+#'
+#' Generates a Shiny UI label for a form input. If the input is required,
+#' an asterisk (*) is appended to the label to indicate that it is mandatory.
+#'
+#' @param text Character. The text for the label.
+#' @param optional Numeric or logical. If `1` or `TRUE`, the field is optional;
+#'   otherwise, a required asterisk is appended.
+#'
+#' @return A `shiny.tag` or `shiny.tag.list` object containing the label text,
+#'   and an asterisk if the field is required.
+#' @examples
+#' make_label("Username", optional = 0)
+#' make_label("Email", optional = 1)
+#' @noRd
+make_label <- function(text, optional) {
+	if (isFALSE(optional == 1)) {
+		tagList(
+			text,
+			shiny::span("*", class = "required")
+		)
+	} else {
+		text
+	}
+}
+
+
+#' Apply HTML `required` Attribute to a Shiny Input
+#'
+#' Modifies a Shiny input tag to include the HTML `required` attribute if the
+#' input is marked as required. This ensures that the input must be filled
+#' out before form submission in the browser.
+#'
+#' @param input_tag A Shiny input tag object (e.g., from `textInput()`, `numericInput()`).
+#' @param required Logical. If `TRUE`, adds the `required` attribute to the input tag.
+#'
+#' @return The modified Shiny input tag with the `required` attribute if applicable.
+#' @examples
+#' apply_required(shiny::textInput("name", "Name"), required = TRUE)
+#' apply_required(shiny::numericInput("age", "Age", value = 30), required = FALSE)
+#' @noRd
+apply_required <- function(input_tag, required) {
+	if (isTRUE(required)) {
+		tagAppendAttributes(input_tag, required = NA)
+	} else {
+		input_tag
+	}
+}

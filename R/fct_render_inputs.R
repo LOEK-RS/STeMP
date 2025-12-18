@@ -58,8 +58,9 @@ render_suggestion_single <- function(element_id, label, suggestions, info_text =
 #' @inheritParams render_suggestion
 #' @return A textInput element
 #' @noRd
-render_text_input <- function(element_id, element, info_text = NULL, value = NULL) {
+render_text_input <- function(element_id, element, info_text = NULL, value = NULL, required = FALSE) {
 	input <- shiny::textInput(inputId = element_id, label = element, value = value)
+	input <- apply_required(input, required)
 	with_tooltip(input, info_text)
 }
 
@@ -433,46 +434,61 @@ render_input_field <- function(
 ) {
 	uploaded_value <- if (!is.null(row$value) && nzchar(row$value)) row$value else NULL
 
+	required <- row$optional == 0
+	label_ui <- make_label(label, row$optional)
+
 	input_tag <- switch(
 		element_type,
-		"text" = render_text_input(element_id, label, info_text, value = uploaded_value),
-		"author" = render_text_input(element_id, label, info_text, value = uploaded_value),
-		"hyperparams" = render_text_area(element_id, label, info_text, value = uploaded_value),
-		"suggestion" = render_suggestion(element_id, label, suggestions, info_text, selected = uploaded_value),
+		"text" = render_text_input(element_id, label_ui, info_text, value = uploaded_value, required = required),
+		"author" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
+		"hyperparams" = render_text_area(element_id, label_ui, info_text, value = uploaded_value),
+		"suggestion" = render_suggestion(element_id, label_ui, suggestions, info_text, selected = uploaded_value),
 		"suggestion_single" = render_suggestion_single(
 			element_id,
-			label,
+			label_ui,
 			suggestions,
 			info_text,
 			selected = uploaded_value
 		),
-		"num_training_samples" = render_n_samples(element_id, label, model_metadata, info_text, value = uploaded_value),
-		"num_predictors" = render_n_predictors(element_id, label, model_metadata, info_text, value = uploaded_value),
-		"num_classes" = render_n_classes(element_id, label, model_metadata, info_text, value = uploaded_value),
+		"num_training_samples" = render_n_samples(element_id, label_ui, model_metadata, info_text, value = uploaded_value),
+		"num_predictors" = render_n_predictors(element_id, label_ui, model_metadata, info_text, value = uploaded_value),
+		"num_classes" = render_n_classes(element_id, label_ui, model_metadata, info_text, value = uploaded_value),
 		"num_samples_per_class" = render_n_samples_class(
 			element_id,
-			label,
+			label_ui,
 			model_metadata,
 			info_text,
 			value = uploaded_value
 		),
-		"interpolation_range" = render_range(element_id, label, model_metadata, info_text, value = uploaded_value),
-		"names_predictors" = render_names_predictors(element_id, label, model_metadata, info_text, value = uploaded_value),
-		"model_hyperparams" = render_hyperparameters(element_id, label, model_metadata, info_text, value = uploaded_value),
-		"model_type" = render_model_type(element_id, label, model_metadata, info_text, value = uploaded_value),
-		"model_algorithm" = render_model_algorithm(element_id, label, model_metadata, info_text, value = uploaded_value),
-		"samples_crs" = render_crs(element_id, label, geo_metadata, info_text, value = uploaded_value),
+		"interpolation_range" = render_range(element_id, label_ui, model_metadata, info_text, value = uploaded_value),
+		"names_predictors" = render_names_predictors(
+			element_id,
+			label_ui,
+			model_metadata,
+			info_text,
+			value = uploaded_value
+		),
+		"model_hyperparams" = render_hyperparameters(
+			element_id,
+			label_ui,
+			model_metadata,
+			info_text,
+			value = uploaded_value
+		),
+		"model_type" = render_model_type(element_id, label_ui, model_metadata, info_text, value = uploaded_value),
+		"model_algorithm" = render_model_algorithm(element_id, label_ui, model_metadata, info_text, value = uploaded_value),
+		"samples_crs" = render_crs(element_id, label_ui, geo_metadata, info_text, value = uploaded_value),
 		"validation_results" = render_validation_results(
 			element_id,
-			label,
+			label_ui,
 			model_metadata,
 			info_text,
 			value = uploaded_value
 		),
-		"design" = render_design(element_id, label, selected = uploaded_value, info_text = info_text),
+		"design" = render_design(element_id, label_ui, selected = uploaded_value, info_text = info_text),
 
 		# fallback to text input
-		render_text_input(element_id, label, info_text, value = uploaded_value)
+		render_text_input(element_id, label_ui, info_text, value = uploaded_value)
 	)
 
 	return(input_tag)

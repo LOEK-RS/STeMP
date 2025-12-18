@@ -70,3 +70,10 @@ table.dataTable tbody td {
 .hide_optional .optional_field {
   display: none !important;
 }
+
+/* Label required fields */
+.required {
+	color: #000;
+	font-weight: normal;
+	margin-left: 2px;
+}
