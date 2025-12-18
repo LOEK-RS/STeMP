@@ -28,7 +28,8 @@ analyze_protocol <- function(protocol, render = TRUE) {
 	# sampling_design == "clustered" + validation_strategy == "Random Cross-Validation"
 	clustered_design_spatial_Err <- sampling_design == "clustered" && evaluation_strategy == "Random Cross-Validation"
 	# sampling_design == "clustered" + predictor_types %in% "Spatial Proxies"
-	clustered_design_spatial_proxies <- sampling_design == "clustered" && grepl("Spatial Proxies", predictor_types)
+	clustered_design_spatial_proxies <- sampling_design == "clustered" &&
+		grepl("Spatial Proxies", predictor_types, fixed = TRUE)
 	# sampling_design == "clustered" + uncertainty_quantification == 'None'"
 	clustered_design_no_uncert <- sampling_design == "clustered" &&
 		(uncertainty_quantification == "None" | is.na(uncertainty_quantification))

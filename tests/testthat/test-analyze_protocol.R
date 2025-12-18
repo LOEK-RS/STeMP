@@ -10,7 +10,8 @@ test_that("analyze_protocol works with Model only", {
 	expect_equal(
 		grep(
 			"The samples were clustered relative to the prediction area, which often leads to extrapolation",
-			warnings
+			warnings,
+			fixed = TRUE
 		),
 		2
 	)
@@ -27,7 +28,8 @@ test_that("analyze_protocol works with model and prediction", {
 	expect_equal(
 		grep(
 			"The samples were clustered relative to the prediction area, which often leads to extrapolation",
-			warnings
+			warnings,
+			fixed = TRUE
 		),
 		2
 	)
