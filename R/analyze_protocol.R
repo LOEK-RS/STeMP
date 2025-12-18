@@ -5,6 +5,11 @@
 #' @return A list containing the warnings as plain text, as well as the rendered table if `render` is TRUE.
 #' @export
 analyze_protocol <- function(protocol, render = TRUE) {
+	# check if input is of class data.frame
+	if (!is.data.frame(protocol)) {
+		stop("input must be a data.frame")
+	}
+
 	# get values of relevant fields
 	vals <- stats::setNames(protocol$value, protocol$element_id)
 	sampling_design <- unname(vals["sampling_design"])
