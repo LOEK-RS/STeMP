@@ -58,7 +58,10 @@ mod_howto_ui <- function(id) {
 					") are uploaded, the ",
 					shiny::em("sampling design"),
 					"is automatically calculated 
-                    and a geodistance plot is generated.",
+                    and a geodistance plot is generated.
+										All ",
+					shiny::strong("uploads should be done before filling the protocol"),
+					"since they may overwrite some fields.",
 					style = "font-size: 18px;"
 				),
 
