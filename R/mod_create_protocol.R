@@ -164,9 +164,11 @@ mod_create_protocol_server <- function(
 			id = "warnings",
 			sampling_design = model_results$sampling_design,
 			validation_method = model_results$validation_method,
+			evaluation_method = prediction_results$evaluation_method,
 			uncertainty_quantification = prediction_results$uncertainty_quantification,
 			predictor_types = model_results$predictor_types,
-			show_warnings = show_warnings
+			show_warnings = show_warnings,
+			o_objective_1_val = overview$o_objective_1
 		)
 
 		# 9) Re-set fields filled by uploaded protocol if the delete-uploaded-protocol button is activated

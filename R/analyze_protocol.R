@@ -19,14 +19,17 @@ analyze_protocol <- function(protocol, render = TRUE) {
 	uncertainty_quantification <- unname(vals["uncertainty_quantification"])
 
 	# list of possible problems:
+	# CV used for both model selection and final prediction assessment
+	CV_both <- grepl("Cross-Validation", validation_strategy, fixed = TRUE) &&
+		grepl("Cross-Validation", evaluation_strategy, fixed = TRUE)
 	# sampling_design == "random" + validation_strategy == "Spatial Cross-Validation"
-	random_design_spatial_CV <- sampling_design == "random" && validation_strategy == "Spatial Cross-Validation"
-	# sampling_design == "random" + evaluation_strategy == "Spatial Cross-Validation" # needs new name, e.g. model vs map validation. OR the same name. Also, add "train/test splits"
-	random_design_spatial_Err <- sampling_design == "random" && evaluation_strategy == "Spatial Cross-Validation"
+	random_design_spatial_CV <- sampling_design == "random" && grepl("Spatial", validation_strategy, fixed = TRUE)
+	# sampling_design == "random" + evaluation_strategy == "Spatial Cross-Validation"
+	random_design_spatial_Err <- sampling_design == "random" && grepl("Spatial", evaluation_strategy, fixed = TRUE)
 	# sampling_design == "clustered" + validation_strategy == "Random Cross-Validation"
-	clustered_design_spatial_CV <- sampling_design == "clustered" && validation_strategy == "Random Cross-Validation"
-	# sampling_design == "clustered" + validation_strategy == "Random Cross-Validation"
-	clustered_design_spatial_Err <- sampling_design == "clustered" && evaluation_strategy == "Random Cross-Validation"
+	clustered_design_spatial_CV <- sampling_design == "clustered" && grepl("Random", validation_strategy, fixed = TRUE)
+	# sampling_design == "clustered" + evaluation_strategy == "Random Cross-Validation"
+	clustered_design_spatial_Err <- sampling_design == "clustered" && grepl("Random", evaluation_strategy, fixed = TRUE)
 	# sampling_design == "clustered" + predictor_types %in% "Spatial Proxies"
 	clustered_design_spatial_proxies <- sampling_design == "clustered" &&
 		grepl("Spatial Proxies", predictor_types, fixed = TRUE)
@@ -36,13 +39,21 @@ analyze_protocol <- function(protocol, render = TRUE) {
 
 	# Collect warnings
 	warnings <- list()
+	if (isTRUE(CV_both)) {
+		warning_message <- shiny::HTML(
+			"Cross-Validation was used for both model selection and evaluating the final prediction.<br>
+				This can lead to data leakage. See <a href='https://doi.org/10.1007/978-0-387-84858-7' target='_blank'>Hastie et al., 2009</a>."
+		)
+		warnings <- append(warnings, warning_message)
+	}
+
 	if (isTRUE(random_design_spatial_CV)) {
 		warning_message <- shiny::HTML(
 			paste0(
 				protocol[protocol$element_id == "validation_strategy", "value"],
 				" was used for model selection, while the training samples were randomly distributed relative to the prediction area. 
 					This might yield overly pessimistic results and thus bias model selection, or false mistrust in the models' performance if
-					no final map accuracy is estimated.",
+					no final map accuracy is estimated. ",
 				'See <a href="https://doi.org/10.1016/j.ecolmodel.2021.109692" target="_blank">Wadoux et al., 2021</a>,
    <a href="https://doi.org/10.1016/j.ecoinf.2022.101665" target="_blank">de Bruin et al., 2022</a>,
    <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
