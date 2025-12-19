@@ -37,7 +37,7 @@ render_suggestion <- function(element_id, label, suggestions, info_text = NULL, 
 render_suggestion_single <- function(element_id, label, suggestions, info_text = NULL, selected = NULL) {
 	choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
 
-	# If a selected value is passed (from CSV), use it; else default to "None"
+	# If a selected value is passed (from CSV), use it
 	selected_val <- selected %||% NULL
 
 	input <- shiny::selectizeInput(
