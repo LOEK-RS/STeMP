@@ -7,7 +7,8 @@ test_that("clustered + random CV triggers warning flag", {
 			evaluation_method = reactive("Random Cross-Validation"),
 			uncertainty_quantification = reactive("None"),
 			predictor_types = reactive(character(0)),
-			show_warnings = reactive(TRUE)
+			show_warnings = reactive(TRUE),
+			o_objective_1_val = reactive("Model and prediction")
 		),
 		{
 			# Run observers
@@ -27,7 +28,8 @@ test_that("random + spatial CV triggers warning flag", {
 			evaluation_method = reactive("Spatial Cross-Validation"),
 			uncertainty_quantification = reactive("None"),
 			predictor_types = reactive(character(0)),
-			show_warnings = reactive(TRUE)
+			show_warnings = reactive(TRUE),
+			o_objective_1_val = reactive("Model and prediction")
 		),
 		{
 			session$flushReact()
@@ -45,7 +47,8 @@ test_that("clustered + spatial proxies triggers warning flag", {
 			evaluation_method = reactive("Random Cross-Validation"),
 			uncertainty_quantification = reactive("None"),
 			predictor_types = reactive(c("Spatial Proxies")),
-			show_warnings = reactive(TRUE)
+			show_warnings = reactive(TRUE),
+			o_objective_1_val = reactive("Model and prediction")
 		),
 		{
 			session$flushReact()
@@ -63,7 +66,8 @@ test_that("clustered + no uncertainty quantification triggers warning flag", {
 			evaluation_method = reactive("Spatial Cross-Validation"),
 			uncertainty_quantification = reactive("None"),
 			predictor_types = reactive(character(0)),
-			show_warnings = reactive(TRUE)
+			show_warnings = reactive(TRUE),
+			o_objective_1_val = reactive("Model and prediction")
 		),
 		{
 			session$flushReact()
@@ -81,7 +85,8 @@ test_that("Warnings raised for inapporpriate evaluation strategy", {
 			evaluation_method = reactive("Spatial Cross-Validation"),
 			uncertainty_quantification = reactive("None"),
 			predictor_types = reactive(character(0)),
-			show_warnings = reactive(TRUE)
+			show_warnings = reactive(TRUE),
+			o_objective_1_val = reactive("Model and prediction")
 		),
 		{
 			session$flushReact()
@@ -99,7 +104,8 @@ test_that("CV for model selection and final prediction assessment triggers warni
 			evaluation_method = reactive("Spatial Cross-Validation"),
 			uncertainty_quantification = reactive("None"),
 			predictor_types = reactive(character(0)),
-			show_warnings = reactive(TRUE)
+			show_warnings = reactive(TRUE),
+			o_objective_1_val = reactive("Model and prediction")
 		),
 		{
 			session$flushReact()
