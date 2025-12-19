@@ -333,6 +333,29 @@ mod_model_panel_server <- function(
 			}
 		})
 
+		# Hide range/classes fields dynamically in dependence of model type
+		shiny::observe({
+		  model_type <- input[["model_type"]]
+		  shinyjs::removeClass(selector = "#protocol-model-classes", class = "hide_range_class")
+		  shinyjs::removeClass(selector = "#protocol-model-classes-label", class = "hide_range_class")
+		  shinyjs::removeClass(selector = "#protocol-model-samples_per_class", class = "hide_range_class")
+		  shinyjs::removeClass(selector = "#protocol-model-samples_per_class-label", class = "hide_range_class")
+		  shinyjs::removeClass(selector = "#protocol-model-range", class = "hide_range_class")
+		  shinyjs::removeClass(selector = "#protocol-model-range-label", class = "hide_range_class")
+		  if (is.null(model_type) || model_type == "") {
+		    return()
+		  }
+		  if (model_type == "Regression") {
+		    shinyjs::addClass(selector = "#protocol-model-classes", class = "hide_range_class")
+		    shinyjs::addClass(selector = "#protocol-model-classes-label", class = "hide_range_class")
+		    shinyjs::addClass(selector = "#protocol-model-samples_per_class", class = "hide_range_class")
+		    shinyjs::addClass(selector = "#protocol-model-samples_per_class-label", class = "hide_range_class")
+		  } else if (model_type == "Classification") {
+		    shinyjs::addClass(selector = "#protocol-model-range", class = "hide_range_class")
+		    shinyjs::addClass(selector = "#protocol-model-range-label", class = "hide_range_class")
+		  }
+		})
+
 		# Return values
 		return(list(
 			"model_inputs" = inputs_reactive,

@@ -71,6 +71,11 @@ table.dataTable tbody td {
   display: none !important;
 }
 
+/* Hide range/classes fields dynamically */
+.hide_range_class {
+  display: none !important;
+}
+
 /* Label required fields */
 .required {
 	color: #000;
