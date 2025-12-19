@@ -34,6 +34,7 @@ mod_prediction_panel_ui <- function(id) {
 #' \itemize{
 #'   \item{prediction_inputs}{Reactive data.frame with current input values for prediction section elements}
 #'   \item{uncertainty_quantification}{Selected uncertainty quantification approach}
+#'   \item{evaluation_method}{Selected evaluation strategy}
 #' }
 #' @noRd
 mod_prediction_panel_server <- function(
