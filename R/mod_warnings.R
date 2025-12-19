@@ -23,6 +23,8 @@ mod_warnings_ui <- function(id) {
 #' @param evaluation_method Reactive returning current map evaluation method
 #' @param uncertainty_quantification Reactive returning uncertainty quantification method (e.g., "none")
 #' @param predictor_types Reactive returning a vector of predictor types (e.g., contains "Spatial Proxies")
+#' @param show_warnings Should warnings be displayed?
+#' @param o_objective_1_val Is only the model panel or also the prediction panel displayed?
 #' @noRd
 mod_warnings_server <- function(
 	id,
@@ -31,7 +33,8 @@ mod_warnings_server <- function(
 	evaluation_method,
 	uncertainty_quantification,
 	predictor_types,
-	show_warnings = shiny::reactive(TRUE)
+	show_warnings = shiny::reactive(TRUE),
+	o_objective_1_val
 ) {
 	shiny::moduleServer(id, function(input, output, session) {
 		warning_flags <- shiny::reactiveValues()
@@ -48,7 +51,7 @@ mod_warnings_server <- function(
 
 		# Warning: CV for map accuracy estimation, when also using CV for model selection
 		shiny::observe({
-			shiny::req(validation_method(), evaluation_method())
+			shiny::req(validation_method(), evaluation_method(), o_objective_1_val() == "Model and prediction")
 
 			is_problematic <- grepl("Cross-Validation", validation_method(), fixed = TRUE) &&
 				grepl("Cross-Validation", evaluation_method(), fixed = TRUE)
@@ -109,7 +112,7 @@ mod_warnings_server <- function(
 
 		# Warning: Random resampling for map accuracy estimation with clustered samples can be optimistic
 		shiny::observe({
-			shiny::req(sampling_design(), evaluation_method())
+			shiny::req(sampling_design(), evaluation_method(), o_objective_1_val() == "Model and prediction")
 
 			is_problematic <- sampling_design() == "clustered" &&
 				grepl("Random", evaluation_method(), fixed = TRUE)
@@ -130,7 +133,7 @@ mod_warnings_server <- function(
 
 		# Warning: Spatial resampling for map accuracy estimation with random samples can be pessimistic
 		shiny::observe({
-			shiny::req(sampling_design(), evaluation_method())
+			shiny::req(sampling_design(), evaluation_method(), o_objective_1_val() == "Model and prediction")
 
 			is_problematic <- sampling_design() == "random" &&
 				grepl("Spatial", evaluation_method(), fixed = TRUE)
@@ -171,7 +174,7 @@ mod_warnings_server <- function(
 
 		# Warning: Clustered samples + no uncertainty quantification
 		shiny::observe({
-			shiny::req(sampling_design(), uncertainty_quantification())
+			shiny::req(sampling_design(), uncertainty_quantification(), o_objective_1_val() == "Model and prediction")
 
 			is_problematic <- sampling_design() == "clustered" &&
 				uncertainty_quantification() == "None"
