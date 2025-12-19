@@ -226,10 +226,14 @@ mod_prediction_panel_server <- function(
 		uncertainty_quantification <- shiny::reactive({
 			input[["uncertainty_quantification"]]
 		})
+		evaluation_method <- shiny::reactive({
+			input[["evaluation_strategy"]]
+		})
 
 		return(list(
 			"prediction_inputs" = shiny::reactive(inputs_reactive()),
-			"uncertainty_quantification" = uncertainty_quantification
+			"uncertainty_quantification" = uncertainty_quantification,
+			"evaluation_method" = evaluation_method
 		))
 	})
 }

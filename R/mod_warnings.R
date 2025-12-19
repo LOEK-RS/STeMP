@@ -19,7 +19,8 @@ mod_warnings_ui <- function(id) {
 #'
 #' @param id Module namespace ID
 #' @param sampling_design Reactive returning current sampling design (e.g., "clustered", "random")
-#' @param validation_method Reactive returning current validation method (e.g., "Random Cross-Validation", "Spatial Cross-Validation")
+#' @param validation_method Reactive returning current model validation method (e.g., "Random Cross-Validation", "Spatial Cross-Validation")
+#' @param evaluation_method Reactive returning current map evaluation method
 #' @param uncertainty_quantification Reactive returning uncertainty quantification method (e.g., "none")
 #' @param predictor_types Reactive returning a vector of predictor types (e.g., contains "Spatial Proxies")
 #' @noRd
@@ -27,6 +28,7 @@ mod_warnings_server <- function(
 	id,
 	sampling_design,
 	validation_method,
+	evaluation_method,
 	uncertainty_quantification,
 	predictor_types,
 	show_warnings = shiny::reactive(TRUE)
@@ -44,19 +46,38 @@ mod_warnings_server <- function(
 			}
 		}
 
-		# Warning: Random CV with clustered samples can be optimistic
+		# Warning: CV for map accuracy estimation, when also using CV for model selection
 		shiny::observe({
-			shiny::req(sampling_design(), validation_method())
+			shiny::req(validation_method(), evaluation_method())
 
-			is_problematic <- sampling_design() == "clustered" &&
-				validation_method() == "Random Cross-Validation"
+			is_problematic <- grepl("Cross-Validation", validation_method(), fixed = TRUE) &&
+				grepl("Cross-Validation", evaluation_method(), fixed = TRUE)
 
 			check_and_warn(
 				condition = shiny::reactive({
 					is_problematic
 				}),
 				message = shiny::HTML(
-					"Random CV might yield overly optimistic results with clustered samples. ",
+					"Using Cross-Validation for both, model selection and assessing the final prediction might lead to data leakage.",
+					'See <a href="https://doi.org/10.1007/978-0-387-84858-7" target="_blank">Hastie et al., 2009</a>'
+				),
+				flag_name = "both_cv"
+			)
+		})
+
+		# Warning: Random resampling with clustered samples can be optimistic during model selection
+		shiny::observe({
+			shiny::req(sampling_design(), validation_method())
+
+			is_problematic <- sampling_design() == "clustered" &&
+				grepl("Random", validation_method(), fixed = TRUE)
+
+			check_and_warn(
+				condition = shiny::reactive({
+					is_problematic
+				}),
+				message = shiny::HTML(
+					"Random resampling might yield overly optimistic results with clustered samples. ",
 					'See <a href="https://doi.org/10.1111/ecog.02881" target="_blank">Roberts et al., 2017</a>,
          <a href="https://doi.org/10.1038/s41467-020-18321-y" target="_blank">Ploton et al., 2020</a>,
          <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
@@ -65,24 +86,66 @@ mod_warnings_server <- function(
 			)
 		})
 
-		# Warning: Spatial CV with random samples can be pessimistic
+		# Warning: Spatial resampling with random samples can be pessimistic during model selection
 		shiny::observe({
 			shiny::req(sampling_design(), validation_method())
 
 			is_problematic <- sampling_design() == "random" &&
-				validation_method() == "Spatial Cross-Validation"
+				grepl("Spatial", validation_method(), fixed = TRUE)
 
 			check_and_warn(
 				condition = shiny::reactive({
 					is_problematic
 				}),
 				message = shiny::HTML(
-					"Spatial CV might yield overly pessimistic results with clustered samples. ",
+					"Spatial resampling might yield overly pessimistic results with clustered samples. ",
 					'See <a href="https://doi.org/10.1016/j.ecolmodel.2021.109692" target="_blank">Wadoux et al., 2021</a>,
          <a href="https://doi.org/10.1016/j.ecoinf.2022.101665" target="_blank">de Bruin et al., 2022</a>,
          <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
 				),
 				flag_name = "random_clustered_cv"
+			)
+		})
+
+		# Warning: Random resampling for map accuracy estimation with clustered samples can be optimistic
+		shiny::observe({
+			shiny::req(sampling_design(), evaluation_method())
+
+			is_problematic <- sampling_design() == "clustered" &&
+				grepl("Random", evaluation_method(), fixed = TRUE)
+
+			check_and_warn(
+				condition = shiny::reactive({
+					is_problematic
+				}),
+				message = shiny::HTML(
+					"Random resampling might yield overly optimistic estimates of the map accuracy with clustered samples. ",
+					'See <a href="https://doi.org/10.1111/ecog.02881" target="_blank">Roberts et al., 2017</a>,
+         <a href="https://doi.org/10.1038/s41467-020-18321-y" target="_blank">Ploton et al., 2020</a>,
+         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
+				),
+				flag_name = "clustered_random_ev"
+			)
+		})
+
+		# Warning: Spatial resampling for map accuracy estimation with random samples can be pessimistic
+		shiny::observe({
+			shiny::req(sampling_design(), evaluation_method())
+
+			is_problematic <- sampling_design() == "random" &&
+				grepl("Spatial", evaluation_method(), fixed = TRUE)
+
+			check_and_warn(
+				condition = shiny::reactive({
+					is_problematic
+				}),
+				message = shiny::HTML(
+					"Spatial resampling might yield overly pessimistic estimates of the map accuracy with clustered samples. ",
+					'See <a href="https://doi.org/10.1016/j.ecolmodel.2021.109692" target="_blank">Wadoux et al., 2021</a>,
+         <a href="https://doi.org/10.1016/j.ecoinf.2022.101665" target="_blank">de Bruin et al., 2022</a>,
+         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
+				),
+				flag_name = "random_clustered_ev"
 			)
 		})
 
