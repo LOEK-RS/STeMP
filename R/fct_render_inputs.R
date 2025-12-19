@@ -38,7 +38,7 @@ render_suggestion_single <- function(element_id, label, suggestions, info_text =
 	choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
 
 	# If a selected value is passed (from CSV), use it; else default to "None"
-	selected_val <- selected %||% "None"
+	selected_val <- selected %||% NULL
 
 	input <- shiny::selectizeInput(
 		inputId = element_id,
@@ -46,7 +46,11 @@ render_suggestion_single <- function(element_id, label, suggestions, info_text =
 		choices = choices,
 		selected = selected_val,
 		multiple = FALSE,
-		options = list(create = TRUE, placeholder = "Choose or type")
+		options = list(
+			create = TRUE,
+			placeholder = "Choose or type",
+			onInitialize = I("function() { this.clear(true); }")
+		)
 	)
 	with_tooltip(input, info_text)
 }
