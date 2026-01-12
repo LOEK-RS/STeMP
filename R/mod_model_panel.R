@@ -117,9 +117,13 @@ mod_model_panel_server <- function(
 						}
 					}
 
+					# Decide if this row should be hidden for classification/regression
+					div_class_classification <- if (row$hide_for_classification == 1) "regression_field" else NULL
+					div_class_regression <- if (row$hide_for_regression == 1) "classification_field" else NULL
+					
 					# Decide if this row is optional
-					div_class <- if (row$optional == 1) "optional_field" else NULL
-
+					div_class_optional <- if (row$optional == 1) "optional_field" else NULL
+					
 					# Render field
 					content <- if (row$element_type == "sample_plot") {
 						if (!is.null(valid_geo_samples_metadata())) {
@@ -195,8 +199,8 @@ mod_model_panel_server <- function(
 						)
 					}
 
-					# Wrap with optional class if flagged
-					shiny::tags$div(class = div_class, content)
+					# Wrap with optional/classification/regression class if flagged
+					shiny::tags$div(class = c(div_class_optional, div_class_classification, div_class_regression), content)
 				})
 
 				shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
@@ -324,6 +328,21 @@ mod_model_panel_server <- function(
 			}
 		})
 
+		# Hide range/classes fields dynamically in dependence of model type
+		shiny::observe({
+		  model_type <- input[["model_type"]]
+		  if (is.null(model_type) || model_type == "") {
+		    shinyjs::removeClass(selector = "body", class = "hide_for_regression")
+		    shinyjs::removeClass(selector = "body", class = "hide_for_classification")
+		  } else if (model_type == "Classification") {
+		    shinyjs::addClass(selector = "body", class = "hide_for_classification")
+		    shinyjs::removeClass(selector = "body", class = "hide_for_regression")
+		  } else if (model_type == "Regression") {
+		    shinyjs::addClass(selector = "body", class = "hide_for_regression")
+		    shinyjs::removeClass(selector = "body", class = "hide_for_classification")
+		  }
+		})
+
 		# Hide/show optional fields dynamically
 		shiny::observe({
 			if (isTRUE(hide_optional())) {
@@ -332,30 +351,7 @@ mod_model_panel_server <- function(
 				shinyjs::removeClass(selector = "body", class = "hide_optional")
 			}
 		})
-
-		# Hide range/classes fields dynamically in dependence of model type
-		shiny::observe({
-		  model_type <- input[["model_type"]]
-		  shinyjs::removeClass(selector = "#protocol-model-classes", class = "hide_range_class")
-		  shinyjs::removeClass(selector = "#protocol-model-classes-label", class = "hide_range_class")
-		  shinyjs::removeClass(selector = "#protocol-model-samples_per_class", class = "hide_range_class")
-		  shinyjs::removeClass(selector = "#protocol-model-samples_per_class-label", class = "hide_range_class")
-		  shinyjs::removeClass(selector = "#protocol-model-range", class = "hide_range_class")
-		  shinyjs::removeClass(selector = "#protocol-model-range-label", class = "hide_range_class")
-		  if (is.null(model_type) || model_type == "") {
-		    return()
-		  }
-		  if (model_type == "Regression") {
-		    shinyjs::addClass(selector = "#protocol-model-classes", class = "hide_range_class")
-		    shinyjs::addClass(selector = "#protocol-model-classes-label", class = "hide_range_class")
-		    shinyjs::addClass(selector = "#protocol-model-samples_per_class", class = "hide_range_class")
-		    shinyjs::addClass(selector = "#protocol-model-samples_per_class-label", class = "hide_range_class")
-		  } else if (model_type == "Classification") {
-		    shinyjs::addClass(selector = "#protocol-model-range", class = "hide_range_class")
-		    shinyjs::addClass(selector = "#protocol-model-range-label", class = "hide_range_class")
-		  }
-		})
-
+		
 		# Return values
 		return(list(
 			"model_inputs" = inputs_reactive,
