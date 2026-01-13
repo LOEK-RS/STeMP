@@ -72,8 +72,12 @@ table.dataTable tbody td {
 }
 
 /* Hide range/classes fields dynamically */
-.hide_range_class {
-  display: none !important;
+.hide_for_classification .regression_field {
+  display: none;
+}
+
+.hide_for_regression .classification_field {
+  display: none;
 }
 
 /* Label required fields */
