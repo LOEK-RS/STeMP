@@ -217,14 +217,18 @@ render_model_type <- function(element_id, element, model_metadata = NULL, info_t
 #' @noRd
 render_model_algorithm <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
 	default_algos <- c("rf", "gbm", "glm", "svmRadial", "nnet", "rpart")
-	selected_algo <- value %||%
-		get_value(NULL, function() {
-			if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
-				model_metadata$model_algorithm()
-			} else {
-				""
-			}
-		})
+	
+	selected_algo <- if (is.null(value) || is.na(value)) {
+	  get_value(NULL, function() {
+	    if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
+	      model_metadata$model_algorithm()
+	    } else {
+	      ""
+	    }
+	  })
+	} else {
+	  value
+	}
 
 	algo_choices <- if (selected_algo != "" && !(selected_algo %in% default_algos)) {
 		c(default_algos, selected_algo)
