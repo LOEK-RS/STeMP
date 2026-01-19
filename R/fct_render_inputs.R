@@ -229,16 +229,6 @@ render_model_algorithm <- function(element_id, element, model_metadata = NULL, i
 	} else {
 	  value
 	}
-	
-	
-	# selected_algo <- value %||%
-	# 	get_value(NULL, function() {
-	# 		if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
-	# 			model_metadata$model_algorithm()
-	# 		} else {
-	# 			""
-	# 		}
-	# 	})
 
 	algo_choices <- if (selected_algo != "" && !(selected_algo %in% default_algos)) {
 		c(default_algos, selected_algo)
