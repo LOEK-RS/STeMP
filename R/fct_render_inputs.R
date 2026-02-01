@@ -10,6 +10,10 @@
 #' @noRd
 render_suggestion <- function(element_id, label, suggestions, info_text = NULL, selected = NULL) {
 	choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
+	if (!is.null(selected) && !is.na(selected)) {
+	  # Only add values that are not already in the choices
+	  choices <- unique(c(choices, selected))
+	}
 	selected_val <- selected
 	if (!is.null(selected_val) && is.character(selected_val)) {
 		# Convert comma-separated string from CSV to vector
@@ -36,6 +40,10 @@ render_suggestion <- function(element_id, label, suggestions, info_text = NULL, 
 #' @noRd
 render_suggestion_single <- function(element_id, label, suggestions, info_text = NULL, selected = NULL) {
   choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
+  if (!is.null(selected) && !is.na(selected)) {
+    # Only add values that are not already in the choices
+    choices <- unique(c(choices, selected))
+  }
   
   # If a selected value is passed (from CSV), use it
   selected_val <- selected %||% NULL
