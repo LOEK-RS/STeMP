@@ -134,6 +134,14 @@ mod_create_protocol_server <- function(
 			} else {
 				df <- rbind(overview_df, model_df)
 			}
+			# Remove hidden fields from HTML preview and PDF/CSV download
+			if (isTRUE(hide_optional())) {
+			  protocol_data_df <- protocol_data()
+			  optional_elements <- protocol_data_df[protocol_data_df$optional == 1, ]
+			  optional_ids <- optional_elements$element_id
+			  # Filter out optional rows
+			  df <- df[!df$element_id %in% lapply(optional_ids, function(id) id), ]
+			}
 			# Remove plot elements from combined protocol data
 			df <- df[!grepl("plot", df$element, fixed = TRUE), ]
 			df
