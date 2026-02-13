@@ -134,6 +134,32 @@ mod_create_protocol_server <- function(
 			} else {
 				df <- rbind(overview_df, model_df)
 			}
+			# Remove hidden fields from HTML preview and PDF/CSV download
+			if (isTRUE(hide_optional())) {
+			  protocol_data_df <- protocol_data()
+			  optional_elements <- protocol_data_df[protocol_data_df$optional == 1, ]
+			  optional_ids <- optional_elements$element_id
+			  # Filter out optional rows
+			  df <- df[!df$element_id %in% lapply(optional_ids, function(id) id), ]
+			}
+
+			model_type <- model_df[model_df$element_id == "model_type", "value"]
+			if (is.null(model_type) || model_type == "" || is.na(model_type)) {
+			  # Do nothing
+			} else if (model_type == "Classification") {
+			  protocol_data_df <- protocol_data()
+			  regression_elements <- protocol_data_df[protocol_data_df$hide_for_classification == 1, ]
+			  regression_ids <- regression_elements$element_id
+			  # Filter out rows with elements for regression as model type
+			  df <- df[!df$element_id %in% lapply(regression_ids, function(id) id), ]
+			} else if (model_type == "Regression") {
+			  protocol_data_df <- protocol_data()
+			  classification_elements <- protocol_data_df[protocol_data_df$hide_for_regression == 1, ]
+			  classification_ids <- classification_elements$element_id
+			  # Filter out rows with elements for classification as model type
+			  df <- df[!df$element_id %in% lapply(classification_ids, function(id) id), ]
+			}
+
 			# Remove plot elements from combined protocol data
 			df <- df[!grepl("plot", df$element, fixed = TRUE), ]
 			df
