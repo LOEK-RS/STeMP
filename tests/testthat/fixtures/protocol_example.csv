@@ -6,8 +6,6 @@ Overview,Authorship,Study title,study_title,NA
 Overview,Authorship,Study link,study_link,NA
 Overview,Target variable,Target variable*,target_variable,Plant traits
 Overview,Scientific Field,Scientific Field*,scientific_field,Biogeosciences
-Model,Response,Sampling locations,sampling_locations,NA
-Model,Response,Sampling area map,sampling_area_map,NA
 Model,Response,Training domain,training_domain,landscape
 Model,Response,Sample acquisition*,sample_acquisition,In-Situ
 Model,Response,Sample geometry,sample_geometry,Point
@@ -38,7 +36,6 @@ Model,Software,Software*,software,R 4.5.1
 Model,Software,Code availability*,code_availability,Github
 Model,Software,Data availability*,data_availability,Figshare
 Prediction,Parameter uncertainty and biases,Sensitivity assessment,sensitivity_assessment,NA
-Prediction,Prediction domain,Prediction map,prediction_map,NA
 Prediction,Prediction domain,Prediction domain*,prediction_domain,landscape
 Prediction,Evaluation and Uncertainty,Evaluation strategy*,evaluation_strategy,Independent probability sample
 Prediction,Evaluation and Uncertainty,Performance metrics,performance_metrics,Kappa
