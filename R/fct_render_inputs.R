@@ -509,7 +509,6 @@ render_input_field <- function(
 			info_text,
 			value = uploaded_value
 		),
-		"design" = render_design(element_id, label_ui, selected = uploaded_value, info_text = info_text),
 
 		# fallback to text input
 		render_text_input(element_id, label_ui, info_text, value = uploaded_value)

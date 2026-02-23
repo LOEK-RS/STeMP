@@ -180,7 +180,7 @@ mod_model_panel_server <- function(
 
 						render_design(
 							element_id = ns(row$element_id),
-							element = row$element,
+							element = make_label(row$element, row$optional),
 							selected = selected_val,
 							info_text = row$info_text
 						)

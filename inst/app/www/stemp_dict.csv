@@ -19,7 +19,7 @@
 4,Model,m,Response,m_response,Classes,classes,The number of response classes,num_classes,,1,0,1
 5,Model,m,Response,m_response,Samples per class,samples_per_class,The number of samples in each class,num_samples_per_class,,1,0,1
 6,Model,m,Response,m_response,Range,range,The range of response values represented in the training data,interpolation_range,,1,1,0
-8,Model,m,Response,m_response,Sampling design *,sampling_design,The sampling design (will be automatically filled when sampling locations and prediction area are provided as .gpkg),sampling_design,,0,0,0
+8,Model,m,Response,m_response,Sampling design,sampling_design,The sampling design (will be automatically filled when sampling locations and prediction area are provided as .gpkg),sampling_design,,0,0,0
 9,Model,m,Response,m_response,Coordinate Reference System,coordinate_reference_system,The coordinate reference system used to reference the samples (epsg code),samples_crs,,1,0,0
 10,Model,m,Response,m_response,Data sources of response,data_sources_of_response,"The sources of the response data (e.g., own field sampling, biodiversity databes like GBIF etc.)",text,,1,0,0
 11,Model,m,Predictors,m_predictors,Predictor types,predictor_types,What types of predictor data were used to predict the response?,suggestion,"Remote Sensing Images, Simulated Data, Spatial Proxies",0,0,0
