@@ -12,7 +12,7 @@ Model,Response,Sample geometry,sample_geometry,Point
 Model,Response,Sample size*,sample_size,150
 Model,Response,Classes,classes,3
 Model,Response,Samples per class,samples_per_class,"setosa: 50, versicolor: 50, virginica: 50"
-Model,Response,Sampling design *,sampling_design,clustered
+Model,Response,Sampling design*,sampling_design,clustered
 Model,Response,Coordinate Reference System,coordinate_reference_system,4326
 Model,Response,Data sources of response,data_sources_of_response,NA
 Model,Predictors,Predictor types,predictor_types,Remote Sensing Images
