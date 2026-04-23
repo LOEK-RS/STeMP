@@ -113,10 +113,67 @@ tbl
 ```
 
 # Figures
-```{r echo=FALSE, out.width="80%", fig.align='center'}
+```{r echo=FALSE, message=FALSE, out.width="80%", fig.align='center'}
+library(ggpubr)
+library(png)
+library(grid)
+library(ggplot2)
+library(gridExtra)
+
 if (!is.null(params$plot_files) && length(params$plot_files) > 0) {
-	knitr::include_graphics(as.character(params$plot_files), auto_pdf = FALSE, error = FALSE)
+
+  caption_text <- function(file) {
+    if (grepl("sampling_locations", file)) {
+      "Map of sampling locations."
+    } else if (grepl("sampling_area", file)) {
+      "Map of sampling area."
+    } else if (grepl("geodist", file)) {
+      "Plot of nearest neighbour distances in geographic space."
+    } else if (grepl("prediction_area", file)) {
+      "Map of prediction area."
+    } else {
+      tools::file_path_sans_ext(basename(file))
+    }
+  }
+
+  plot <- function(file) {
+    img <- readPNG(as.character(file))
+    g <- rasterGrob(img, interpolate = TRUE)
+
+    caption <- ggplot() +
+      annotate("text", x = 0, y = 0, label = caption_text(file),
+               size = 5, hjust = 0.5, vjust = 0) +
+      theme_void()
+
+    if (grepl("geodist", file)) {
+      extra_space <- ggplot() + geom_blank() + theme_void() +
+        theme(plot.margin = margin(t = 2, b = 0, l = 0, r = 0))
+      arrangeGrob(
+        extra_space,
+        ggplot() + annotation_custom(g) + theme_void(),
+        caption,
+        ncol = 1,
+        heights = c(2.4, 10, 1)
+      )
+    } else {
+      arrangeGrob(
+        ggplot() + annotation_custom(g) + theme_void(),
+        caption,
+        ncol = 1,
+        heights = c(10, 1)
+      )
+    }
+  }
+
+  plots <- lapply(as.character(params$plot_files), plot)
+
+  invisible(lapply(plots, function(p) {
+    grid::grid.newpage()
+    grid::grid.draw(p)
+  }))
 }
 ```
+
+
 
 
