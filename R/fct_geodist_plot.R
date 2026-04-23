@@ -25,7 +25,7 @@ geodist_plot <- function(
 		}
 
 		samples_data <- sf::st_transform(samples_data, sf::st_crs(area_data))
-		geod <- CAST::geodist(samples_data, modeldomain = area_data)
+		geod <- CAST::geodist(samples_data, modeldomain = area_data, dist_fun = "great_circle")
 
 		# Check wether log-scale is needed
 		dist_samples <- geod[geod$what == "sample-to-sample", ]$dist

@@ -6,7 +6,7 @@
 #' @noRd
 calculate_geodist_classification <- function(samples_sf, area_sf) {
 	samples_sf <- sf::st_transform(samples_sf, sf::st_crs(area_sf))
-	geod <- CAST::geodist(samples_sf, modeldomain = area_sf)
+	geod <- CAST::geodist(samples_sf, modeldomain = area_sf, dist_fun = "great_circle")
 
 	Gj <- geod[geod$what == "sample-to-sample", ]$dist
 	Gij <- geod[geod$what == "prediction-to-sample", ]$dist
