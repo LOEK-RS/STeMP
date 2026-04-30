@@ -374,6 +374,19 @@ render_geodist_plot <- function(element_id, element, ns = identity, info_text = 
 	)
 }
 
+#' Renderer for reupload of plots as PNG
+#' @noRd
+render_plot_png <- function(element_id, element, file, info_text) {
+  render_plot_field(
+    element_id,
+    element,
+    shiny::tags$div(style = "display: flex; justify-content: center;",
+                    shiny::tags$img(src = paste0("/temp_stemp/", file),
+                                    style = "height: 500px")),
+    info_text
+  )
+}
+
 # --- Plot server helpers ---
 
 #' Server-side render logic for samples plot
