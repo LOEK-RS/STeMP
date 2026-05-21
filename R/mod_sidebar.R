@@ -27,82 +27,10 @@ mod_sidebar_ui <- function(id) {
     ),
 
     # upload existing protocol
-    shiny::h5(
-      "Upload protocol (.csv)",
-      style = "font-weight: bold; margin-bottom: 5px;"
-    ),
-
-    # Single row: Browse and Delete buttons
-    shiny::div(
-      style = "display: flex; gap: 6px; align-items: center; margin-bottom: 6px;",
-
-      # Custom Browse button
-      shiny::actionButton(
-        ns("browse_trigger_csv"),
-        label = "Browse",
-        class = "btn btn-sm btn-primary",
-        style = "flex: 1;"
-      ),
-
-      # Delete button
-      shiny::actionButton(
-        ns("delete_csv"),
-        label = "Delete",
-        class = "btn btn-sm btn-danger",
-        style = "width: 90px;"
-      )
-    ),
-
-    # hidden native file input
-    shiny::div(
-      style = "display: none;",
-      shiny::fileInput(
-        ns("csv_upload"),
-        label = NULL,
-        accept = ".csv",
-        buttonLabel = "Hidden",
-        width = "0px"
-      )
-    ),
-
+    mod_csv_zip_upload_ui(ns("protocol_csv"), "csv", "Upload protocol (.csv)"),
+    
     # upload existing figures
-    shiny::h5(
-      "Upload figures (.zip)",
-      style = "font-weight: bold; margin-bottom: 5px;"
-    ),
-
-    # Single row: Browse and Delete buttons
-    shiny::div(
-      style = "display: flex; gap: 6px; align-items: center; margin-bottom: 6px;",
-
-      # Custom Browse button
-      shiny::actionButton(
-        ns("browse_trigger_zip"),
-        label = "Browse",
-        class = "btn btn-sm btn-primary",
-        style = "flex: 1;"
-      ),
-
-      # Delete button
-      shiny::actionButton(
-        ns("delete_zip"),
-        label = "Delete",
-        class = "btn btn-sm btn-danger",
-        style = "width: 90px;"
-      )
-    ),
-
-    # hidden native file input
-    shiny::div(
-      style = "display: none;",
-      shiny::fileInput(
-        ns("zip_upload"),
-        label = NULL,
-        accept = ".zip",
-        buttonLabel = "Hidden",
-        width = "0px"
-      )
-    ),
+    mod_csv_zip_upload_ui(ns("figures_zip"), "zip", "Upload figures (.zip)"),
 
     shiny::tags$hr(),
 
@@ -209,102 +137,38 @@ mod_sidebar_server <- function(
       shiny::tagList(overall, section_bars)
     })
 
-    ## CSV upload
-    # Reactive for protocol CSV data
-    csv_data <- shiny::reactiveVal(NULL)
-    csv_deleted <- shiny::reactiveVal(FALSE)
-
-    # Disable "Delete" button as long as no CSV is uploaded
-    shiny::observe({
-      if (is.null(csv_data())) {
-        shinyjs::disable("delete_csv")
-      } else {
-        shinyjs::enable("delete_csv")
-      }
-    })
-
-    # Trigger hidden file input when custom upload button is clicked
-    shiny::observeEvent(input$browse_trigger_csv, {
-      shinyjs::click("csv_upload")
-    })
-
-    # Handle csv upload
-    shiny::observeEvent(input$csv_upload, {
-      shiny::req(input$csv_upload)
-      tryCatch(
-        {
-          df <- utils::read.csv(input$csv_upload$datapath)
-          df$element_id <- normalize_id(df$element)
-          csv_data(df)
-
-          shinyjs::enable("delete_csv")
-        },
-        error = function(e) {
-          output$csv_status <- shiny::renderUI({
-            shiny::tags$p("Error loading CSV file", style = "color: red;")
-          })
-        }
-      )
-    })
-
-    # Delete button for CSV upload
-    shiny::observeEvent(input$delete_csv, {
-      csv_data(NULL)
-      shinyjs::reset("csv_upload")
-      shinyjs::disable("delete_csv")
-      csv_deleted(TRUE)
-    })
-
-    ## Figures upload
-    # Reactive for figure zip data
-    zip_data <- shiny::reactiveVal(NULL)
-    zip_deleted <- shiny::reactiveVal(FALSE)
-
-    # Disable "Delete" button as long as no zip is uploaded
-    shiny::observe({
-      if (is.null(zip_data())) {
-        shinyjs::disable("delete_zip")
-      } else {
-        shinyjs::enable("delete_zip")
-      }
-    })
-
-    # Trigger hidden file input when custom upload button is clicked
-    shiny::observeEvent(input$browse_trigger_zip, {
-      shinyjs::click("zip_upload")
-    })
-
-    # Handle zip upload
-    shiny::observeEvent(input$zip_upload, {
-      shiny::req(input$zip_upload)
-      tryCatch(
-        {
-          utils::unzip(input$zip_upload$datapath, exdir = output_dir)
-          zip_data(TRUE)
-
-          shinyjs::enable("delete_zip")
-        },
-        error = function(e) {
-          output$zip_status <- shiny::renderUI({
-            shiny::tags$p("Error loading zip file", style = "color: red;")
-          })
-        }
-      )
-    })
-
-    # Delete button for zip upload
-    shiny::observeEvent(input$delete_zip, {
-      zip_data(NULL)
-      shinyjs::reset("zip_upload")
-      delete_plot_png("sampling_locations", output_dir)
-      delete_plot_png("sampling_area", output_dir)
-      delete_plot_png("prediction_area", output_dir)
-      delete_plot_png("geodist_sampling_area", output_dir)
-      delete_plot_png("geodist_prediction_area", output_dir)
-      shinyjs::disable("delete_zip")
-      zip_deleted(TRUE)
-    })
-
+    ## CSV (protocol data) upload via nested module
+    csv_handlers <- mod_csv_zip_upload_server(
+      "protocol_csv",
+      filetype = "csv",
+      read_fn = function(path, ...) {
+        df <- utils::read.csv(path)
+        df$element_id <- normalize_id(df$element)
+        df
+      },
+      delete_fn = function(...) {} # no extra CSV cleanup
+    )
+    
+    ## ZIP (figures) upload via nested module
+    zip_handlers <- mod_csv_zip_upload_server(
+      "figures_zip",
+      filetype = "zip",
+      read_fn = function(path, outdir) {
+        if(grepl("\\.zip$", basename(path))) {
+          utils::unzip(path, exdir = outdir)
+          TRUE
+        } else {stop("This is not a ZIP file")}
+      },
+      delete_fn = function(outdir) {
+        delete_plot_png("sampling_locations", outdir)
+        delete_plot_png("sampling_area", outdir)
+        delete_plot_png("prediction_area", outdir)
+        delete_plot_png("geodist_sampling_area", outdir)
+        delete_plot_png("geodist_prediction_area", outdir)
+      },
+      outdir = output_dir
+    )
+    
     ## Download options
     # Reactive timer for figure existence check, updates every second
     autoInvalidate <- shiny::reactiveTimer(1000)
@@ -389,8 +253,8 @@ mod_sidebar_server <- function(
 
     # Return reactive values for use in app
     list(
-      csv = csv_data,
-      zip = zip_data,
+      csv = csv_handlers$data,
+      zip = zip_handlers$data,
       filtered_protocol_data = filtered_protocol_data,
       hide_optional = shiny::reactive(input$hide_optional),
       show_warnings = shiny::reactive(input$show_warnings)
