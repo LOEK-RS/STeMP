@@ -1,6 +1,6 @@
 #' Upload Module - UI
 #'
-#' UI for uploading protocol CSV, model RDS, and geospatial data (gpkg),
+#' UI for uploading model RDS and geospatial data (gpkg),
 #' including delete buttons for geospatial uploads.
 #'
 #' @param id Module namespace ID
@@ -46,13 +46,12 @@ mod_upload_ui <- function(id) {
 
 #' Upload Module - Server
 #'
-#' Handles uploads for protocol CSV, model RDS, and geospatial gpkg files.
+#' Handles uploads for model RDS and geospatial gpkg files.
 #' Provides status feedback and supports deleting uploaded geospatial data.
 #'
 #' @param id Module namespace ID
 #' @return List of reactives for uploaded data objects:
 #' \describe{
-#'   \item{csv}{Reactive containing the protocol data frame or NULL}
 #'   \item{model}{Reactive containing the loaded model object or NULL}
 #'   \item{samples}{Reactive list from mod_gpkg_upload_server for sample points}
 #'   \item{training_area}{Reactive list from mod_gpkg_upload_server for training area polygons}
