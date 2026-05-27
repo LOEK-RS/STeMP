@@ -44,7 +44,8 @@ mod_prediction_panel_server <- function(
 	geo_metadata = NULL,
 	uploaded_values = shiny::reactive(NULL),
 	output_dir = NULL,
-	hide_optional = shiny::reactive(FALSE)
+	hide_optional = shiny::reactive(FALSE),
+	uploaded_zip = NULL
 ) {
 	shiny::moduleServer(id, function(input, output, session) {
 		ns <- session$ns
@@ -124,7 +125,17 @@ mod_prediction_panel_server <- function(
 
 					# Render specific plots or inputs
 					content <- if (row$element_type == "prediction_area_plot") {
-						if (!is.null(valid_geo_prediction_area_metadata())) {
+					  file <- "prediction_area.png"
+					  if (!is.null(uploaded_zip()) && 
+					      file.exists(file.path(output_dir, file))) {
+					    render_plot_png(
+					      element_id = ns(row$element_id),
+					      element = row$element,
+					      file = file,
+					      info_text = row$info_text
+					    )
+					  }
+						else if (!is.null(valid_geo_prediction_area_metadata())) {
 							render_prediction_area_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
@@ -136,7 +147,17 @@ mod_prediction_panel_server <- function(
 							NULL
 						}
 					} else if (row$element_type == "geodist_plot_prediction") {
-						if (o_objective_1_val() == "Model and prediction" && !is.null(valid_geo_all_metadata())) {
+					  file <- "geodist_prediction_area.png"
+					  if (o_objective_1_val() == "Model and prediction" && !is.null(uploaded_zip()) && 
+					      file.exists(file.path(output_dir, file))) {
+					    render_plot_png(
+					      element_id = ns(row$element_id),
+					      element = row$element,
+					      file = file,
+					      info_text = row$info_text
+					    )
+					  }
+						else if (o_objective_1_val() == "Model and prediction" && !is.null(valid_geo_all_metadata())) {
 							render_geodist_plot(
 								element_id = ns(row$element_id),
 								element = row$element,

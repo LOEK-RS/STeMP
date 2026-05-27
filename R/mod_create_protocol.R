@@ -43,6 +43,7 @@ mod_create_protocol_server <- function(
 	id,
 	protocol_data,
 	uploaded_csv,
+	uploaded_zip,
 	model_metadata,
 	geo_metadata,
 	output_dir,
@@ -105,7 +106,8 @@ mod_create_protocol_server <- function(
 				uploaded_values()[["Prediction"]]
 			}),
 			output_dir = output_dir,
-			hide_optional = hide_optional
+			hide_optional = hide_optional,
+			uploaded_zip = uploaded_zip
 		)
 
 		# 5) Initialize Model panel submodule, pass protocol_data, metadata, reactive selections and uploaded Model values
@@ -121,7 +123,8 @@ mod_create_protocol_server <- function(
 			}),
 			output_dir = output_dir,
 			model_deleted = model_deleted,
-			hide_optional = hide_optional
+			hide_optional = hide_optional,
+			uploaded_zip = uploaded_zip
 		)
 
 		# 6) Combine data frames from Overview, Model, and (conditionally) Prediction panels into updated protocol

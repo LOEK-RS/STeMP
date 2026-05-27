@@ -48,7 +48,8 @@ mod_model_panel_server <- function(
 	uploaded_values = shiny::reactive(NULL),
 	output_dir = NULL,
 	model_deleted = shiny::reactive(FALSE),
-	hide_optional = shiny::reactive(FALSE)
+	hide_optional = shiny::reactive(FALSE),
+	uploaded_zip = NULL
 ) {
 	shiny::moduleServer(id, function(input, output, session) {
 		ns <- session$ns
@@ -126,7 +127,17 @@ mod_model_panel_server <- function(
 					
 					# Render field
 					content <- if (row$element_type == "sample_plot") {
-						if (!is.null(valid_geo_samples_metadata())) {
+					  file <- "sampling_locations.png"
+					  if (!is.null(uploaded_zip()) && 
+					      file.exists(file.path(output_dir, file))) {
+					    render_plot_png(
+					      element_id = ns(row$element_id),
+					      element = row$element,
+					      file = file,
+					      info_text = row$info_text
+					    )
+					  }
+						else if (!is.null(valid_geo_samples_metadata())) {
 							render_samples_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
@@ -136,7 +147,17 @@ mod_model_panel_server <- function(
 							)
 						}
 					} else if (row$element_type == "training_area_plot") {
-						if (!is.null(valid_geo_training_area_metadata())) {
+					  file <- "sampling_area.png"
+					  if (!is.null(uploaded_zip()) && 
+					      file.exists(file.path(output_dir, file))) {
+					    render_plot_png(
+					      element_id = ns(row$element_id),
+					      element = row$element,
+					      file = file,
+					      info_text = row$info_text
+					    )
+					  }
+						else if (!is.null(valid_geo_training_area_metadata())) {
 							render_training_area_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
@@ -146,7 +167,17 @@ mod_model_panel_server <- function(
 							)
 						}
 					} else if (row$element_type == "geodist_plot_training") {
-						if (o_objective_1_val() == "Model only" && !is.null(valid_geo_all_metadata())) {
+					  file <- "geodist_sampling_area.png"
+					  if (o_objective_1_val() == "Model only" && !is.null(uploaded_zip()) && 
+					      file.exists(file.path(output_dir, file))) {
+					    render_plot_png(
+					      element_id = ns(row$element_id),
+					      element = row$element,
+					      file = file,
+					      info_text = row$info_text
+					    )
+					  }
+						else if (o_objective_1_val() == "Model only" && !is.null(valid_geo_all_metadata())) {
 							render_geodist_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
