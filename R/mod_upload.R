@@ -105,8 +105,8 @@ mod_upload_server <- function(id, output_dir) {
 		shiny::observeEvent(input$delete_samples, {
 			samples$data(NULL)
 			shinyjs::reset("samples-upload")
-			delete_plot_png("sampling_locations", output_dir)
-			delete_plot_png("geodist_sampling_area", output_dir)
+			delete_plot_png("training_locations", output_dir)
+			delete_plot_png("geodist_training_area", output_dir)
 			delete_plot_png("geodist_prediction_area", output_dir)
 			output$sample_status <- shiny::renderUI({
 				shiny::tags$p("Sample upload deleted.", style = "color: orange;")
@@ -116,8 +116,8 @@ mod_upload_server <- function(id, output_dir) {
 		shiny::observeEvent(input$delete_training_area, {
 			training_area$data(NULL)
 			shinyjs::reset("training_area-upload")
-			delete_plot_png("sampling_area", output_dir)
-			delete_plot_png("geodist_sampling_area", output_dir)
+			delete_plot_png("training_area", output_dir)
+			delete_plot_png("geodist_training_area", output_dir)
 			output$training_area_status <- shiny::renderUI({
 				shiny::tags$p("Training area upload deleted.", style = "color: orange;")
 			})

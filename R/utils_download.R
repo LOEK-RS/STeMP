@@ -16,15 +16,15 @@ get_allowed_element_ids <- function(objective) {
 	switch(
 		objective,
 		"Model and prediction" = c(
-			"sampling_locations",
-			"sampling_area",
+			"training_locations",
+			"training_area",
 			"prediction_area",
 			"geodist_prediction_area"
 		),
 		"Model only" = c(
-			"sampling_locations",
-			"sampling_area",
-			"geodist_sampling_area"
+			"training_locations",
+			"training_area",
+			"geodist_training_area"
 		),
 		character(0)
 	)

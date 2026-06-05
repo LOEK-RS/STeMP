@@ -126,8 +126,8 @@ mod_model_panel_server <- function(
 					div_class_optional <- if (row$optional == 1) "optional_field" else NULL
 					
 					# Render field
-					content <- if (row$element_type == "sample_plot") {
-					  file <- "sampling_locations.png"
+					content <- if (row$element_type == "training_plot") {
+					  file <- "training_locations.png"
 					  if (!is.null(uploaded_zip()) && 
 					      file.exists(file.path(output_dir, file))) {
 					    render_plot_png(
@@ -147,7 +147,7 @@ mod_model_panel_server <- function(
 							)
 						}
 					} else if (row$element_type == "training_area_plot") {
-					  file <- "sampling_area.png"
+					  file <- "training_area.png"
 					  if (!is.null(uploaded_zip()) && 
 					      file.exists(file.path(output_dir, file))) {
 					    render_plot_png(
@@ -167,7 +167,7 @@ mod_model_panel_server <- function(
 							)
 						}
 					} else if (row$element_type == "geodist_plot_training") {
-					  file <- "geodist_sampling_area.png"
+					  file <- "geodist_training_area.png"
 					  if (o_objective_1_val() == "Model only" && !is.null(uploaded_zip()) && 
 					      file.exists(file.path(output_dir, file))) {
 					    render_plot_png(
@@ -244,10 +244,10 @@ mod_model_panel_server <- function(
 		shiny::observe({
 			df <- model_data()
 			meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
-			sample_plot_ids <- df$element_id[df$element_type == "sample_plot"]
+			training_plot_ids <- df$element_id[df$element_type == "training_plot"]
 			render_samples_plot_server(
 				output,
-				ns(sample_plot_ids),
+				ns(training_plot_ids),
 				meta_geo_samples_list,
 				what = "samples_sf",
 				output_dir = output_dir
