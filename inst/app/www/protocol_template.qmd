@@ -112,10 +112,10 @@ tbl
 ```{r echo=FALSE, message=FALSE, out.width="80%", fig.align='center'}
 if (!is.null(params$plot_files) && length(params$plot_files) > 0) {
 	caption_text <- function(file) {
-		if (grepl("sampling_locations", file)) {
-			"Map of sampling locations."
-		} else if (grepl("sampling_area", file)) {
-			"Map of sampling area."
+		if (grepl("training_locations", file)) {
+			"Map of training locations."
+		} else if (grepl("training_area", file)) {
+			"Map of training area."
 		} else if (grepl("geodist", file)) {
 			"Plot of nearest neighbour distances in geographic space."
 		} else if (grepl("prediction_area", file)) {

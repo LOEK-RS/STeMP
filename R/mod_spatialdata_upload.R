@@ -6,7 +6,7 @@
 #' @param label Label for the file input button (default "Upload file")
 #' @return UI elements for file input
 #' @noRd
-mod_gpkg_upload_ui <- function(id, label = "Upload file") {
+mod_spatialdata_upload_ui <- function(id, label = "Upload file") {
 	ns <- shiny::NS(id)
 
 	shiny::tagList(
@@ -30,7 +30,7 @@ mod_gpkg_upload_ui <- function(id, label = "Upload file") {
 #'   \item{valid}{Reactive boolean indicating whether the uploaded file is valid}
 #' }
 #' @noRd
-mod_gpkg_upload_server <- function(id, geom_types_expected = c("POINT", "MULTIPOINT")) {
+mod_spatialdata_upload_server <- function(id, geom_types_expected = c("POINT", "MULTIPOINT")) {
 	shiny::moduleServer(id, function(input, output, session) {
 		uploaded_data <- shiny::reactiveVal(NULL)
 		valid <- shiny::reactiveVal(FALSE)

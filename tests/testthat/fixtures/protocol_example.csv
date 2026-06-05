@@ -21,15 +21,15 @@ Model,Predictors,Names of predictors,names_of_predictors,"Sepal.Length, Sepal.Wi
 Model,Predictors,Preprocessing,preprocessing,Cloud removal
 Model,Predictors,Data sources of predictors,data_sources_of_predictors,NA
 Model,Learning method,Model type*,model_type,Classification
-Model,Learning method,Learning method*,learning_method,ranger
+Model,Learning method,Algorithm*,algorithm,ranger
 Model,Learning method,Architecture,architecture,NA
 Model,Parameter uncertainty and biases,Potential biases*,potential_biases,"Spatially clustered samples, might not be representative for entire prediction domain"
 Model,Parameter uncertainty and biases,Limitations*,limitations,Low sample size
-Model,Model validation and selection,Validation strategy*,validation_strategy,Random Cross-Validation
-Model,Model validation and selection,Performance metrics*,performance_metrics,Kappa
-Model,Model validation and selection,Validation results*,validation_results,"Accuracy = 0.960, Kappa = 0.940"
-Model,Model validation and selection,Hyperparameter tuning,hyperparameter_tuning,"mtry=2, splitrule=1, min.node.size=1"
-Model,Model validation and selection,Predictor selection*,predictor_selection,None
+Model,Model evaluation and selection,Model evaluation strategy*,validation_strategy,Random Cross-Validation
+Model,Model evaluation and selection,Performance metrics*,performance_metrics,Kappa
+Model,Model evaluation and selection,Model evaluation results*,validation_results,"Accuracy = 0.960, Kappa = 0.940"
+Model,Model evaluation and selection,Hyperparameter tuning,hyperparameter_tuning,"mtry=2, splitrule=1, min.node.size=1"
+Model,Model evaluation and selection,Predictor selection*,predictor_selection,None
 Model,Model interpretation,Explainability,explainability,PDP
 Model,Model interpretation,Scientific interpretation,scientific_interpretation,NA
 Model,Software,Software*,software,R 4.5.1
@@ -37,7 +37,7 @@ Model,Software,Code availability*,code_availability,Github
 Model,Software,Data availability*,data_availability,Figshare
 Prediction,Parameter uncertainty and biases,Sensitivity assessment,sensitivity_assessment,NA
 Prediction,Prediction domain,Prediction domain*,prediction_domain,landscape
-Prediction,Evaluation and Uncertainty,Evaluation strategy*,evaluation_strategy,Independent probability sample
+Prediction,Evaluation and Uncertainty,Map evaluation strategy*,evaluation_strategy,Independent probability sample
 Prediction,Evaluation and Uncertainty,Performance metrics,performance_metrics,Kappa
 Prediction,Evaluation and Uncertainty,Map accuracy*,map_accuracy,0.5
 Prediction,Evaluation and Uncertainty,Uncertainty quantification*,uncertainty_quantification,None

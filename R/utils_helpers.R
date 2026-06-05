@@ -67,9 +67,9 @@ save_figure <- function(figure, element_id, temp_dir = NULL) {
 		element_id,
 		"protocol-prediction-geodistance_plot_prediction_area" = "geodist_prediction_area",
 		"protocol-prediction-prediction_map" = "prediction_area",
-		"protocol-model-sampling_area_map" = "sampling_area",
-		"protocol-model-sampling_locations" = "sampling_locations",
-		"protocol-model-geodistance_plot_sampling_area" = "geodist_sampling_area",
+		"protocol-model-training_area_map" = "training_area",
+		"protocol-model-training_locations" = "training_locations",
+		"protocol-model-geodistance_plot_training_area" = "geodist_training_area",
 		element_id
 	)
 
@@ -84,7 +84,7 @@ save_figure <- function(figure, element_id, temp_dir = NULL) {
 #'
 #' Deletes a PNG file matching the element ID from a specified directory.
 #'
-#' @param element_id The ID of the element (e.g., "sampling_locations")
+#' @param element_id The ID of the element (e.g., "training_locations")
 #' @param output_dir Directory where plot PNGs are stored
 #' @noRd
 delete_plot_png <- function(element_id, output_dir) {

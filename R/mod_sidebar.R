@@ -160,10 +160,10 @@ mod_sidebar_server <- function(
         } else {stop("This is not a ZIP file")}
       },
       delete_fn = function(outdir) {
-        delete_plot_png("sampling_locations", outdir)
-        delete_plot_png("sampling_area", outdir)
+        delete_plot_png("training_locations", outdir)
+        delete_plot_png("training_area", outdir)
         delete_plot_png("prediction_area", outdir)
-        delete_plot_png("geodist_sampling_area", outdir)
+        delete_plot_png("geodist_training_area", outdir)
         delete_plot_png("geodist_prediction_area", outdir)
       },
       outdir = output_dir
