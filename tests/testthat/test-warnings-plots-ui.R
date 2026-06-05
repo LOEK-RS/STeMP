@@ -53,7 +53,7 @@ test_that("{shinytest2} recording: STeMP", {
 	app$set_inputs(`protocol-model-predictor_types` = character(0), wait_ = FALSE)
 	app$set_inputs(`protocol-model-preprocessing` = character(0), wait_ = FALSE)
 	app$set_inputs(`protocol-model-model_type` = "", wait_ = FALSE)
-	app$set_inputs(`protocol-model-learning_method` = "", wait_ = FALSE)
+	app$set_inputs(`protocol-model-algorithm` = "", wait_ = FALSE)
 	app$set_inputs(`protocol-model-validation_strategy` = "None", wait_ = FALSE)
 	app$set_inputs(`protocol-model-performance_metrics` = character(0), wait_ = FALSE)
 	app$set_inputs(`protocol-model-predictor_selection` = character(0), wait_ = FALSE)

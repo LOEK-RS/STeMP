@@ -21,7 +21,7 @@ Model,Predictors,Names of predictors,names_of_predictors,"Sepal.Length, Sepal.Wi
 Model,Predictors,Preprocessing,preprocessing,Cloud removal
 Model,Predictors,Data sources of predictors,data_sources_of_predictors,NA
 Model,Learning method,Model type*,model_type,Classification
-Model,Learning method,Learning method*,learning_method,ranger
+Model,Learning method,Algorithm*,algorithm,ranger
 Model,Learning method,Architecture,architecture,NA
 Model,Parameter uncertainty and biases,Potential biases*,potential_biases,"Spatially clustered samples, might not be representative for entire prediction domain"
 Model,Parameter uncertainty and biases,Limitations*,limitations,Low sample size

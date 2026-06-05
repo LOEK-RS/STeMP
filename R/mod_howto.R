@@ -49,11 +49,11 @@ mod_howto_ui <- function(id) {
 					"In the ",
 					shiny::em("Upload/Import"),
 					" tab, you can upload model objects (currently only .RDS files) to automatically
-                    fill some of the protocol fields based on the models' metadata. Also, it is possible to upload the sampling locations,
-                    the training area and the prediction area as .gpkg files and generate plots from them. If sampling locations and the prediction
+                    fill some of the protocol fields based on the models' metadata. Also, it is possible to upload the training locations,
+                    the training area and the prediction area as .gpkg files and generate plots from them. If training locations and the prediction
                     area (if the objective is ",
 					shiny::em("Model and prediction"),
-					"), or sampling locations (if the objective is ",
+					"), or training locations (if the objective is ",
 					shiny::em("Model only"),
 					") are uploaded, the ",
 					shiny::em("sampling design"),

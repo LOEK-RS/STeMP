@@ -7,7 +7,7 @@
 7,Overview,o,Target variable,o_objective,Target variable,target_variable,"The response variable the model aims to predict (e.g., temperature, plant biomass)",text,,0,0,0
 8,Overview,o,Scientific Field,o_field,Scientific Field,scientific_field,The scientific field in which the model was developed,suggestion,"Biogeosciences, Atmosphere, Oceanography, Cryosphere, Hydrology",0,0,0
 1,Model,m,Learning method,m_algorithms,Model type,model_type,Is the model developed for Regression or Classification tasks?,model_type,"Regression, Classification",0,0,0
-2,Model,m,Learning method,m_algorithms,Learning method,learning_method,Name of the applied learning method,model_algorithm,,0,0,0
+2,Model,m,Learning method,m_algorithms,Algorithm,algorithm,Name of the applied algorithm,model_algorithm,,0,0,0
 3,Model,m,Learning method,m_algorithms,Architecture,architecture,"Outline the model's architecture (nodes, layers etc.)",text,,1,0,0
 1,Model,m,Response,m_response,Training locations,training_locations,Map of training locations,training_plot,,0,0,0
 1,Model,m,Response,m_response,Training area map,training_area_map,Map of training area,training_area_plot,,0,0,0

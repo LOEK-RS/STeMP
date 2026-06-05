@@ -21,7 +21,7 @@ mod_upload_ui <- function(id) {
 				shiny::tags$hr(),
 
 				shiny::p(shiny::tags$b("Upload geospatial data (.gpkg)")),
-				mod_spatialdata_upload_ui(ns("samples"), label = "Upload sampling locations"),
+				mod_spatialdata_upload_ui(ns("samples"), label = "Upload training locations"),
 				shiny::uiOutput(ns("sample_status")),
 				shiny::actionButton(ns("delete_samples"), "Delete uploaded samples", style = "margin-bottom: 15px;"),
 				mod_spatialdata_upload_ui(ns("training_area"), label = "Upload training area"),
