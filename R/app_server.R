@@ -30,7 +30,7 @@ app_server <- function(input, output, session) {
 
 	# Initialize metadata modules for model and geodata
 	model_metadata <- mod_model_metadata_server("model_metadata", input_model_object = upload_mod$model)
-	geo_metadata <- mod_gpkg_metadata_server(
+	geo_metadata <- mod_spatialdata_metadata_server(
 		"model_metadata",
 		samples = upload_mod$samples,
 		training_area = upload_mod$training_area,

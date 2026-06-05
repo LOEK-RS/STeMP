@@ -21,17 +21,17 @@ mod_upload_ui <- function(id) {
 				shiny::tags$hr(),
 
 				shiny::p(shiny::tags$b("Upload geospatial data (.gpkg)")),
-				mod_gpkg_upload_ui(ns("samples"), label = "Upload sampling locations"),
+				mod_spatialdata_upload_ui(ns("samples"), label = "Upload sampling locations"),
 				shiny::uiOutput(ns("sample_status")),
 				shiny::actionButton(ns("delete_samples"), "Delete uploaded samples", style = "margin-bottom: 15px;"),
-				mod_gpkg_upload_ui(ns("training_area"), label = "Upload training area"),
+				mod_spatialdata_upload_ui(ns("training_area"), label = "Upload training area"),
 				shiny::uiOutput(ns("training_area_status")),
 				shiny::actionButton(
 					ns("delete_training_area"),
 					"Delete uploaded training area",
 					style = "margin-bottom: 15px;"
 				),
-				mod_gpkg_upload_ui(ns("prediction_area"), label = "Upload prediction area"),
+				mod_spatialdata_upload_ui(ns("prediction_area"), label = "Upload prediction area"),
 				shiny::uiOutput(ns("prediction_area_status")),
 				shiny::actionButton(
 					ns("delete_prediction_area"),
@@ -53,9 +53,9 @@ mod_upload_ui <- function(id) {
 #' @return List of reactives for uploaded data objects:
 #' \describe{
 #'   \item{model}{Reactive containing the loaded model object or NULL}
-#'   \item{samples}{Reactive list from mod_gpkg_upload_server for sample points}
-#'   \item{training_area}{Reactive list from mod_gpkg_upload_server for training area polygons}
-#'   \item{prediction_area}{Reactive list from mod_gpkg_upload_server for prediction area polygons}
+#'   \item{samples}{Reactive list from mod_spatialdata_upload_server for sample points}
+#'   \item{training_area}{Reactive list from mod_spatialdata_upload_server for training area polygons}
+#'   \item{prediction_area}{Reactive list from mod_spatialdata_upload_server for prediction area polygons}
 #' }
 #' @noRd
 mod_upload_server <- function(id, output_dir) {
@@ -97,9 +97,9 @@ mod_upload_server <- function(id, output_dir) {
 		})
 
 		# Geospatial uploads via nested modules
-		samples <- mod_gpkg_upload_server("samples", geom_types_expected = c("POINT", "MULTIPOINT"))
-		training_area <- mod_gpkg_upload_server("training_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
-		prediction_area <- mod_gpkg_upload_server("prediction_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
+		samples <- mod_spatialdata_upload_server("samples", geom_types_expected = c("POINT", "MULTIPOINT"))
+		training_area <- mod_spatialdata_upload_server("training_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
+		prediction_area <- mod_spatialdata_upload_server("prediction_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
 
 		# Delete buttons to clear geospatial uploads and reset UI
 		shiny::observeEvent(input$delete_samples, {

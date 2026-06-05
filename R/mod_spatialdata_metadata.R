@@ -6,7 +6,7 @@
 #' @param id Module namespace ID
 #' @return An empty tagList (no UI)
 #' @noRd
-mod_gpkg_metadata_ui <- function(id) {
+mod_spatialdata_metadata_ui <- function(id) {
 	ns <- shiny::NS(id)
 	shiny::tagList() # no UI elements required for this module
 }
@@ -35,7 +35,7 @@ mod_gpkg_metadata_ui <- function(id) {
 #'   \item{prediction_area_sf}{Reactive sf object for prediction area}
 #' }
 #' @noRd
-mod_gpkg_metadata_server <- function(id, samples, training_area, prediction_area) {
+mod_spatialdata_metadata_server <- function(id, samples, training_area, prediction_area) {
 	shiny::moduleServer(id, function(input, output, session) {
 		# Check if samples data exists and passes validation
 		has_samples <- shiny::reactive({
