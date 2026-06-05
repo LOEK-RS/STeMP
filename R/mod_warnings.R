@@ -192,7 +192,7 @@ mod_warnings_server <- function(
 		)
 
 		ref_mila_2022 <- make_ref(
-			"Milà et al., 2022",
+			"Mil\u00E0 et al., 2022",
 			"https://doi.org/10.1111/2041-210X.13851"
 		)
 
@@ -202,7 +202,7 @@ mod_warnings_server <- function(
 		)
 
 		ref_mila_2024 <- make_ref(
-			"Milà et al., 2024",
+			"Mil\u00E0 et al., 2024",
 			"https://doi.org/10.5194/gmd-17-6007-2024"
 		)
 
@@ -274,7 +274,7 @@ mod_warnings_server <- function(
 		# ---------------------------------------------------------------------
 
 		register_warning(
-			flag_name = "random_spatial_cv",
+			flag_name = "random_clustered_cv",
 			condition = function() {
 				is_value(sampling_design(), "random") &&
 					contains_text(validation_method(), "Spatial")
@@ -329,7 +329,7 @@ mod_warnings_server <- function(
 		# ---------------------------------------------------------------------
 
 		register_warning(
-			flag_name = "random_spatial_ev",
+			flag_name = "random_clustered_ev",
 			condition = function() {
 				is_value(o_objective_1_val(), "Model and prediction") &&
 					is_value(sampling_design(), "random") &&
@@ -386,7 +386,7 @@ mod_warnings_server <- function(
 		# ---------------------------------------------------------------------
 
 		register_warning(
-			flag_name = "clustered_no_uncertainty",
+			flag_name = "clustered_noAssessment",
 			condition = function() {
 				is_value(o_objective_1_val(), "Model and prediction") &&
 					is_value(sampling_design(), "clustered") &&
