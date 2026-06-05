@@ -81,7 +81,7 @@ mod_warnings_server <- function(
 			)
 		}
 
-		make_warning_message <- function(issue, sections, refs = list(), recommendation = NULL) {
+		make_warning_message <- function(issue, sections, refs = list()) {
 			shiny::tags$div(
 				style = "line-height: 1.35;",
 				shiny::tags$p(
@@ -89,13 +89,6 @@ mod_warnings_server <- function(
 					shiny::tags$strong("Potential issue: "),
 					issue
 				),
-				if (!is.null(recommendation)) {
-					shiny::tags$p(
-						style = "margin-bottom: 4px;",
-						shiny::tags$strong("Recommendation: "),
-						recommendation
-					)
-				},
 				format_sections(sections),
 				format_refs(refs)
 			)
@@ -345,13 +338,7 @@ mod_warnings_server <- function(
 					"Spatial Proxies" %in% predictor_types()
 			},
 			message = make_warning_message(
-				issue = paste(
-					"Using spatial proxies with clustered training points can increase the risk of",
-					"extrapolation to feature combinations not represented in the training data."
-				),
-				recommendation = paste(
-					"Consider using physically or ecologically relevant predictors where possible."
-				),
+				issue = "Using spatial proxies with clustered training points can increase the risk of extrapolation to combinations of predictor values not represented in the training data.",
 				sections = c(
 					"Model > Response",
 					"Model > Predictors"
@@ -374,16 +361,10 @@ mod_warnings_server <- function(
 
 				o_objective_1_val() == "Model and prediction" &&
 					sampling_design() == "clustered" &&
-					uncertainty_quantification() == "None"
+					any(grepl("None", uncertainty_quantification(), fixed = TRUE), na.rm = TRUE)
 			},
 			message = make_warning_message(
-				issue = paste(
-					"Clustered training points can lead to extrapolation when the model is applied to",
-					"feature combinations not present in the training data."
-				),
-				recommendation = paste(
-					"Consider identifying and communicating areas of extrapolation or prediction uncertainty."
-				),
+				issue = "Clustered training points can lead to extrapolation when the model is applied to feature combinations not present in the training data.",
 				sections = c(
 					"Model > Response",
 					"Prediction > Map evaluation and uncertainty assessment"
