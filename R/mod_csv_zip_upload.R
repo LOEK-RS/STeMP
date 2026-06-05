@@ -10,49 +10,49 @@
 #' @noRd
 
 mod_csv_zip_upload_ui <- function(id, filetype, label) {
-  ns <- shiny::NS(id)
-  
-  shiny::tagList(
-    shiny::h5(
-      label,
-      style = "font-weight: bold; margin-bottom: 5px;"
-    ),
-    
-    # Single row: Browse and Delete buttons
-    shiny::div(
-      style = "display: flex; gap: 6px; align-items: center; margin-bottom: 6px;",
-      
-      # Custom Browse button
-      shiny::actionButton(
-        ns(paste0("browse_trigger_", filetype)),
-        label = "Browse",
-        class = "btn btn-sm btn-primary",
-        style = "flex: 1;"
-      ),
-      
-      # Delete button
-      shiny::actionButton(
-        ns(paste0("delete_", filetype)),
-        label = "Delete",
-        class = "btn btn-sm btn-danger",
-        style = "width: 90px;"
-      )
-    ),
-    
-    shiny::uiOutput(ns(paste0(filetype, "_status"))),
-    
-    # hidden native file input
-    shiny::div(
-      style = "display: none;",
-      shiny::fileInput(
-        ns(paste0(filetype, "_upload")),
-        label = NULL,
-        accept = paste0(".", filetype),
-        buttonLabel = "Hidden",
-        width = "0px"
-      )
-    )
-  )
+	ns <- shiny::NS(id)
+
+	shiny::tagList(
+		shiny::h5(
+			label,
+			style = "font-weight: bold; margin-bottom: 5px;"
+		),
+
+		# Single row: Browse and Delete buttons
+		shiny::div(
+			style = "display: flex; gap: 6px; align-items: center; margin-bottom: 6px;",
+
+			# Custom Browse button
+			shiny::actionButton(
+				ns(paste0("browse_trigger_", filetype)),
+				label = "Browse",
+				class = "btn btn-sm btn-primary",
+				style = "flex: 1;"
+			),
+
+			# Delete button
+			shiny::actionButton(
+				ns(paste0("delete_", filetype)),
+				label = "Delete",
+				class = "btn btn-sm btn-danger",
+				style = "width: 90px;"
+			)
+		),
+
+		shiny::uiOutput(ns(paste0(filetype, "_status"))),
+
+		# hidden native file input
+		shiny::div(
+			style = "display: none;",
+			shiny::fileInput(
+				ns(paste0(filetype, "_upload")),
+				label = NULL,
+				accept = paste0(".", filetype),
+				buttonLabel = "Hidden",
+				width = "0px"
+			)
+		)
+	)
 }
 
 #' CSV/ZIP Upload Module Server
@@ -76,56 +76,67 @@ mod_csv_zip_upload_ui <- function(id, filetype, label) {
 #' }
 #' @noRd
 mod_csv_zip_upload_server <- function(id, filetype, read_fn, delete_fn, ...) {
-  shiny::moduleServer(id, function(input, output, session) {
-    ns <- session$ns
-    
-    data_rv <- shiny::reactiveVal(NULL)
-    deleted_rv <- shiny::reactiveVal(FALSE)
-    status_output <- paste0(filetype, "_status")
-    
-    # Disable "Delete" button as long as no file is uploaded
-    shiny::observe({
-      if (is.null(data_rv())) {
-        shinyjs::disable(paste0("delete_", filetype))
-      } else {
-        shinyjs::enable(paste0("delete_", filetype))
-      }
-    })
-    
-    # Trigger hidden file input when custom upload button is clicked
-    shiny::observeEvent(input[[paste0("browse_trigger_", filetype)]], {
-      shinyjs::click(paste0(filetype, "_upload"))
-    }, ignoreNULL = TRUE)
-    
-    # Handle file upload
-    shiny::observeEvent(input[[paste0(filetype, "_upload")]], {
-      shiny::req(input[[paste0(filetype, "_upload")]])
-      tryCatch({
-        res <- read_fn(input[[paste0(filetype, "_upload")]]$datapath, ...)
-        data_rv(res)
-        shinyjs::enable(paste0("delete_", filetype))
-        output[[status_output]] <- shiny::renderUI({
-          shiny::tags$p(paste0(toupper(filetype), " file loaded successfully."), style = "color: blue;")
-        })
-      }, error = function(e) {
-        output[[status_output]] <- shiny::renderUI({
-          shiny::tags$p(paste("Error loading", toupper(filetype), "file."), style = "color: red;")
-        })
-      })
-    })
-    
-    # Delete handler
-    shiny::observeEvent(input[[paste0("delete_", filetype)]], {
-      data_rv(NULL)
-      shinyjs::reset(paste0(filetype, "_upload"))
-      delete_fn(...)
-      shinyjs::disable(paste0("delete_", filetype))
-      deleted_rv(TRUE)
-      output[[status_output]] <- shiny::renderUI({
-        shiny::tags$p(paste0(toupper(filetype), " file upload deleted."), style = "color: orange;")
-      })
-    }, ignoreInit = TRUE)
-    
-    list(data = data_rv)
-  })
+	shiny::moduleServer(id, function(input, output, session) {
+		ns <- session$ns
+
+		data_rv <- shiny::reactiveVal(NULL)
+		deleted_rv <- shiny::reactiveVal(FALSE)
+		status_output <- paste0(filetype, "_status")
+
+		# Disable "Delete" button as long as no file is uploaded
+		shiny::observe({
+			if (is.null(data_rv())) {
+				shinyjs::disable(paste0("delete_", filetype))
+			} else {
+				shinyjs::enable(paste0("delete_", filetype))
+			}
+		})
+
+		# Trigger hidden file input when custom upload button is clicked
+		shiny::observeEvent(
+			input[[paste0("browse_trigger_", filetype)]],
+			{
+				shinyjs::click(paste0(filetype, "_upload"))
+			},
+			ignoreNULL = TRUE
+		)
+
+		# Handle file upload
+		shiny::observeEvent(input[[paste0(filetype, "_upload")]], {
+			shiny::req(input[[paste0(filetype, "_upload")]])
+			tryCatch(
+				{
+					res <- read_fn(input[[paste0(filetype, "_upload")]]$datapath, ...)
+					data_rv(res)
+					shinyjs::enable(paste0("delete_", filetype))
+					output[[status_output]] <- shiny::renderUI({
+						shiny::tags$p(paste0(toupper(filetype), " file loaded successfully."), style = "color: blue;")
+					})
+				},
+				error = function(e) {
+					output[[status_output]] <- shiny::renderUI({
+						shiny::tags$p(paste("Error loading", toupper(filetype), "file."), style = "color: red;")
+					})
+				}
+			)
+		})
+
+		# Delete handler
+		shiny::observeEvent(
+			input[[paste0("delete_", filetype)]],
+			{
+				data_rv(NULL)
+				shinyjs::reset(paste0(filetype, "_upload"))
+				delete_fn(...)
+				shinyjs::disable(paste0("delete_", filetype))
+				deleted_rv(TRUE)
+				output[[status_output]] <- shiny::renderUI({
+					shiny::tags$p(paste0(toupper(filetype), " file upload deleted."), style = "color: orange;")
+				})
+			},
+			ignoreInit = TRUE
+		)
+
+		list(data = data_rv)
+	})
 }

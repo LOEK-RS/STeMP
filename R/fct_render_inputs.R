@@ -11,8 +11,8 @@
 render_suggestion <- function(element_id, label, suggestions, info_text = NULL, selected = NULL) {
 	choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
 	if (!is.null(selected) && !is.na(selected)) {
-	  # Only add values that are not already in the choices
-	  choices <- unique(c(choices, selected))
+		# Only add values that are not already in the choices
+		choices <- unique(c(choices, selected))
 	}
 	selected_val <- selected
 	if (!is.null(selected_val) && is.character(selected_val)) {
@@ -39,25 +39,26 @@ render_suggestion <- function(element_id, label, suggestions, info_text = NULL, 
 #' @return A selectizeInput with single selection enabled
 #' @noRd
 render_suggestion_single <- function(element_id, label, suggestions, info_text = NULL, selected = NULL) {
-  choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
-  if (!is.null(selected) && !is.na(selected)) {
-    # Only add values that are not already in the choices
-    choices <- unique(c(choices, selected))
-  }
-  
-  # If a selected value is passed (from CSV), use it
-  selected_val <- selected %||% NULL
-  
-  input <- shiny::selectizeInput(
-    inputId = element_id,
-    label = label,
-    choices = choices,
-    selected = selected_val,
-    multiple = FALSE,
-    options = list(
-      create = TRUE,
-      placeholder = "Choose or type",
-      onInitialize = I(sprintf("
+	choices <- sort(trimws(unlist(strsplit(suggestions, ","))))
+	if (!is.null(selected) && !is.na(selected)) {
+		# Only add values that are not already in the choices
+		choices <- unique(c(choices, selected))
+	}
+
+	# If a selected value is passed (from CSV), use it
+	selected_val <- selected %||% NULL
+
+	input <- shiny::selectizeInput(
+		inputId = element_id,
+		label = label,
+		choices = choices,
+		selected = selected_val,
+		multiple = FALSE,
+		options = list(
+			create = TRUE,
+			placeholder = "Choose or type",
+			onInitialize = I(sprintf(
+				"
         function() {
           if (%s) {
             this.setValue('%s');
@@ -65,11 +66,12 @@ render_suggestion_single <- function(element_id, label, suggestions, info_text =
             this.clear(true);
           }
         }",
-                               ifelse(!is.null(selected_val), "true", "false"), 
-                               selected_val %||% ""))
-    )
-  )
-  with_tooltip(input, info_text)
+				ifelse(!is.null(selected_val), "true", "false"),
+				selected_val %||% ""
+			))
+		)
+	)
+	with_tooltip(input, info_text)
 }
 
 #' Render a simple text input
@@ -233,17 +235,17 @@ render_model_type <- function(element_id, element, model_metadata = NULL, info_t
 #' @noRd
 render_model_algorithm <- function(element_id, element, model_metadata = NULL, info_text = NULL, value = NULL) {
 	default_algos <- c("rf", "gbm", "glm", "svmRadial", "nnet", "rpart")
-	
+
 	selected_algo <- if (is.null(value) || is.na(value)) {
-	  get_value(NULL, function() {
-	    if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
-	      model_metadata$model_algorithm()
-	    } else {
-	      ""
-	    }
-	  })
+		get_value(NULL, function() {
+			if (!is.null(model_metadata) && !is.null(model_metadata$model_algorithm)) {
+				model_metadata$model_algorithm()
+			} else {
+				""
+			}
+		})
 	} else {
-	  value
+		value
 	}
 
 	algo_choices <- if (selected_algo != "" && !(selected_algo %in% default_algos)) {
@@ -377,14 +379,15 @@ render_geodist_plot <- function(element_id, element, ns = identity, info_text = 
 #' Renderer for reupload of plots as PNG
 #' @noRd
 render_plot_png <- function(element_id, element, file, info_text) {
-  render_plot_field(
-    element_id,
-    element,
-    shiny::tags$div(style = "display: flex; justify-content: center;",
-                    shiny::tags$img(src = paste0("/temp_stemp/", file),
-                                    style = "height: 500px")),
-    info_text
-  )
+	render_plot_field(
+		element_id,
+		element,
+		shiny::tags$div(
+			style = "display: flex; justify-content: center;",
+			shiny::tags$img(src = paste0("/temp_stemp/", file), style = "height: 500px")
+		),
+		info_text
+	)
 }
 
 # --- Plot server helpers ---
