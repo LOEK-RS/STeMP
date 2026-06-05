@@ -14,7 +14,7 @@ on:
   # as a situation that should be safe (because we aren't actually running the untrusted
   # code, we are just treating it as passive data).
   # https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
-  pull_request_target:
+  pull_request:
 
 name: format-suggest.yaml
 
