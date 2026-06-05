@@ -39,38 +39,8 @@ mod_warnings_server <- function(
 		warning_flags <- shiny::reactiveValues()
 
 		# ---------------------------------------------------------------------
-		# Small helpers
+		# Message formatting helpers
 		# ---------------------------------------------------------------------
-
-		scalar_value <- function(x) {
-			if (is.null(x) || length(x) == 0) {
-				return(NA_character_)
-			}
-
-			as.character(x[[1]])
-		}
-
-		is_value <- function(x, value) {
-			identical(scalar_value(x), value)
-		}
-
-		contains_text <- function(x, pattern) {
-			x <- scalar_value(x)
-
-			if (is.na(x)) {
-				return(FALSE)
-			}
-
-			grepl(pattern, x, fixed = TRUE)
-		}
-
-		has_predictor_type <- function(x, type) {
-			if (is.null(x) || length(x) == 0) {
-				return(FALSE)
-			}
-
-			type %in% as.character(x)
-		}
 
 		make_ref <- function(label, url) {
 			list(label = label, url = url)
@@ -223,9 +193,11 @@ mod_warnings_server <- function(
 		register_warning(
 			flag_name = "both_cv",
 			condition = function() {
-				is_value(o_objective_1_val(), "Model and prediction") &&
-					contains_text(validation_method(), "Cross-Validation") &&
-					contains_text(evaluation_method(), "Cross-Validation")
+				shiny::req(validation_method(), evaluation_method(), o_objective_1_val())
+
+				o_objective_1_val() == "Model and prediction" &&
+					grepl("Cross-Validation", validation_method(), fixed = TRUE) &&
+					grepl("Cross-Validation", evaluation_method(), fixed = TRUE)
 			},
 			message = make_warning_message(
 				issue = paste(
@@ -249,8 +221,10 @@ mod_warnings_server <- function(
 		register_warning(
 			flag_name = "clustered_random_cv",
 			condition = function() {
-				is_value(sampling_design(), "clustered") &&
-					contains_text(validation_method(), "Random")
+				shiny::req(sampling_design(), validation_method())
+
+				sampling_design() == "clustered" &&
+					grepl("Random", validation_method(), fixed = TRUE)
 			},
 			message = make_warning_message(
 				issue = paste(
@@ -276,8 +250,10 @@ mod_warnings_server <- function(
 		register_warning(
 			flag_name = "random_clustered_cv",
 			condition = function() {
-				is_value(sampling_design(), "random") &&
-					contains_text(validation_method(), "Spatial")
+				shiny::req(sampling_design(), validation_method())
+
+				sampling_design() == "random" &&
+					grepl("Spatial", validation_method(), fixed = TRUE)
 			},
 			message = make_warning_message(
 				issue = paste(
@@ -303,9 +279,11 @@ mod_warnings_server <- function(
 		register_warning(
 			flag_name = "clustered_random_ev",
 			condition = function() {
-				is_value(o_objective_1_val(), "Model and prediction") &&
-					is_value(sampling_design(), "clustered") &&
-					contains_text(evaluation_method(), "Random")
+				shiny::req(sampling_design(), evaluation_method(), o_objective_1_val())
+
+				o_objective_1_val() == "Model and prediction" &&
+					sampling_design() == "clustered" &&
+					grepl("Random", evaluation_method(), fixed = TRUE)
 			},
 			message = make_warning_message(
 				issue = paste(
@@ -331,9 +309,11 @@ mod_warnings_server <- function(
 		register_warning(
 			flag_name = "random_clustered_ev",
 			condition = function() {
-				is_value(o_objective_1_val(), "Model and prediction") &&
-					is_value(sampling_design(), "random") &&
-					contains_text(evaluation_method(), "Spatial")
+				shiny::req(sampling_design(), evaluation_method(), o_objective_1_val())
+
+				o_objective_1_val() == "Model and prediction" &&
+					sampling_design() == "random" &&
+					grepl("Spatial", evaluation_method(), fixed = TRUE)
 			},
 			message = make_warning_message(
 				issue = paste(
@@ -359,8 +339,10 @@ mod_warnings_server <- function(
 		register_warning(
 			flag_name = "clustered_proxies",
 			condition = function() {
-				is_value(sampling_design(), "clustered") &&
-					has_predictor_type(predictor_types(), "Spatial Proxies")
+				shiny::req(sampling_design(), predictor_types())
+
+				sampling_design() == "clustered" &&
+					"Spatial Proxies" %in% predictor_types()
 			},
 			message = make_warning_message(
 				issue = paste(
@@ -388,9 +370,11 @@ mod_warnings_server <- function(
 		register_warning(
 			flag_name = "clustered_noAssessment",
 			condition = function() {
-				is_value(o_objective_1_val(), "Model and prediction") &&
-					is_value(sampling_design(), "clustered") &&
-					is_value(uncertainty_quantification(), "None")
+				shiny::req(sampling_design(), uncertainty_quantification(), o_objective_1_val())
+
+				o_objective_1_val() == "Model and prediction" &&
+					sampling_design() == "clustered" &&
+					uncertainty_quantification() == "None"
 			},
 			message = make_warning_message(
 				issue = paste(
