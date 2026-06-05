@@ -7,7 +7,6 @@
 #' @return Empty UI placeholder (notifications appear dynamically)
 #' @noRd
 mod_warnings_ui <- function(id) {
-	ns <- shiny::NS(id)
 	shiny::tagList()
 }
 
@@ -18,13 +17,13 @@ mod_warnings_ui <- function(id) {
 #' uncertainty quantification, and predictor types.
 #'
 #' @param id Module namespace ID
-#' @param sampling_design Reactive returning current sampling design (e.g., "clustered", "random")
-#' @param validation_method Reactive returning current model validation method (e.g., "Random Cross-Validation", "Spatial Cross-Validation")
-#' @param evaluation_method Reactive returning current map evaluation method
-#' @param uncertainty_quantification Reactive returning uncertainty quantification method (e.g., "none")
-#' @param predictor_types Reactive returning a vector of predictor types (e.g., contains "Spatial Proxies")
-#' @param show_warnings Should warnings be displayed?
-#' @param o_objective_1_val Is only the model panel or also the prediction panel displayed?
+#' @param sampling_design Reactive returning current sampling design, e.g. `"clustered"` or `"random"`.
+#' @param validation_method Reactive returning current model evaluation method, e.g. `"Random Cross-Validation"`.
+#' @param evaluation_method Reactive returning current map evaluation method.
+#' @param uncertainty_quantification Reactive returning uncertainty quantification method, e.g. `"None"`.
+#' @param predictor_types Reactive returning a vector of predictor types, e.g. containing `"Spatial Proxies"`.
+#' @param show_warnings Reactive logical indicating whether warnings should be displayed.
+#' @param o_objective_1_val Reactive indicating whether only the model panel or also the prediction panel is displayed.
 #' @noRd
 mod_warnings_server <- function(
 	id,
@@ -39,158 +38,342 @@ mod_warnings_server <- function(
 	shiny::moduleServer(id, function(input, output, session) {
 		warning_flags <- shiny::reactiveValues()
 
-		# Utility to check condition and show notification only once
-		check_and_warn <- function(condition, message, flag_name) {
-			if (isTRUE(show_warnings()) && isTRUE(condition()) && is.null(warning_flags[[flag_name]])) {
-				shiny::showNotification(message, type = "warning", duration = 10)
-				warning_flags[[flag_name]] <- TRUE
-			} else if ((!isTRUE(condition()) || !isTRUE(show_warnings())) && !is.null(warning_flags[[flag_name]])) {
-				warning_flags[[flag_name]] <- NULL
-			}
+		# ---------------------------------------------------------------------
+		# Message formatting helpers
+		# ---------------------------------------------------------------------
+
+		make_ref <- function(label, url) {
+			list(label = label, url = url)
 		}
 
-		# Warning: CV for map accuracy estimation, when also using CV for model selection
-		shiny::observe({
-			shiny::req(validation_method(), evaluation_method(), o_objective_1_val() == "Model and prediction")
-
-			is_problematic <- grepl("Cross-Validation", validation_method(), fixed = TRUE) &&
-				grepl("Cross-Validation", evaluation_method(), fixed = TRUE)
-
-			check_and_warn(
-				condition = shiny::reactive({
-					is_problematic
-				}),
-				message = shiny::HTML(
-					"Using Cross-Validation for both, model selection and assessing the final prediction might lead to data leakage.",
-					'See <a href="https://doi.org/10.1007/978-0-387-84858-7" target="_blank">Hastie et al., 2009</a>'
-				),
-				flag_name = "both_cv"
+		format_sections <- function(sections) {
+			shiny::tags$p(
+				style = "margin-bottom: 4px;",
+				shiny::tags$strong("Relevant sections: "),
+				paste(sections, collapse = "; ")
 			)
-		})
+		}
 
-		# Warning: Random resampling with clustered samples can be optimistic during model selection
-		shiny::observe({
-			shiny::req(sampling_design(), validation_method())
+		format_refs <- function(refs) {
+			if (length(refs) == 0) {
+				return(NULL)
+			}
 
-			is_problematic <- sampling_design() == "clustered" &&
-				grepl("Random", validation_method(), fixed = TRUE)
+			ref_tags <- lapply(seq_along(refs), function(i) {
+				shiny::tagList(
+					shiny::tags$a(
+						href = refs[[i]]$url,
+						target = "_blank",
+						refs[[i]]$label
+					),
+					if (i < length(refs)) {
+						shiny::HTML(", ")
+					} else {
+						shiny::HTML(".")
+					}
+				)
+			})
 
-			check_and_warn(
-				condition = shiny::reactive({
-					is_problematic
-				}),
-				message = shiny::HTML(
-					"Random resampling might yield overly optimistic results with clustered samples. ",
-					'See <a href="https://doi.org/10.1111/ecog.02881" target="_blank">Roberts et al., 2017</a>,
-         <a href="https://doi.org/10.1038/s41467-020-18321-y" target="_blank">Ploton et al., 2020</a>,
-         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
-				),
-				flag_name = "clustered_random_cv"
+			shiny::tags$p(
+				style = "margin-bottom: 0;",
+				shiny::tags$strong("References: "),
+				ref_tags
 			)
-		})
+		}
 
-		# Warning: Spatial resampling with random samples can be pessimistic during model selection
-		shiny::observe({
-			shiny::req(sampling_design(), validation_method())
-
-			is_problematic <- sampling_design() == "random" &&
-				grepl("Spatial", validation_method(), fixed = TRUE)
-
-			check_and_warn(
-				condition = shiny::reactive({
-					is_problematic
-				}),
-				message = shiny::HTML(
-					"Spatial resampling might yield overly pessimistic results with clustered samples. ",
-					'See <a href="https://doi.org/10.1016/j.ecolmodel.2021.109692" target="_blank">Wadoux et al., 2021</a>,
-         <a href="https://doi.org/10.1016/j.ecoinf.2022.101665" target="_blank">de Bruin et al., 2022</a>,
-         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
+		make_warning_message <- function(issue, sections, refs = list()) {
+			shiny::tags$div(
+				style = "line-height: 1.35;",
+				shiny::tags$p(
+					style = "margin-bottom: 4px;",
+					shiny::tags$strong("Potential issue: "),
+					issue
 				),
-				flag_name = "random_clustered_cv"
+				format_sections(sections),
+				format_refs(refs)
 			)
-		})
+		}
 
-		# Warning: Random resampling for map accuracy estimation with clustered samples can be optimistic
-		shiny::observe({
-			shiny::req(sampling_design(), evaluation_method(), o_objective_1_val() == "Model and prediction")
+		check_and_warn <- function(condition, message, flag_name) {
+			if (!isTRUE(show_warnings())) {
+				warning_flags[[flag_name]] <- NULL
+				return(invisible(NULL))
+			}
 
-			is_problematic <- sampling_design() == "clustered" &&
-				grepl("Random", evaluation_method(), fixed = TRUE)
+			if (isTRUE(condition) && is.null(warning_flags[[flag_name]])) {
+				shiny::showNotification(
+					message,
+					type = "warning",
+					duration = 10,
+					closeButton = TRUE
+				)
+				warning_flags[[flag_name]] <- TRUE
+			} else if (!isTRUE(condition) && !is.null(warning_flags[[flag_name]])) {
+				warning_flags[[flag_name]] <- NULL
+			}
 
-			check_and_warn(
-				condition = shiny::reactive({
-					is_problematic
-				}),
-				message = shiny::HTML(
-					"Random resampling might yield overly optimistic estimates of the map accuracy with clustered samples. ",
-					'See <a href="https://doi.org/10.1111/ecog.02881" target="_blank">Roberts et al., 2017</a>,
-         <a href="https://doi.org/10.1038/s41467-020-18321-y" target="_blank">Ploton et al., 2020</a>,
-         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
+			invisible(NULL)
+		}
+
+		register_warning <- function(flag_name, condition, message) {
+			shiny::observe({
+				check_and_warn(
+					condition = condition(),
+					message = message,
+					flag_name = flag_name
+				)
+			})
+		}
+
+		# ---------------------------------------------------------------------
+		# References
+		# ---------------------------------------------------------------------
+
+		ref_hastie_2009 <- make_ref(
+			"Hastie et al., 2009",
+			"https://doi.org/10.1007/978-0-387-84858-7"
+		)
+
+		ref_roberts_2017 <- make_ref(
+			"Roberts et al., 2017",
+			"https://doi.org/10.1111/ecog.02881"
+		)
+
+		ref_ploton_2020 <- make_ref(
+			"Ploton et al., 2020",
+			"https://doi.org/10.1038/s41467-020-18321-y"
+		)
+
+		ref_wadoux_2021 <- make_ref(
+			"Wadoux et al., 2021",
+			"https://doi.org/10.1016/j.ecolmodel.2021.109692"
+		)
+
+		ref_de_bruin_2022 <- make_ref(
+			"de Bruin et al., 2022",
+			"https://doi.org/10.1016/j.ecoinf.2022.101665"
+		)
+
+		ref_mila_2022 <- make_ref(
+			"Mil\u00E0 et al., 2022",
+			"https://doi.org/10.1111/2041-210X.13851"
+		)
+
+		ref_meyer_2019 <- make_ref(
+			"Meyer et al., 2019",
+			"https://doi.org/10.1016/j.ecolmodel.2019.108815"
+		)
+
+		ref_mila_2024 <- make_ref(
+			"Mil\u00E0 et al., 2024",
+			"https://doi.org/10.5194/gmd-17-6007-2024"
+		)
+
+		ref_meyer_pebesma_2021 <- make_ref(
+			"Meyer & Pebesma, 2021",
+			"https://doi.org/10.1111/2041-210X.13650"
+		)
+
+		ref_elith_2010 <- make_ref(
+			"Elith et al., 2010",
+			"https://doi.org/10.1111/j.2041-210X.2010.00036.x"
+		)
+
+		# ---------------------------------------------------------------------
+		# Warning: CV used both for model selection and final prediction assessment
+		# ---------------------------------------------------------------------
+
+		register_warning(
+			flag_name = "both_cv",
+			condition = function() {
+				shiny::req(validation_method(), evaluation_method(), o_objective_1_val())
+
+				o_objective_1_val() == "Model and prediction" &&
+					grepl("Cross-Validation", validation_method(), fixed = TRUE) &&
+					grepl("Cross-Validation", evaluation_method(), fixed = TRUE)
+			},
+			message = make_warning_message(
+				issue = paste(
+					"Using cross-validation both for model selection and for assessing the final",
+					"prediction can lead to data leakage."
 				),
-				flag_name = "clustered_random_ev"
-			)
-		})
-
-		# Warning: Spatial resampling for map accuracy estimation with random samples can be pessimistic
-		shiny::observe({
-			shiny::req(sampling_design(), evaluation_method(), o_objective_1_val() == "Model and prediction")
-
-			is_problematic <- sampling_design() == "random" &&
-				grepl("Spatial", evaluation_method(), fixed = TRUE)
-
-			check_and_warn(
-				condition = shiny::reactive({
-					is_problematic
-				}),
-				message = shiny::HTML(
-					"Spatial resampling might yield overly pessimistic estimates of the map accuracy with clustered samples. ",
-					'See <a href="https://doi.org/10.1016/j.ecolmodel.2021.109692" target="_blank">Wadoux et al., 2021</a>,
-         <a href="https://doi.org/10.1016/j.ecoinf.2022.101665" target="_blank">de Bruin et al., 2022</a>,
-         <a href="https://doi.org/10.1111/2041-210X.13851" target="_blank">Mil\u00E0 et al., 2022</a>.'
+				sections = c(
+					"Model > Model evaluation and selection",
+					"Prediction > Map evaluation and uncertainty assessment"
 				),
-				flag_name = "random_clustered_ev"
+				refs = list(
+					ref_hastie_2009
+				)
 			)
-		})
+		)
 
-		# Warning: Spatial proxies + clustered samples = extrapolation risk
-		shiny::observe({
-			shiny::req(sampling_design(), predictor_types())
+		# ---------------------------------------------------------------------
+		# Warning: Random resampling with clustered training points during model selection
+		# ---------------------------------------------------------------------
 
-			is_problematic <- "Spatial Proxies" %in% predictor_types() && sampling_design() == "clustered"
+		register_warning(
+			flag_name = "clustered_random_cv",
+			condition = function() {
+				shiny::req(sampling_design(), validation_method())
 
-			check_and_warn(
-				condition = shiny::reactive({
-					is_problematic
-				}),
-				message = shiny::HTML(
-					"Warning: Using spatial proxies with clustered samples likely leads to extrapolation situations.\n
-          Consider using physically relevant predictors instead.\n",
-					'See <a href="https://doi.org/10.1016/j.ecolmodel.2019.108815" target="_blank">Meyer et al., 2019,
-          <a href="https://doi.org/10.5194/gmd-17-6007-2024" target="_blank">Mil\u00E0 et al., 2024'
+				sampling_design() == "clustered" &&
+					grepl("Random", validation_method(), fixed = TRUE)
+			},
+			message = make_warning_message(
+				issue = paste(
+					"Random resampling might yield overly optimistic model performance estimates",
+					"when training points are spatially clustered."
 				),
-				flag_name = "clustered_proxies"
-			)
-		})
-
-		# Warning: Clustered samples + no uncertainty quantification
-		shiny::observe({
-			shiny::req(sampling_design(), uncertainty_quantification(), o_objective_1_val() == "Model and prediction")
-
-			is_problematic <- sampling_design() == "clustered" &&
-				uncertainty_quantification() == "None"
-
-			check_and_warn(
-				condition = shiny::reactive({
-					is_problematic
-				}),
-				message = shiny::HTML(
-					"Warning: Clustered samples often lead to extrapolation when the model is applied to feature combinations not present in the training data.<br>
-          Identifying areas of extrapolation/uncertainty and communicating them to the user of the prediction is recommended.<br>
-          See <a href='https://doi.org/10.1111/2041-210X.13650' target='_blank'>Meyer & Pebesma, 2021</a>,
-          <a href='https://doi.org/10.1111/j.2041-210X.2010.00036.x' target='_blank'>Elith et al., 2010</a>."
+				sections = c(
+					"Model > Response",
+					"Model > Model evaluation and selection"
 				),
-				flag_name = "clustered_noAssessment"
+				refs = list(
+					ref_roberts_2017,
+					ref_ploton_2020,
+					ref_mila_2022
+				)
 			)
-		})
+		)
+
+		# ---------------------------------------------------------------------
+		# Warning: Spatial resampling with random training points during model selection
+		# ---------------------------------------------------------------------
+
+		register_warning(
+			flag_name = "random_clustered_cv",
+			condition = function() {
+				shiny::req(sampling_design(), validation_method())
+
+				sampling_design() == "random" &&
+					grepl("Spatial", validation_method(), fixed = TRUE)
+			},
+			message = make_warning_message(
+				issue = paste(
+					"Spatial resampling might yield overly pessimistic model performance estimates",
+					"when training points are randomly distributed relative to the prediction area."
+				),
+				sections = c(
+					"Model > Response",
+					"Model > Model evaluation and selection"
+				),
+				refs = list(
+					ref_wadoux_2021,
+					ref_de_bruin_2022,
+					ref_mila_2022
+				)
+			)
+		)
+
+		# ---------------------------------------------------------------------
+		# Warning: Random resampling with clustered training points for map accuracy
+		# ---------------------------------------------------------------------
+
+		register_warning(
+			flag_name = "clustered_random_ev",
+			condition = function() {
+				shiny::req(sampling_design(), evaluation_method(), o_objective_1_val())
+
+				o_objective_1_val() == "Model and prediction" &&
+					sampling_design() == "clustered" &&
+					grepl("Random", evaluation_method(), fixed = TRUE)
+			},
+			message = make_warning_message(
+				issue = paste(
+					"Random resampling might yield overly optimistic estimates of final map",
+					"accuracy when training points are spatially clustered."
+				),
+				sections = c(
+					"Model > Response",
+					"Prediction > Map evaluation and uncertainty assessment"
+				),
+				refs = list(
+					ref_roberts_2017,
+					ref_ploton_2020,
+					ref_mila_2022
+				)
+			)
+		)
+
+		# ---------------------------------------------------------------------
+		# Warning: Spatial resampling with random training points for map accuracy
+		# ---------------------------------------------------------------------
+
+		register_warning(
+			flag_name = "random_clustered_ev",
+			condition = function() {
+				shiny::req(sampling_design(), evaluation_method(), o_objective_1_val())
+
+				o_objective_1_val() == "Model and prediction" &&
+					sampling_design() == "random" &&
+					grepl("Spatial", evaluation_method(), fixed = TRUE)
+			},
+			message = make_warning_message(
+				issue = paste(
+					"Spatial resampling might yield overly pessimistic estimates of final map",
+					"accuracy when training points are randomly distributed relative to the prediction area."
+				),
+				sections = c(
+					"Model > Response",
+					"Prediction > Map evaluation and uncertainty assessment"
+				),
+				refs = list(
+					ref_wadoux_2021,
+					ref_de_bruin_2022,
+					ref_mila_2022
+				)
+			)
+		)
+
+		# ---------------------------------------------------------------------
+		# Warning: Spatial proxies + clustered training points = extrapolation risk
+		# ---------------------------------------------------------------------
+
+		register_warning(
+			flag_name = "clustered_proxies",
+			condition = function() {
+				shiny::req(sampling_design(), predictor_types())
+
+				sampling_design() == "clustered" &&
+					"Spatial Proxies" %in% predictor_types()
+			},
+			message = make_warning_message(
+				issue = "Using spatial proxies with clustered training points can increase the risk of extrapolation to combinations of predictor values not represented in the training data.",
+				sections = c(
+					"Model > Response",
+					"Model > Predictors"
+				),
+				refs = list(
+					ref_meyer_2019,
+					ref_mila_2024
+				)
+			)
+		)
+
+		# ---------------------------------------------------------------------
+		# Warning: Clustered training points + no uncertainty quantification
+		# ---------------------------------------------------------------------
+
+		register_warning(
+			flag_name = "clustered_noAssessment",
+			condition = function() {
+				shiny::req(sampling_design(), uncertainty_quantification(), o_objective_1_val())
+
+				o_objective_1_val() == "Model and prediction" &&
+					sampling_design() == "clustered" &&
+					any(grepl("None", uncertainty_quantification(), fixed = TRUE), na.rm = TRUE)
+			},
+			message = make_warning_message(
+				issue = "Clustered training points can lead to extrapolation when the model is applied to feature combinations not present in the training data.",
+				sections = c(
+					"Model > Response",
+					"Prediction > Map evaluation and uncertainty assessment"
+				),
+				refs = list(
+					ref_meyer_pebesma_2021,
+					ref_elith_2010
+				)
+			)
+		)
 	})
 }
