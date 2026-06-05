@@ -1,8 +1,8 @@
 ---
-title: "analyze_protocol"
+title: "protocol_analyze"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{analyze_protocol}
+  %\VignetteIndexEntry{protocol_analyze}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
