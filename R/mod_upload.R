@@ -99,7 +99,10 @@ mod_upload_server <- function(id, output_dir) {
 		# Geospatial uploads via nested modules
 		samples <- mod_spatialdata_upload_server("samples", geom_types_expected = c("POINT", "MULTIPOINT"))
 		training_area <- mod_spatialdata_upload_server("training_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
-		prediction_area <- mod_spatialdata_upload_server("prediction_area", geom_types_expected = c("POLYGON", "MULTIPOLYGON"))
+		prediction_area <- mod_spatialdata_upload_server(
+			"prediction_area",
+			geom_types_expected = c("POLYGON", "MULTIPOLYGON")
+		)
 
 		# Delete buttons to clear geospatial uploads and reset UI
 		shiny::observeEvent(input$delete_samples, {

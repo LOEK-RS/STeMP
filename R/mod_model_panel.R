@@ -121,23 +121,24 @@ mod_model_panel_server <- function(
 					# Decide if this row should be hidden for classification/regression
 					div_class_classification <- if (row$hide_for_classification == 1) "regression_field" else NULL
 					div_class_regression <- if (row$hide_for_regression == 1) "classification_field" else NULL
-					
+
 					# Decide if this row is optional
 					div_class_optional <- if (row$optional == 1) "optional_field" else NULL
-					
+
 					# Render field
 					content <- if (row$element_type == "training_plot") {
-					  file <- "training_locations.png"
-					  if (!is.null(uploaded_zip()) && 
-					      file.exists(file.path(output_dir, file))) {
-					    render_plot_png(
-					      element_id = ns(row$element_id),
-					      element = row$element,
-					      file = file,
-					      info_text = row$info_text
-					    )
-					  }
-						else if (!is.null(valid_geo_samples_metadata())) {
+						file <- "training_locations.png"
+						if (
+							!is.null(uploaded_zip()) &&
+								file.exists(file.path(output_dir, file))
+						) {
+							render_plot_png(
+								element_id = ns(row$element_id),
+								element = row$element,
+								file = file,
+								info_text = row$info_text
+							)
+						} else if (!is.null(valid_geo_samples_metadata())) {
 							render_samples_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
@@ -147,17 +148,18 @@ mod_model_panel_server <- function(
 							)
 						}
 					} else if (row$element_type == "training_area_plot") {
-					  file <- "training_area.png"
-					  if (!is.null(uploaded_zip()) && 
-					      file.exists(file.path(output_dir, file))) {
-					    render_plot_png(
-					      element_id = ns(row$element_id),
-					      element = row$element,
-					      file = file,
-					      info_text = row$info_text
-					    )
-					  }
-						else if (!is.null(valid_geo_training_area_metadata())) {
+						file <- "training_area.png"
+						if (
+							!is.null(uploaded_zip()) &&
+								file.exists(file.path(output_dir, file))
+						) {
+							render_plot_png(
+								element_id = ns(row$element_id),
+								element = row$element,
+								file = file,
+								info_text = row$info_text
+							)
+						} else if (!is.null(valid_geo_training_area_metadata())) {
 							render_training_area_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
@@ -167,17 +169,19 @@ mod_model_panel_server <- function(
 							)
 						}
 					} else if (row$element_type == "geodist_plot_training") {
-					  file <- "geodist_training_area.png"
-					  if (o_objective_1_val() == "Model only" && !is.null(uploaded_zip()) && 
-					      file.exists(file.path(output_dir, file))) {
-					    render_plot_png(
-					      element_id = ns(row$element_id),
-					      element = row$element,
-					      file = file,
-					      info_text = row$info_text
-					    )
-					  }
-						else if (o_objective_1_val() == "Model only" && !is.null(valid_geo_all_metadata())) {
+						file <- "geodist_training_area.png"
+						if (
+							o_objective_1_val() == "Model only" &&
+								!is.null(uploaded_zip()) &&
+								file.exists(file.path(output_dir, file))
+						) {
+							render_plot_png(
+								element_id = ns(row$element_id),
+								element = row$element,
+								file = file,
+								info_text = row$info_text
+							)
+						} else if (o_objective_1_val() == "Model only" && !is.null(valid_geo_all_metadata())) {
 							render_geodist_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
@@ -361,17 +365,17 @@ mod_model_panel_server <- function(
 
 		# Hide range/classes fields dynamically in dependence of model type
 		shiny::observe({
-		  model_type <- input[["model_type"]]
-		  if (is.null(model_type) || model_type == "") {
-		    shinyjs::removeClass(selector = "body", class = "hide_for_regression")
-		    shinyjs::removeClass(selector = "body", class = "hide_for_classification")
-		  } else if (model_type == "Classification") {
-		    shinyjs::addClass(selector = "body", class = "hide_for_classification")
-		    shinyjs::removeClass(selector = "body", class = "hide_for_regression")
-		  } else if (model_type == "Regression") {
-		    shinyjs::addClass(selector = "body", class = "hide_for_regression")
-		    shinyjs::removeClass(selector = "body", class = "hide_for_classification")
-		  }
+			model_type <- input[["model_type"]]
+			if (is.null(model_type) || model_type == "") {
+				shinyjs::removeClass(selector = "body", class = "hide_for_regression")
+				shinyjs::removeClass(selector = "body", class = "hide_for_classification")
+			} else if (model_type == "Classification") {
+				shinyjs::addClass(selector = "body", class = "hide_for_classification")
+				shinyjs::removeClass(selector = "body", class = "hide_for_regression")
+			} else if (model_type == "Regression") {
+				shinyjs::addClass(selector = "body", class = "hide_for_regression")
+				shinyjs::removeClass(selector = "body", class = "hide_for_classification")
+			}
 		})
 
 		# Hide/show optional fields dynamically
@@ -382,7 +386,7 @@ mod_model_panel_server <- function(
 				shinyjs::removeClass(selector = "body", class = "hide_optional")
 			}
 		})
-		
+
 		# Return values
 		return(list(
 			"model_inputs" = inputs_reactive,

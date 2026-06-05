@@ -6,43 +6,43 @@
 #' @return UI elements including progress bars, toggle switch, radio buttons, and download button
 #' @noRd
 mod_sidebar_ui <- function(id) {
-  ns <- shiny::NS(id)
-  shiny::tagList(
-    shiny::h5("Progress", style = "font-weight: bold"),
-    shiny::uiOutput(ns("progress_bars")),
+	ns <- shiny::NS(id)
+	shiny::tagList(
+		shiny::h5("Progress", style = "font-weight: bold"),
+		shiny::uiOutput(ns("progress_bars")),
 
-    shiny::h5("Hide optional fields", style = "font-weight: bold"),
-    shinyWidgets::materialSwitch(
-      ns("hide_optional"),
-      label = NULL,
-      status = "danger"
-    ),
+		shiny::h5("Hide optional fields", style = "font-weight: bold"),
+		shinyWidgets::materialSwitch(
+			ns("hide_optional"),
+			label = NULL,
+			status = "danger"
+		),
 
-    shiny::h5("Display warnings", style = "font-weight: bold"),
-    shinyWidgets::materialSwitch(
-      ns("show_warnings"),
-      label = NULL,
-      status = "warning",
-      value = TRUE
-    ),
+		shiny::h5("Display warnings", style = "font-weight: bold"),
+		shinyWidgets::materialSwitch(
+			ns("show_warnings"),
+			label = NULL,
+			status = "warning",
+			value = TRUE
+		),
 
-    # upload existing protocol
-    mod_csv_zip_upload_ui(ns("protocol_csv"), "csv", "Upload protocol (.csv)"),
-    
-    # upload existing figures
-    mod_csv_zip_upload_ui(ns("figures_zip"), "zip", "Upload figures (.zip)"),
+		# upload existing protocol
+		mod_csv_zip_upload_ui(ns("protocol_csv"), "csv", "Upload protocol (.csv)"),
 
-    shiny::tags$hr(),
+		# upload existing figures
+		mod_csv_zip_upload_ui(ns("figures_zip"), "zip", "Upload figures (.zip)"),
 
-    # download protocol
-    shiny::h5("Download protocol", style = "font-weight: bold"),
-    shiny::radioButtons(
-      ns("document_format"),
-      label = NULL,
-      choices = c("csv", "pdf", "figures")
-    ),
-    shiny::downloadButton(ns("protocol_download"))
-  )
+		shiny::tags$hr(),
+
+		# download protocol
+		shiny::h5("Download protocol", style = "font-weight: bold"),
+		shiny::radioButtons(
+			ns("document_format"),
+			label = NULL,
+			choices = c("csv", "pdf", "figures")
+		),
+		shiny::downloadButton(ns("protocol_download"))
+	)
 }
 
 #' Sidebar Module - Server
@@ -62,202 +62,204 @@ mod_sidebar_ui <- function(id) {
 #' }
 #' @noRd
 mod_sidebar_server <- function(
-  id,
-  protocol_data,
-  o_objective_1_val,
-  output_dir,
-  generate_html
+	id,
+	protocol_data,
+	o_objective_1_val,
+	output_dir,
+	generate_html
 ) {
-  shiny::moduleServer(id, function(input, output, session) {
-    ## Reactive filtered protocol data based on "hide optional" toggle
-    filtered_protocol_data <- shiny::reactive({
-      shiny::req(protocol_data())
-      df <- protocol_data()
-      # Keep all rows, but optionally mark optional rows
-      df$visible <- TRUE
-      if (isTRUE(input$hide_optional)) {
-        df$visible[df$optional == 1] <- FALSE
-      }
-      df
-    })
+	shiny::moduleServer(id, function(input, output, session) {
+		## Reactive filtered protocol data based on "hide optional" toggle
+		filtered_protocol_data <- shiny::reactive({
+			shiny::req(protocol_data())
+			df <- protocol_data()
+			# Keep all rows, but optionally mark optional rows
+			df$visible <- TRUE
+			if (isTRUE(input$hide_optional)) {
+				df$visible[df$optional == 1] <- FALSE
+			}
+			df
+		})
 
-    ## Progress bar (reactive to filtered data)
-    output$progress_bars <- shiny::renderUI({
-      # Use filtered_protocol_data reactive
-      df <- filtered_protocol_data()
-      shiny::req(df)
+		## Progress bar (reactive to filtered data)
+		output$progress_bars <- shiny::renderUI({
+			# Use filtered_protocol_data reactive
+			df <- filtered_protocol_data()
+			shiny::req(df)
 
-      make_bar <- function(data, label, id, bold = FALSE, status = "info") {
-        total <- sum(data$visible) # count only visible rows
-        if (total == 0) {
-          return(NULL)
-        }
+			make_bar <- function(data, label, id, bold = FALSE, status = "info") {
+				total <- sum(data$visible) # count only visible rows
+				if (total == 0) {
+					return(NULL)
+				}
 
-        filled <- !is.na(data$value) & data$value != "" & data$visible
-        completed <- sum(filled, na.rm = TRUE)
-        percent <- round(100 * completed / total)
+				filled <- !is.na(data$value) & data$value != "" & data$visible
+				completed <- sum(filled, na.rm = TRUE)
+				percent <- round(100 * completed / total)
 
-        shiny::div(
-          style = if (bold) {
-            "font-weight: bold; margin-bottom: 6px;"
-          } else {
-            "margin-bottom: 6px;"
-          },
-          shinyWidgets::progressBar(
-            id = session$ns(id),
-            value = percent,
-            total = 100,
-            display_pct = TRUE,
-            title = label,
-            status = if (percent < 100) status else "success"
-          )
-        )
-      }
+				shiny::div(
+					style = if (bold) {
+						"font-weight: bold; margin-bottom: 6px;"
+					} else {
+						"margin-bottom: 6px;"
+					},
+					shinyWidgets::progressBar(
+						id = session$ns(id),
+						value = percent,
+						total = 100,
+						display_pct = TRUE,
+						title = label,
+						status = if (percent < 100) status else "success"
+					)
+				)
+			}
 
-      # Overall progress (bold)
-      overall <- make_bar(
-        df,
-        "Overall",
-        "progress_overall",
-        bold = TRUE,
-        status = "primary"
-      )
+			# Overall progress (bold)
+			overall <- make_bar(
+				df,
+				"Overall",
+				"progress_overall",
+				bold = TRUE,
+				status = "primary"
+			)
 
-      # Section progress bars
-      section_bars <- lapply(unique(df$section), function(s) {
-        make_bar(
-          df[df$section == s, , drop = FALSE],
-          paste("Section:", s),
-          paste0("progress_", s),
-          bold = FALSE,
-          status = "info"
-        )
-      })
+			# Section progress bars
+			section_bars <- lapply(unique(df$section), function(s) {
+				make_bar(
+					df[df$section == s, , drop = FALSE],
+					paste("Section:", s),
+					paste0("progress_", s),
+					bold = FALSE,
+					status = "info"
+				)
+			})
 
-      shiny::tagList(overall, section_bars)
-    })
+			shiny::tagList(overall, section_bars)
+		})
 
-    ## CSV (protocol data) upload via nested module
-    csv_handlers <- mod_csv_zip_upload_server(
-      "protocol_csv",
-      filetype = "csv",
-      read_fn = function(path, ...) {
-        df <- utils::read.csv(path)
-        df$element_id <- normalize_id(df$element)
-        df
-      },
-      delete_fn = function(...) {} # no extra CSV cleanup
-    )
-    
-    ## ZIP (figures) upload via nested module
-    zip_handlers <- mod_csv_zip_upload_server(
-      "figures_zip",
-      filetype = "zip",
-      read_fn = function(path, outdir) {
-        if(grepl("\\.zip$", basename(path))) {
-          utils::unzip(path, exdir = outdir)
-          TRUE
-        } else {stop("This is not a ZIP file")}
-      },
-      delete_fn = function(outdir) {
-        delete_plot_png("training_locations", outdir)
-        delete_plot_png("training_area", outdir)
-        delete_plot_png("prediction_area", outdir)
-        delete_plot_png("geodist_training_area", outdir)
-        delete_plot_png("geodist_prediction_area", outdir)
-      },
-      outdir = output_dir
-    )
-    
-    ## Download options
-    # Reactive timer for figure existence check, updates every second
-    autoInvalidate <- shiny::reactiveTimer(1000)
+		## CSV (protocol data) upload via nested module
+		csv_handlers <- mod_csv_zip_upload_server(
+			"protocol_csv",
+			filetype = "csv",
+			read_fn = function(path, ...) {
+				df <- utils::read.csv(path)
+				df$element_id <- normalize_id(df$element)
+				df
+			},
+			delete_fn = function(...) {} # no extra CSV cleanup
+		)
 
-    figures_exist <- shiny::reactive({
-      autoInvalidate()
-      length(list.files(output_dir, pattern = "\\.png$")) > 0
-    })
+		## ZIP (figures) upload via nested module
+		zip_handlers <- mod_csv_zip_upload_server(
+			"figures_zip",
+			filetype = "zip",
+			read_fn = function(path, outdir) {
+				if (grepl("\\.zip$", basename(path))) {
+					utils::unzip(path, exdir = outdir)
+					TRUE
+				} else {
+					stop("This is not a ZIP file")
+				}
+			},
+			delete_fn = function(outdir) {
+				delete_plot_png("training_locations", outdir)
+				delete_plot_png("training_area", outdir)
+				delete_plot_png("prediction_area", outdir)
+				delete_plot_png("geodist_training_area", outdir)
+				delete_plot_png("geodist_prediction_area", outdir)
+			},
+			outdir = output_dir
+		)
 
-    ## Enable/disable download button based on figures availability and selected format
-    shiny::observe({
-      shiny::req(input$document_format)
-      if (input$document_format == "figures" && !figures_exist()) {
-        shinyjs::disable("protocol_download")
-        shiny::showNotification(
-          "No figures generated yet. Download disabled.",
-          type = "warning"
-        )
-      } else {
-        shinyjs::enable("protocol_download")
-      }
-    })
+		## Download options
+		# Reactive timer for figure existence check, updates every second
+		autoInvalidate <- shiny::reactiveTimer(1000)
 
-    ## Clean up figures in output_dir on session end
-    session$onSessionEnded(function() {
-      if (dir.exists(output_dir)) {
-        files <- list.files(
-          output_dir,
-          pattern = "\\.(png|Rmd)$",
-          full.names = TRUE
-        )
-        if (length(files) > 0) file.remove(files)
-      }
-    })
+		figures_exist <- shiny::reactive({
+			autoInvalidate()
+			length(list.files(output_dir, pattern = "\\.png$")) > 0
+		})
 
-    ## Download handler for protocol data (csv/pdf/figures zip)
-    output$protocol_download <- shiny::downloadHandler(
-      filename = function() {
-        ext <- switch(
-          input$document_format,
-          "csv" = "csv",
-          "pdf" = "pdf",
-          "figures" = "zip"
-        )
-        paste0("protocol_", Sys.Date(), ".", ext)
-      },
-      content = function(file) {
-        if (input$document_format == "csv") {
-          df <- filtered_protocol_data()
-          if ("visible" %in% names(df)) {
-            df <- df[, setdiff(names(df), "visible"), drop = FALSE]
-          }
-          utils::write.csv(df, file, row.names = FALSE)
-        } else if (input$document_format == "pdf") {
-          # Always generate fresh HTML, independent of viewer
-          html_file <- generate_html()
-          html_file <- normalizePath(html_file)
+		## Enable/disable download button based on figures availability and selected format
+		shiny::observe({
+			shiny::req(input$document_format)
+			if (input$document_format == "figures" && !figures_exist()) {
+				shinyjs::disable("protocol_download")
+				shiny::showNotification(
+					"No figures generated yet. Download disabled.",
+					type = "warning"
+				)
+			} else {
+				shinyjs::enable("protocol_download")
+			}
+		})
 
-          pagedown::chrome_print(
-            input = html_file,
-            output = file
-          )
-        } else if (input$document_format == "figures") {
-          subdir_zip <- "figures_for_zip"
-          allowed_ids <- get_allowed_element_ids(o_objective_1_val())
-          figures_to_zip <- get_selected_plot_files(
-            output_dir,
-            allowed_ids,
-            copy_subdir = subdir_zip,
-            return_relative = FALSE
-          )
+		## Clean up figures in output_dir on session end
+		session$onSessionEnded(function() {
+			if (dir.exists(output_dir)) {
+				files <- list.files(
+					output_dir,
+					pattern = "\\.(png|Rmd)$",
+					full.names = TRUE
+				)
+				if (length(files) > 0) file.remove(files)
+			}
+		})
 
-          zipfile <- file.path(output_dir, "figures.zip")
-          utils::zip(zipfile = zipfile, files = figures_to_zip, flags = "-j")
+		## Download handler for protocol data (csv/pdf/figures zip)
+		output$protocol_download <- shiny::downloadHandler(
+			filename = function() {
+				ext <- switch(
+					input$document_format,
+					"csv" = "csv",
+					"pdf" = "pdf",
+					"figures" = "zip"
+				)
+				paste0("protocol_", Sys.Date(), ".", ext)
+			},
+			content = function(file) {
+				if (input$document_format == "csv") {
+					df <- filtered_protocol_data()
+					if ("visible" %in% names(df)) {
+						df <- df[, setdiff(names(df), "visible"), drop = FALSE]
+					}
+					utils::write.csv(df, file, row.names = FALSE)
+				} else if (input$document_format == "pdf") {
+					# Always generate fresh HTML, independent of viewer
+					html_file <- generate_html()
+					html_file <- normalizePath(html_file)
 
-          file.copy(zipfile, file)
-          unlink(file.path(output_dir, subdir_zip), recursive = TRUE)
-          unlink(zipfile)
-        }
-      }
-    )
+					pagedown::chrome_print(
+						input = html_file,
+						output = file
+					)
+				} else if (input$document_format == "figures") {
+					subdir_zip <- "figures_for_zip"
+					allowed_ids <- get_allowed_element_ids(o_objective_1_val())
+					figures_to_zip <- get_selected_plot_files(
+						output_dir,
+						allowed_ids,
+						copy_subdir = subdir_zip,
+						return_relative = FALSE
+					)
 
-    # Return reactive values for use in app
-    list(
-      csv = csv_handlers$data,
-      zip = zip_handlers$data,
-      filtered_protocol_data = filtered_protocol_data,
-      hide_optional = shiny::reactive(input$hide_optional),
-      show_warnings = shiny::reactive(input$show_warnings)
-    )
-  })
+					zipfile <- file.path(output_dir, "figures.zip")
+					utils::zip(zipfile = zipfile, files = figures_to_zip, flags = "-j")
+
+					file.copy(zipfile, file)
+					unlink(file.path(output_dir, subdir_zip), recursive = TRUE)
+					unlink(zipfile)
+				}
+			}
+		)
+
+		# Return reactive values for use in app
+		list(
+			csv = csv_handlers$data,
+			zip = zip_handlers$data,
+			filtered_protocol_data = filtered_protocol_data,
+			hide_optional = shiny::reactive(input$hide_optional),
+			show_warnings = shiny::reactive(input$show_warnings)
+		)
+	})
 }
