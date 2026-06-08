@@ -46,7 +46,7 @@ test_that("{shinytest2} recording: STeMP", {
 	)
 	app$wait_for_idle()
 
-	app$set_inputs(`protocol-model-training_domain` = character(0), wait_ = FALSE)
+	app$set_inputs(`protocol-model-training_extent` = character(0), wait_ = FALSE)
 	app$set_inputs(`protocol-model-sample_acquisition` = character(0), wait_ = FALSE)
 	app$set_inputs(`protocol-model-sample_geometry` = character(0), wait_ = FALSE)
 	app$set_inputs(`protocol-model-sampling_design` = "clustered", wait_ = FALSE)
@@ -67,6 +67,7 @@ test_that("{shinytest2} recording: STeMP", {
 	app$set_inputs(`protocol-model-data_sources_of_response` = "", wait_ = FALSE)
 	app$set_inputs(`protocol-model-data_sources_of_predictors` = "", wait_ = FALSE)
 	app$set_inputs(`protocol-model-names_of_predictors` = "", wait_ = FALSE)
+	app$set_inputs(`protocol-model-resolution_of_predictors` = "", wait_ = FALSE)
 	app$set_inputs(`protocol-model-architecture` = "", wait_ = FALSE)
 	app$set_inputs(`protocol-model-potential_biases` = "", wait_ = FALSE)
 	app$set_inputs(`protocol-model-limitations` = "", wait_ = FALSE)

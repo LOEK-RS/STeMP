@@ -6,7 +6,7 @@ Overview,Authorship,Study title,study_title,NA
 Overview,Authorship,Study link,study_link,NA
 Overview,Target variable,Target variable*,target_variable,Plant traits
 Overview,Scientific Field,Scientific Field*,scientific_field,Biogeosciences
-Model,Response,Training domain,training_domain,landscape
+Model,Response,Training extent,training_extent,landscape
 Model,Response,Sample acquisition*,sample_acquisition,In-Situ
 Model,Response,Sample geometry,sample_geometry,Point
 Model,Response,Sample size*,sample_size,150
@@ -18,6 +18,7 @@ Model,Response,Data sources of response,data_sources_of_response,NA
 Model,Predictors,Predictor types,predictor_types,Remote Sensing Images
 Model,Predictors,Number of predictors*,number_of_predictors,4
 Model,Predictors,Names of predictors,names_of_predictors,"Sepal.Length, Sepal.Width, Petal.Length, Petal.Width"
+Model,Predictors,Resolution of predictors,resolution_of_predictors,1000 m
 Model,Predictors,Preprocessing,preprocessing,Cloud removal
 Model,Predictors,Data sources of predictors,data_sources_of_predictors,NA
 Model,Learning method,Model type*,model_type,Classification
@@ -36,7 +37,8 @@ Model,Software,Software*,software,R 4.5.1
 Model,Software,Code availability*,code_availability,Github
 Model,Software,Data availability*,data_availability,Figshare
 Prediction,Parameter uncertainty and biases,Sensitivity assessment,sensitivity_assessment,NA
-Prediction,Prediction domain,Prediction domain*,prediction_domain,landscape
+Prediction,Prediction domain,Prediction extent*,prediction_extent,landscape
+Prediction,Prediction domain,Prediction resolution*,prediction_resolution,landscape
 Prediction,Evaluation and Uncertainty,Map evaluation strategy*,evaluation_strategy,Independent probability sample
 Prediction,Evaluation and Uncertainty,Performance metrics,performance_metrics,Kappa
 Prediction,Evaluation and Uncertainty,Map accuracy*,map_accuracy,0.5
