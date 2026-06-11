@@ -263,18 +263,39 @@ render_model_algorithm <- function(element_id, element, model_metadata = NULL, i
 	with_tooltip(input, info_text)
 }
 
-#' Render text input for coordinate reference system from geographic metadata
+#' Render text input for coordinate reference system
 #' @noRd
 render_crs <- function(element_id, element, geo_metadata = NULL, info_text = NULL, value = NULL) {
-	val <- get_value(value, function() {
-		if (!is.null(geo_metadata) && !is.null(geo_metadata$samples_crs)) {
-			geo_metadata$samples_crs()
-		} else {
-			NULL
-		}
-	})
-	input <- shiny::textInput(inputId = element_id, label = element, value = val)
+		input <- shiny::textInput(inputId = element_id, label = element, value = value)
 	with_tooltip(input, info_text)
+}
+
+#' Server logic to update input for coordinate reference system based on geographic metadata
+#'
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param session Shiny session object
+#' @param element_id ID of the design select input to update
+#' @param geo_metadata Reactive or reactiveValues containing geographic metadata
+#' @noRd
+render_crs_server <- function(input, output, session, element_id, geo_metadata = NULL) {
+  shiny::observeEvent(
+    geo_metadata,
+    {
+      val <- get_value(uploaded_value = NULL, function() {
+        if (!is.null(geo_metadata) && !is.null(geo_metadata$samples_crs)) {
+          geo_metadata$samples_crs()
+        } else {
+          NULL
+        }
+      })
+      
+      shinyjs::delay(100, {
+        shiny::updateTextInput(session, inputId = element_id, value = val)
+      })
+    },
+    ignoreInit = FALSE
+  )
 }
 
 #' Render select input for sampling design choices
@@ -334,7 +355,7 @@ render_plot_field <- function(element_id, label, plot_ui, info_text = NULL) {
 
 #' Render placeholder for samples plot output
 #' @noRd
-render_samples_plot <- function(element_id, element, geo_metadata = NULL, ns = identity, info_text = NULL) {
+render_samples_plot <- function(element_id, element, ns = identity, info_text = NULL) {
 	render_plot_field(
 		element_id,
 		element,
@@ -345,7 +366,7 @@ render_samples_plot <- function(element_id, element, geo_metadata = NULL, ns = i
 
 #' Render placeholder for training area plot output
 #' @noRd
-render_training_area_plot <- function(element_id, element, geo_metadata = NULL, ns = identity, info_text = NULL) {
+render_training_area_plot <- function(element_id, element, ns = identity, info_text = NULL) {
 	render_plot_field(
 		element_id,
 		element,
@@ -356,7 +377,7 @@ render_training_area_plot <- function(element_id, element, geo_metadata = NULL, 
 
 #' Render placeholder for prediction area plot output
 #' @noRd
-render_prediction_area_plot <- function(element_id, element, geo_metadata = NULL, ns = identity, info_text = NULL) {
+render_prediction_area_plot <- function(element_id, element, ns = identity, info_text = NULL) {
 	render_plot_field(
 		element_id,
 		element,
@@ -468,7 +489,6 @@ render_input_field <- function(
 	suggestions = NULL,
 	info_text = NULL,
 	model_metadata = NULL,
-	geo_metadata = NULL,
 	ns = identity,
 	row
 ) {
@@ -517,7 +537,7 @@ render_input_field <- function(
 		),
 		"model_type" = render_model_type(element_id, label_ui, model_metadata, info_text, value = uploaded_value),
 		"model_algorithm" = render_model_algorithm(element_id, label_ui, model_metadata, info_text, value = uploaded_value),
-		"samples_crs" = render_crs(element_id, label_ui, geo_metadata, info_text, value = uploaded_value),
+		"samples_crs" = render_crs(element_id, label_ui, info_text, value = uploaded_value),
 		"validation_results" = render_validation_results(
 			element_id,
 			label_ui,

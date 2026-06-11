@@ -140,7 +140,6 @@ mod_prediction_panel_server <- function(
 							render_prediction_area_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
-								geo_metadata = meta_geo_prediction_area_list,
 								ns = ns,
 								info_text = row$info_text
 							)
@@ -178,7 +177,6 @@ mod_prediction_panel_server <- function(
 							o_objective_1 = o_objective_1_val(),
 							suggestions = row$suggestions,
 							info_text = row$info_text,
-							geo_metadata = geo_metadata,
 							ns = ns,
 							row = row
 						)

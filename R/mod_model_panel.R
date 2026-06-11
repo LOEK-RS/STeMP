@@ -98,9 +98,7 @@ mod_model_panel_server <- function(
 				return(shiny::tags$p("No model data available"))
 			}
 
-			meta_model_list <- valid_model_metadata() %||% list()
-			meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
-			meta_geo_training_area_list <- valid_geo_training_area_metadata() %||% list()
+			# meta_model_list <- valid_model_metadata() %||% list()
 
 			uploaded_df <- uploaded_values()
 
@@ -129,7 +127,7 @@ mod_model_panel_server <- function(
 					content <- if (row$element_type == "training_plot") {
 						file <- "training_locations.png"
 						if (
-							!is.null(uploaded_zip()) &&
+							# !is.null(uploaded_zip()) &&
 								file.exists(file.path(output_dir, file))
 						) {
 							render_plot_png(
@@ -138,11 +136,10 @@ mod_model_panel_server <- function(
 								file = file,
 								info_text = row$info_text
 							)
-						} else if (!is.null(valid_geo_samples_metadata())) {
+						} else {
 							render_samples_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
-								geo_metadata = meta_geo_samples_list,
 								ns = ns,
 								info_text = row$info_text
 							)
@@ -150,7 +147,7 @@ mod_model_panel_server <- function(
 					} else if (row$element_type == "training_area_plot") {
 						file <- "training_area.png"
 						if (
-							!is.null(uploaded_zip()) &&
+							# !is.null(uploaded_zip()) &&
 								file.exists(file.path(output_dir, file))
 						) {
 							render_plot_png(
@@ -159,11 +156,10 @@ mod_model_panel_server <- function(
 								file = file,
 								info_text = row$info_text
 							)
-						} else if (!is.null(valid_geo_training_area_metadata())) {
+						} else {
 							render_training_area_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
-								geo_metadata = meta_geo_training_area_list,
 								ns = ns,
 								info_text = row$info_text
 							)
@@ -171,8 +167,8 @@ mod_model_panel_server <- function(
 					} else if (row$element_type == "geodist_plot_training") {
 						file <- "geodist_training_area.png"
 						if (
-							o_objective_1_val() == "Model only" &&
-								!is.null(uploaded_zip()) &&
+							# o_objective_1_val() == "Model only" &&
+							# 	!is.null(uploaded_zip()) &&
 								file.exists(file.path(output_dir, file))
 						) {
 							render_plot_png(
@@ -181,7 +177,7 @@ mod_model_panel_server <- function(
 								file = file,
 								info_text = row$info_text
 							)
-						} else if (o_objective_1_val() == "Model only" && !is.null(valid_geo_all_metadata())) {
+						} else {
 							render_geodist_plot(
 								element_id = ns(row$element_id),
 								element = row$element,
@@ -190,7 +186,7 @@ mod_model_panel_server <- function(
 							)
 						}
 					} else if (row$element_type == "sampling_design") {
-						# 1. Look for uploaded CSV value
+						# Look for uploaded CSV value
 						uploaded_val <- NULL
 						if (!is.null(uploaded_df)) {
 							val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
@@ -198,20 +194,7 @@ mod_model_panel_server <- function(
 								uploaded_val <- val
 							}
 						}
-
-						# 2. Fallback to auto-derived value (geodist_sel)
-						auto_val <- NULL
-						try(
-							{
-								if (!is.null(geodist_sel())) {
-									auto_val <- geodist_sel()
-								}
-							},
-							silent = TRUE
-						)
-
-						# 3. Final selected value: uploaded CSV takes precedence
-						selected_val <- uploaded_val %||% auto_val
+						selected_val <- uploaded_val
 
 						render_design(
 							element_id = ns(row$element_id),
@@ -224,11 +207,10 @@ mod_model_panel_server <- function(
 							element_type = row$element_type,
 							element_id = ns(row$element_id),
 							label = row$element,
-							o_objective_1 = o_objective_1_val(),
+							# o_objective_1 = o_objective_1_val(),
 							suggestions = row$suggestions,
 							info_text = row$info_text,
-							model_metadata = meta_model_list,
-							geo_metadata = meta_geo_samples_list,
+							# model_metadata = meta_model_list,
 							ns = ns,
 							row = row
 						)
@@ -288,6 +270,25 @@ mod_model_panel_server <- function(
 				}
 			}
 		})
+		
+		# CRS server
+		shiny::observe({
+		  shiny::req(model_data())
+		  df <- model_data()
+		  meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
+		  design_id <- df$element_id[df$element_type == "samples_crs"]
+		  
+		  if (length(design_id) == 1) {
+		    render_crs_server(
+		      input = input,
+		      output = output,
+		      session = session,
+		      element_id = design_id,
+		      geo_metadata = meta_geo_samples_list
+		    )
+		  }
+		})
+		
 
 		# Sampling design server
 		shiny::observe({
