@@ -22,6 +22,7 @@ test_that("Uploading a protocol CSV automatically fills relevant fields", {
 			id = "protocol",
 			protocol_data = reactive(protocol_data),
 			uploaded_csv = reactive(protocol_df), # simulate upload
+			uploaded_zip = shiny::reactive(NULL),
 			model_metadata = reactiveValues(), # dummy
 			geo_metadata = reactiveValues(
 				samples_sf = reactive(NULL),

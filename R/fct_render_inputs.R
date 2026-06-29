@@ -339,128 +339,94 @@ render_design_server <- function(input, output, session, element_id, geodist_sel
 	})
 }
 
-# --- Plot renderers ---
-
 #' Generic renderer for plots with wrapper consistent with rest of protocol
 #' @noRd
-render_plot_field <- function(element_id, label, plot_ui, info_text = NULL) {
-	inputTag <- shiny::div(
-		class = "form-group shiny-input-container",
-		shiny::tags$label(`for` = element_id, class = "control-label", label),
-		plot_ui
-	)
-	with_tooltip(inputTag, info_text)
+render_plot <- function(element_id, label, info_text = NULL) {
+  inputTag <- shiny::div(
+    class = c("form-group shiny-input-container"),
+    shiny::tags$label(`for` = element_id, class = "control-label", label),
+    shiny::div(
+      shiny::uiOutput(outputId = paste0(element_id, "_img"), style = "height: auto")
+    ),
+    shiny::div(
+      shiny::uiOutput(outputId = paste0(element_id, "_plot_ui"))
+    )
+  )
+  with_tooltip(inputTag, info_text)
 }
 
-
-#' Render placeholder for samples plot output
-#' @noRd
-render_samples_plot <- function(element_id, element, ns = identity, info_text = NULL) {
-	render_plot_field(
-		element_id,
-		element,
-		shiny::plotOutput(outputId = ns(element_id), height = "300px"),
-		info_text
-	)
-}
-
-#' Render placeholder for training area plot output
-#' @noRd
-render_training_area_plot <- function(element_id, element, ns = identity, info_text = NULL) {
-	render_plot_field(
-		element_id,
-		element,
-		shiny::plotOutput(outputId = ns(element_id), height = "300px"),
-		info_text
-	)
-}
-
-#' Render placeholder for prediction area plot output
-#' @noRd
-render_prediction_area_plot <- function(element_id, element, ns = identity, info_text = NULL) {
-	render_plot_field(
-		element_id,
-		element,
-		shiny::plotOutput(outputId = ns(element_id), height = "300px"),
-		info_text
-	)
-}
-
-#' Render placeholder for geographic distance plot output
-#' @noRd
-render_geodist_plot <- function(element_id, element, ns = identity, info_text = NULL) {
-	render_plot_field(
-		element_id,
-		element,
-		shiny::plotOutput(outputId = ns(element_id), height = "300px"),
-		info_text
-	)
-}
-
-#' Renderer for reupload of plots as PNG
-#' @noRd
-render_plot_png <- function(element_id, element, file, info_text) {
-	render_plot_field(
-		element_id,
-		element,
-		shiny::tags$div(
-			style = "display: flex; justify-content: center;",
-			shiny::tags$img(src = paste0("/temp_stemp/", file), style = "height: 500px")
-		),
-		info_text
-	)
-}
-
-# --- Plot server helpers ---
-
-#' Server-side render logic for samples plot
-#' @noRd
-render_samples_plot_server <- function(
-	output,
-	element_id,
-	geo_metadata = NULL,
-	what = "samples_sf",
-	output_dir = NULL
-) {
-	geo_map(output, element_id, geo_metadata, what, output_dir)
-}
-
-#' Server-side render logic for training area plot
-#' @noRd
-render_training_area_plot_server <- function(
-	output,
-	element_id,
-	geo_metadata = NULL,
-	what = "training_area_sf",
-	output_dir = NULL
-) {
-	geo_map(output, element_id, geo_metadata, what, output_dir)
-}
-
-#' Server-side render logic for prediction area plot
-#' @noRd
-render_prediction_area_plot_server <- function(
-	output,
-	element_id,
-	geo_metadata = NULL,
-	what = "prediction_area_sf",
-	output_dir = NULL
-) {
-	geo_map(output, element_id, geo_metadata, what, output_dir)
-}
-
-#' Server-side render logic for geographic distance plot
+#' Server-side render logic for plots
+#' 
+#' Manages conditional rendering of plots within a Shiny application by toggling between
+#' pre-generated PNG images and dynamically rendered plots based on data availability and
+#' objective selection. Handles UI visibility, validates plot/objective combinations, and
+#' orchestrates both static image display and reactive plot generation.
 #'
+#' @param file Character string specifying the filename of a pre-generated PNG image
+#' @param valid_geo_metadata Reactive expression containing validated geographic metadata;
+#'   used to conditionally render fresh plots
+#' @param element_id Input element ID
 #' @param objective Character vector specifying objective ("Model and prediction", "Model only")
+#' @param uploaded_zip Reactive containing uploaded zip file data; when non-NULL,
+#'   pre-generated PNG images are displayed
+#' @param output_dir Character string specifying the temporary directory path where
+#'   pre-generated PNG files are stored
+#' @param ns Function for namespacing Shiny module element IDs; defaults to identity
+#' @param output Shiny output object for assigning reactive plot outputs
+#' @param plot_fn Function for plotting a fresh plot with the geo data; either geo_map()
+#'   or geodist_plot()
 #' @noRd
-render_geodist_plot_server <- function(
-	output,
-	element_id,
-	geo_metadata = NULL,
-	objective = c("Model and prediction", "Model only"),
-	output_dir = NULL
+render_plot_server <- function(
+    file,
+    valid_geo_metadata,
+    element_id,
+    objective,
+    uploaded_zip,
+    output_dir,
+    ns = identity,
+    output,
+    plot_fn
 ) {
-	geodist_plot(output, element_id, geo_metadata, objective, output_dir)
+    valid_objective_plot_combination <- !isTRUE(
+      (identical(element_id, "geodistance_plot_training_area") && identical(objective, "Model and prediction")) ||
+        (identical(element_id, "geodistance_plot_prediction_area") && identical(objective, "Model only"))
+    )
+
+  if (valid_objective_plot_combination && !is.null(uploaded_zip) && file.exists(file.path(output_dir, file))) {
+
+    # Remove plot UI
+    output[[element_id]] <- shiny::renderPlot(NULL)
+    output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI(NULL)
+
+    # Render PNG from ZIP upload
+    output[[paste0(element_id, "_img")]] <- shiny::renderUI({
+      shiny::tags$div(
+        style = "display: flex; justify-content: center;",
+        shiny::tags$img(
+          src = paste0("/temp_stemp/", file),
+          style = "height: 500px"
+        )
+      )
+    })
+
+  } else if (valid_objective_plot_combination && !is.null(valid_geo_metadata)) {
+
+     # Remove image UI
+    output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
+
+    # Render fresh plot from geo data upload
+    output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI({
+      shiny::plotOutput(outputId = ns(element_id), height = "300px")
+    })
+
+    output[[element_id]] <- plot_fn()
+
+  } else {
+    # Remove everything
+    output[[element_id]] <- shiny::renderPlot(NULL)
+    output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
+    output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI(NULL)
+  }
 }
 
 # --- Master input renderer ---

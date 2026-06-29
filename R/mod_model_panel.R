@@ -124,67 +124,12 @@ mod_model_panel_server <- function(
 					div_class_optional <- if (row$optional == 1) "optional_field" else NULL
 
 					# Render field
-					content <- if (row$element_type == "training_plot") {
-						file <- "training_locations.png"
-						if (
-							# !is.null(uploaded_zip()) &&
-								file.exists(file.path(output_dir, file))
-						) {
-							render_plot_png(
-								element_id = ns(row$element_id),
-								element = row$element,
-								file = file,
-								info_text = row$info_text
-							)
-						} else {
-							render_samples_plot(
-								element_id = ns(row$element_id),
-								element = row$element,
-								ns = ns,
-								info_text = row$info_text
-							)
-						}
-					} else if (row$element_type == "training_area_plot") {
-						file <- "training_area.png"
-						if (
-							# !is.null(uploaded_zip()) &&
-								file.exists(file.path(output_dir, file))
-						) {
-							render_plot_png(
-								element_id = ns(row$element_id),
-								element = row$element,
-								file = file,
-								info_text = row$info_text
-							)
-						} else {
-							render_training_area_plot(
-								element_id = ns(row$element_id),
-								element = row$element,
-								ns = ns,
-								info_text = row$info_text
-							)
-						}
-					} else if (row$element_type == "geodist_plot_training") {
-						file <- "geodist_training_area.png"
-						if (
-							# o_objective_1_val() == "Model only" &&
-							# 	!is.null(uploaded_zip()) &&
-								file.exists(file.path(output_dir, file))
-						) {
-							render_plot_png(
-								element_id = ns(row$element_id),
-								element = row$element,
-								file = file,
-								info_text = row$info_text
-							)
-						} else {
-							render_geodist_plot(
-								element_id = ns(row$element_id),
-								element = row$element,
-								ns = ns,
-								info_text = row$info_text
-							)
-						}
+					content <- if (row$element_type %in% c("training_plot", "training_area_plot", "geodist_plot_training")) {
+					  render_plot(
+					    element_id = ns(row$element_id),
+					    label = row$element,
+					    info_text = row$info_text
+					  )
 					} else if (row$element_type == "sampling_design") {
 						# Look for uploaded CSV value
 						uploaded_val <- NULL
@@ -228,49 +173,71 @@ mod_model_panel_server <- function(
 
 		# Observers for plots
 		shiny::observe({
-			df <- model_data()
-			meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
-			training_plot_ids <- df$element_id[df$element_type == "training_plot"]
-			render_samples_plot_server(
-				output,
-				ns(training_plot_ids),
-				meta_geo_samples_list,
-				what = "samples_sf",
-				output_dir = output_dir
-			)
+		  render_plot_server(
+		    file = "training_locations.png",
+		    valid_geo_metadata = valid_geo_samples_metadata(),
+		    element_id = "training_locations",
+		    objective = o_objective_1_val(),
+		    uploaded_zip = uploaded_zip(),
+		    output_dir = output_dir,
+		    ns = ns,
+		    output = output,
+		    plot_fn = function() {
+		      geo_map(
+		        output = output,
+		        element_id = "training_locations",
+		        geo_metadata = valid_geo_samples_metadata() %||% list(),
+		        what = "samples_sf",
+		        output_dir = output_dir
+		      )
+		    }
+		  )
 		})
 
 		shiny::observe({
-			df <- model_data()
-			meta_geo_training_area_list <- valid_geo_training_area_metadata() %||% list()
-			training_area_plot_ids <- df$element_id[df$element_type == "training_area_plot"]
-			render_training_area_plot_server(
-				output,
-				ns(training_area_plot_ids),
-				meta_geo_training_area_list,
-				what = "training_area_sf",
-				output_dir = output_dir
-			)
-		})
-
-		shiny::observe({
-			shiny::req(o_objective_1_val())
-			if (o_objective_1_val() == "Model only") {
-				df <- model_data()
-				meta_geo_all_list <- valid_geo_all_metadata() %||% list()
-				pid <- df$element_id[df$element_type == "geodist_plot_training"]
-				if (length(pid) == 1) {
-					render_geodist_plot_server(
-						output = output,
-						element_id = ns(pid),
-						geo_metadata = meta_geo_all_list,
-						objective = "Model only",
-						output_dir = output_dir
-					)
-				}
-			}
+		  render_plot_server(
+		    file = "training_area.png",
+		    valid_geo_metadata = valid_geo_training_area_metadata(),
+		    element_id = "training_area_map",
+		    objective = o_objective_1_val(),
+		    uploaded_zip = uploaded_zip(),
+		    output_dir = output_dir,
+		    ns = ns,
+		    output = output,
+		    plot_fn = function() {
+		      geo_map(
+		        output = output,
+		        element_id = "training_area_map",
+		        geo_metadata = valid_geo_training_area_metadata() %||% list(),
+		        what = "training_area_sf",
+		        output_dir = output_dir
+		      )
+		    }
+		  )
 		})
 		
+		shiny::observe({
+		  render_plot_server(
+		    file = "geodist_training_area.png",
+		    valid_geo_metadata = valid_geo_all_metadata(),
+		    element_id = "geodistance_plot_training_area",
+		    objective = o_objective_1_val(),
+		    uploaded_zip = uploaded_zip(),
+		    output_dir = output_dir,
+		    ns = ns,
+		    output = output,
+		    plot_fn = function() {
+		      geodist_plot(
+		        				output = output,
+		        				element_id = "geodistance_plot_training_area",
+		        				geo_metadata = valid_geo_all_metadata() %||% list(),
+		        				objective = "Model only",
+		        				output_dir = output_dir
+		        			)
+		    }
+		  )
+		})
+
 		# CRS server
 		shiny::observe({
 		  shiny::req(model_data())
@@ -289,7 +256,6 @@ mod_model_panel_server <- function(
 		  }
 		})
 		
-
 		# Sampling design server
 		shiny::observe({
 			shiny::req(model_data())
