@@ -41,8 +41,8 @@ mod_model_panel_ui <- function(id) {
 mod_model_panel_server <- function(
 	id,
 	protocol_data,
-	model_metadata = NULL,
-	geo_metadata = NULL,
+	model_metadata = reactiveVal(NULL),
+	geo_metadata = reactiveVal(NULL),
 	o_objective_1_val,
 	geodist_sel = shiny::reactive(NULL),
 	uploaded_values = shiny::reactive(NULL),
@@ -97,8 +97,6 @@ mod_model_panel_server <- function(
 			if (nrow(df) == 0) {
 				return(shiny::tags$p("No model data available"))
 			}
-
-			# meta_model_list <- valid_model_metadata() %||% list()
 
 			uploaded_df <- uploaded_values()
 
@@ -155,7 +153,6 @@ mod_model_panel_server <- function(
 							# o_objective_1 = o_objective_1_val(),
 							suggestions = row$suggestions,
 							info_text = row$info_text,
-							# model_metadata = meta_model_list,
 							ns = ns,
 							row = row
 						)
@@ -168,6 +165,12 @@ mod_model_panel_server <- function(
 				shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
 			})
 
+			# Signal to trigger observers after dynamic UI render (timestamp ensures a change).
+			shinyjs::runjs(sprintf(
+			  "Shiny.onInputChange('%s', new Date().getTime());",
+			  ns("ui_rendered")
+			))
+			
 			do.call(shinyBS::bsCollapse, panels)
 		})
 
@@ -272,7 +275,40 @@ mod_model_panel_server <- function(
 				)
 			}
 		})
+		
+		# Update of inputs based on uploaded model_metadata
+		shiny::observe({
+		  input[["ui_rendered"]]
+		  shiny::req(model_data(), valid_model_metadata())
+		  df <- model_data()
+		  meta_model_list <- valid_model_metadata() %||% list()
 
+		  element_types <- c(
+		    "num_training_samples",
+		    "num_predictors",
+		    "num_classes",
+		    "num_samples_per_class",
+		    "interpolation_range",
+		    "names_predictors",
+		    "model_hyperparams",
+		    "model_type",
+		    "model_algorithm",
+		    "validation_results"
+		  )
+
+		  lapply(element_types, function(element_type) {
+		    render_input_field_server(
+		      input = input,
+		      output = output,
+		      session = session,
+		      element_type = element_type,
+		      element_id = df$element_id[df$element_type == element_type],
+		      model_metadata = meta_model_list,
+		      model_deleted = model_deleted
+		    )
+		  })
+		})
+		
 		# Collect input values
 		inputs_reactive <- shiny::reactive({
 			df <- model_data()
@@ -306,28 +342,6 @@ mod_model_panel_server <- function(
 		})
 		predictor_types <- shiny::reactive({
 			input[["predictor_types"]]
-		})
-
-		# Reset inputs when model is deleted
-		shiny::observeEvent(model_deleted(), {
-			if (model_deleted()) {
-				df <- model_data()
-				ids <- df$element_id
-				if (!is.null(ids) && length(ids) > 0) {
-					for (element_id in ids) {
-						if (grepl("num|classes", element_id)) {
-							shiny::updateNumericInput(session, element_id, value = NA)
-						} else if (
-							element_id %in%
-								c("model_type", "model_algorithm", "sampling_design", "validation_strategy", "predictor_types")
-						) {
-							shiny::updateSelectInput(session, element_id, selected = "")
-						} else {
-							shiny::updateTextInput(session, element_id, value = "")
-						}
-					}
-				}
-			}
 		})
 
 		# Hide range/classes fields dynamically in dependence of model type
