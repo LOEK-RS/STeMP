@@ -42,7 +42,7 @@ normalize_id <- function(x) {
 #' @return The uploaded value, fallback function result, or NULL.
 #' @noRd
 get_value <- function(uploaded_value, fallback_fn) {
-	if (!is.null(uploaded_value)) {
+	if (!is.null(uploaded_value) && !is.na(uploaded_value[1])) {
 		return(uploaded_value)
 	} else if (!is.null(fallback_fn)) {
 		return(fallback_fn())

@@ -96,12 +96,12 @@ render_text_input <- function(element_id, element, info_text = NULL, value = NUL
 #' @param model_metadata Reactive or reactiveValues containing model metadata
 #' @param model_deleted Reactive boolean, resets inputs when TRUE
 #' @noRd
-render_text_input_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
-                                     model_deleted = shiny::reactive(FALSE)) {
+render_text_input_model_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
+                                           uploaded_value = NULL, model_deleted = shiny::reactive(FALSE)) {
   shiny::observeEvent(
     model_metadata,
     {
-      val <- get_value(uploaded_value = NULL, function() {
+      val <- get_value(uploaded_value = uploaded_value, function() {
         if (!is.null(model_metadata) && !is.null(model_metadata[[element_type]])) {
           model_metadata[[element_type]]()
         } else {
@@ -121,9 +121,45 @@ render_text_input_server <- function(input, output, session, element_id, element
     model_deleted(), 
     {
       if(model_deleted()) {
-        shiny::updateTextInput(session, inputId = element_id, value = "")
+        val <- get_value(uploaded_value = uploaded_value, function() {
+            ""
+        })
+        
+        shiny::updateTextInput(session, inputId = element_id, value = val)
       }
-    })
+    },
+    ignoreInit = TRUE
+    )
+}
+
+#' Server logic to update input for text input based on geographic metadata
+#'
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param session Shiny session object
+#' @param element_id Input element ID
+#' @param element_type Type of input element
+#' @param geo_metadata Reactive or reactiveValues containing geographic metadata
+#' @noRd
+render_text_input_geo_server <- function(input, output, session, element_id, element_type,
+                                         uploaded_value = NULL, geo_metadata = reactiveVal(NULL)) {
+  shiny::observeEvent(
+    geo_metadata,
+    {
+      val <- get_value(uploaded_value = uploaded_value, function() {
+        if (!is.null(geo_metadata) && !is.null(geo_metadata[[element_type]])) {
+          geo_metadata[[element_type]]()
+        } else {
+          ""
+        }
+      })
+      
+      shinyjs::delay(100, {
+        shiny::updateTextInput(session, inputId = element_id, value = val)
+      })
+    },
+    ignoreInit = FALSE
+  )
 }
 
 #' Render a multi-line text area input
@@ -153,12 +189,12 @@ render_numeric_input <- function(element_id, element, info_text = NULL, value = 
 #' @param model_metadata Reactive or reactiveValues containing model metadata
 #' @param model_deleted Reactive boolean, resets inputs when TRUE
 #' @noRd
-render_numeric_input_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
-                                        model_deleted = shiny::reactive(FALSE)) {
+render_numeric_input_model_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
+                                        uploaded_value = NULL, model_deleted = shiny::reactive(FALSE)) {
   shiny::observeEvent(
     model_metadata,
     {
-      val <- get_value(uploaded_value = NULL, function() {
+      val <- get_value(uploaded_value = uploaded_value, function() {
         if (!is.null(model_metadata) && !is.null(model_metadata[[element_type]])) {
           model_metadata[[element_type]]()
         } else {
@@ -178,9 +214,14 @@ render_numeric_input_server <- function(input, output, session, element_id, elem
     model_deleted(), 
     {
       if(model_deleted()) {
-        shiny::updateNumericInput(session, inputId = element_id, value = NA)
+        val <- get_value(uploaded_value = uploaded_value, function() {
+          NA
+        })
+        
+        shiny::updateNumericInput(session, inputId = element_id, value = val)
   	}
-  })
+  },
+  ignoreInit = TRUE)
 }
 
 #' Render select input
@@ -206,12 +247,13 @@ render_select_input <- function(element_id, element, choices = c(""), selected =
 #' @param default_choices Vector with default choices as strings
 #' @param model_deleted Reactive boolean, resets inputs when TRUE
 #' @noRd
-render_select_input_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
-                                       default_choices = c(""), model_deleted = shiny::reactive(FALSE)) {
+render_select_input_model_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
+                                       uploaded_value = NULL, default_choices = c(""),
+                                       model_deleted = shiny::reactive(FALSE)) {
   shiny::observeEvent(
     model_metadata,
     {
-      selected_val <- get_value(uploaded_value = NULL, function() {
+      selected_val <- get_value(uploaded_value = uploaded_value, function() {
         if (!is.null(model_metadata) && !is.null(model_metadata[[element_type]])) {
           model_metadata[[element_type]]()
         } else {
@@ -237,44 +279,20 @@ render_select_input_server <- function(input, output, session, element_id, eleme
     model_deleted(), 
     {
       if(model_deleted()) {
-        shiny::updateSelectInput(session, inputId = element_id, choices = default_choices, selected = "")
-      }
-    })
-}
-
-#' Render text input for coordinate reference system
-#' @noRd
-render_crs <- function(element_id, element, geo_metadata = reactiveVal(NULL), info_text = NULL, value = NULL) {
-		input <- shiny::textInput(inputId = element_id, label = element, value = value)
-	with_tooltip(input, info_text)
-}
-
-#' Server logic to update input for coordinate reference system based on geographic metadata
-#'
-#' @param input Shiny input object
-#' @param output Shiny output object
-#' @param session Shiny session object
-#' @param element_id ID of the design select input to update
-#' @param geo_metadata Reactive or reactiveValues containing geographic metadata
-#' @noRd
-render_crs_server <- function(input, output, session, element_id, geo_metadata = reactiveVal(NULL)) {
-  shiny::observeEvent(
-    geo_metadata,
-    {
-      val <- get_value(uploaded_value = NULL, function() {
-        if (!is.null(geo_metadata) && !is.null(geo_metadata$samples_crs)) {
-          geo_metadata$samples_crs()
-        } else {
+        selected_val <- get_value(uploaded_value = uploaded_value, function() {
           ""
+        })
+        
+        choices <- if (selected_val != "" && !(selected_val %in% default_choices)) {
+          c(default_choices, selected_val)
+        } else {
+          default_choices
         }
-      })
-      
-      shinyjs::delay(100, {
-        shiny::updateTextInput(session, inputId = element_id, value = val)
-      })
+        
+        shiny::updateSelectInput(session, inputId = element_id, choices = choices, selected = selected_val)
+      }
     },
-    ignoreInit = FALSE
-  )
+    ignoreInit = TRUE)
 }
 
 #' Render select input for sampling design choices
@@ -473,7 +491,7 @@ render_input_field <- function(
 		  choices = c("", "rf", "gbm", "glm", "svmRadial", "nnet", "rpart"),
 		  selected = uploaded_value,
 		  info_text = info_text),
-		"samples_crs" = render_crs(element_id, label_ui, info_text, value = uploaded_value),
+		"samples_crs" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
 		"validation_results" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
 
 		# fallback to text input
@@ -491,6 +509,7 @@ render_input_field <- function(
 #' @param element_type Type of input element
 #' @param element_id Input element ID
 #' @param model_metadata Reactive or reactiveValues containing model metadata
+#' @param geo_metadata Reactive or reactiveValues containing geo metadata
 #' @param model_deleted Reactive boolean, resets inputs when TRUE
 #' @noRd
 render_input_field_server <- function(
@@ -500,92 +519,111 @@ render_input_field_server <- function(
     element_type,
     element_id,
     model_metadata = NULL,
+    geo_metadata = reactiveVal(NULL),
+    uploaded_value = NULL,
     model_deleted = shiny::reactive(FALSE)
 ) {
   update_input_tag <- switch(
     element_type,
-    "num_training_samples" = render_numeric_input_server(
+    "num_training_samples" = render_numeric_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       model_deleted = model_deleted),
-    "num_predictors" = render_numeric_input_server(
+    "num_predictors" = render_numeric_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       model_deleted = model_deleted),
-    "num_classes" = render_numeric_input_server(
+    "num_classes" = render_numeric_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       model_deleted = model_deleted),
-    "num_samples_per_class" = render_text_input_server(
+    "num_samples_per_class" = render_text_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       model_deleted = model_deleted),
-    "interpolation_range" = render_text_input_server(
+    "interpolation_range" = render_text_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       model_deleted = model_deleted),
-    "names_predictors" = render_text_input_server(
+    "names_predictors" = render_text_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       model_deleted = model_deleted),
-    "model_hyperparams" = render_text_input_server(
+    "model_hyperparams" = render_text_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       model_deleted = model_deleted),
-    "model_type" = render_select_input_server(
+    "model_type" = render_select_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       default_choices = c("Classification", "Regression"),
       model_deleted = model_deleted),
-    "model_algorithm" = render_select_input_server(
+    "model_algorithm" = render_select_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       default_choices = c("rf", "gbm", "glm", "svmRadial", "nnet", "rpart"),
       model_deleted = model_deleted),
-    # "samples_crs" = render_crs(element_id, label_ui, info_text, value = uploaded_value),
-    "validation_results" = render_text_input_server(
+    "samples_crs" = render_text_input_geo_server(
+      input,
+      output,
+      session,
+      element_id = element_id,
+      element_type = element_type,
+      geo_metadata = geo_metadata,
+      uploaded_value = uploaded_value),
+    "validation_results" = render_text_input_model_server(
       input,
       output,
       session,
       element_id = element_id,
       element_type = element_type,
       model_metadata = model_metadata,
+      uploaded_value = uploaded_value,
       model_deleted = model_deleted)
   )
   
