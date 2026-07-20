@@ -298,8 +298,7 @@ mod_model_panel_server <- function(
 		      element_id = element_id,
 		      model_metadata = meta_model_list,
 		      geo_metadata = meta_geo_samples_list,
-		      uploaded_value = uploaded_val,
-		      model_deleted = model_deleted
+		      uploaded_value = uploaded_val
 		    )
 		  })
 		})
