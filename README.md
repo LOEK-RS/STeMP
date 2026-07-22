@@ -48,6 +48,15 @@ library(STeMP)
 run_app()
 ```
 
+You can read and analyze a completed protocol using
+
+```R
+p <- protocol_read("protocol.csv")
+protocol_analyze(p)
+```
+
+
+
 <!--
 
 ## Citation
