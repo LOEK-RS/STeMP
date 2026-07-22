@@ -258,13 +258,12 @@ mod_model_panel_server <- function(
 			}
 		})
 		
-		# Update of inputs based on uploaded metadata
+		# Update of inputs based on uploaded model metadata
 		shiny::observe({
 		  input[["ui_rendered"]]
 		  shiny::req(model_data())
 		  df <- model_data()
 		  meta_model_list <- valid_model_metadata() %||% list()
-		  meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
 		  uploaded_df <- uploaded_values()
 
 		  element_types <- c(
@@ -277,7 +276,6 @@ mod_model_panel_server <- function(
 		    "model_hyperparams",
 		    "model_type",
 		    "model_algorithm",
-		    "samples_crs",
 		    "validation_results"
 		  )
 
@@ -297,10 +295,36 @@ mod_model_panel_server <- function(
 		      element_type = element_type,
 		      element_id = element_id,
 		      model_metadata = meta_model_list,
-		      geo_metadata = meta_geo_samples_list,
 		      uploaded_value = uploaded_val
 		    )
 		  })
+		})
+		
+		# Update input for CRS based on geo metadata
+		shiny::observe({
+		  input[["ui_rendered"]]
+		  shiny::req(model_data())
+		  df <- model_data()
+		  meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
+		  uploaded_df <- uploaded_values()
+		  element_type <- "samples_crs"
+		  element_id <- df$element_id[df$element_type == element_type]
+		  
+		  # Override default value if uploaded
+		  uploaded_val <- NULL
+		  if (!is.null(uploaded_df)) {
+		    uploaded_val <- uploaded_df$value[uploaded_df$element_id == element_id]
+		  }
+		  
+		  render_input_field_server(
+		    input = input,
+		    output = output,
+		    session = session,
+		    element_type = element_type,
+		    element_id = element_id,
+		    geo_metadata = meta_geo_samples_list,
+		    uploaded_value = uploaded_val
+		  )
 		})
 		
 		# Collect input values
