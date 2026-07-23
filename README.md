@@ -1,5 +1,10 @@
 # STeMP
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/LOEK-RS/STeMP/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/LOEK-RS/STeMP/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
+
 Machine learning (ML) methods, which can capture complex, non-linear, and interacting relationships without assuming specific data distributions, are increasingly used in geoscientific spatio-temporal modelling. 
 However, their application comes with several challenges, especially when applied to spatio-temporal data.
 
@@ -69,9 +74,3 @@ Please cite as follows:
 
 This app builds on the ODMAP protocol ([Zurell et al., 2020, Ecography](https://onlinelibrary.wiley.com/doi/full/10.1111/ecog.04960)), which standardizes reporting for species distribution models. 
 We acknowledge the authors' foundational contribution.
-
-<!-- badges: start -->
-  [![R-CMD-check](https://github.com/LOEK-RS/STeMP/actions/workflows/R-CMD-check.yaml/badge.svghttps://github.com/LOEK-RS/STeMP/actions/workflows/R-CMD-check.yaml/badge.svghttps://github.com/LOEK-RS/STeMP/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/LOEK-RS/STeMP/actions/workflows/R-CMD-check.yaml)
-  <!-- badges: end -->
-<simpleWarning in system2(util_test[1], util_test[-1], stdout = TRUE, stderr = FALSE): running command ''xclip' -o -selection clipboard 2>/dev/null' had status 1>
-<simpleWarning in system2(util_test[1], util_test[-1], stdout = TRUE, stderr = FALSE): running command ''xclip' -o -selection clipboard 2>/dev/null' had status 1>
