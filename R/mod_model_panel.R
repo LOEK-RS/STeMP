@@ -151,6 +151,7 @@ mod_model_panel_server <- function(
 
 		# Observers for plots
 		shiny::observe({
+		  input[["ui_rendered"]]
 		  render_plot_server(
 		    file = "training_locations.png",
 		    valid_geo_metadata = valid_geo_samples_metadata(),
@@ -173,6 +174,7 @@ mod_model_panel_server <- function(
 		})
 
 		shiny::observe({
+		  input[["ui_rendered"]]
 		  render_plot_server(
 		    file = "training_area.png",
 		    valid_geo_metadata = valid_geo_training_area_metadata(),
@@ -195,6 +197,7 @@ mod_model_panel_server <- function(
 		})
 		
 		shiny::observe({
+		  input[["ui_rendered"]]
 		  render_plot_server(
 		    file = "geodist_training_area.png",
 		    valid_geo_metadata = valid_geo_all_metadata(),

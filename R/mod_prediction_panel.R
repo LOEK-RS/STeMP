@@ -128,6 +128,12 @@ mod_prediction_panel_server <- function(
 				shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
 			})
 
+			# Signal to trigger observers after dynamic UI render (timestamp ensures a change).
+			shinyjs::runjs(sprintf(
+			  "Shiny.onInputChange('%s', new Date().getTime());",
+			  ns("ui_rendered")
+			))
+			
 			do.call(shinyBS::bsCollapse, panels)
 		})
 
@@ -142,6 +148,7 @@ mod_prediction_panel_server <- function(
 		
 		# Observers for plots
 		shiny::observe({
+		  input[["ui_rendered"]]
 		  shiny::req(o_objective_1_val() == "Model and prediction")
 		  render_plot_server(
 		    file = "prediction_area.png",
@@ -165,6 +172,7 @@ mod_prediction_panel_server <- function(
 		})
 		
 		shiny::observe({
+		  input[["ui_rendered"]]
 		  shiny::req(o_objective_1_val() == "Model and prediction")
 		  render_plot_server(
 		    file = "geodist_prediction_area.png",

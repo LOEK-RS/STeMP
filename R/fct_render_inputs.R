@@ -280,7 +280,8 @@ render_select_input_design_server <- function(input, output, session, element_id
 #' @noRd
 render_plot <- function(element_id, label, info_text = NULL) {
   inputTag <- shiny::div(
-    class = c("form-group shiny-input-container"),
+    id = paste0(element_id, "_field"),
+    class = c("form-group shiny-input-container", "hide_plot_field"),
     shiny::tags$label(`for` = element_id, class = "control-label", label),
     shiny::div(
       shiny::uiOutput(outputId = paste0(element_id, "_img"), style = "height: auto")
@@ -331,6 +332,9 @@ render_plot_server <- function(
 
   if (valid_objective_plot_combination && !is.null(uploaded_zip) && file.exists(file.path(output_dir, file))) {
 
+    # Show plot field
+    shinyjs::removeClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
+    
     # Remove plot UI
     output[[element_id]] <- shiny::renderPlot(NULL)
     output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI(NULL)
@@ -348,7 +352,10 @@ render_plot_server <- function(
 
   } else if (valid_objective_plot_combination && !is.null(valid_geo_metadata)) {
 
-     # Remove image UI
+    # Show plot field
+    shinyjs::removeClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
+    
+    # Remove image UI
     output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
 
     # Render fresh plot from geo data upload
@@ -359,6 +366,9 @@ render_plot_server <- function(
     output[[element_id]] <- plot_fn()
 
   } else {
+    # Hide plot field
+    shinyjs::addClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
+    
     # Remove everything
     output[[element_id]] <- shiny::renderPlot(NULL)
     output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
