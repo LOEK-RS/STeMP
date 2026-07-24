@@ -242,18 +242,6 @@ render_select_input_model_server <- function(input, output, session, element_id,
   )
 }
 
-#' Render select input for sampling design choices
-#' @noRd
-render_design <- function(element_id, element, selected = NULL, info_text = NULL) {
-	input <- shiny::selectInput(
-		inputId = element_id,
-		label = element,
-		choices = c("", "clustered", "random", "stratified"),
-		selected = selected %||% ""
-	)
-	with_tooltip(input, info_text)
-}
-
 #' Server logic to update design selection input based on reactive geographic distance selection
 #'
 #' @param input Shiny input object
@@ -262,20 +250,25 @@ render_design <- function(element_id, element, selected = NULL, info_text = NULL
 #' @param element_id ID of the design select input to update
 #' @param geodist_sel Reactive providing selected design value
 #' @noRd
-render_design_server <- function(input, output, session, element_id, geodist_sel) {
+render_select_input_design_server <- function(input, output, session, element_id, geodist_sel = shiny::reactive(NULL),
+                                 uploaded_value = NULL) {
 	shiny::observeEvent(
 		geodist_sel(),
 		{
-			selected_val <- geodist_sel()
-			if (is.null(selected_val)) {
-				return(NULL)
-			}
+		  selected_val <- get_value(uploaded_value = uploaded_value, function() {
+		    if (!is.null(geodist_sel())) {
+		      geodist_sel()
+		    } else {
+		      ""
+		    }
+		  })
 
 			shinyjs::delay(100, {
 				shiny::updateSelectInput(session, inputId = element_id, selected = selected_val)
 			})
 		},
-		ignoreInit = FALSE
+		ignoreInit = FALSE,
+		ignoreNULL = FALSE
 	)
 
 	shiny::observe({
@@ -436,6 +429,12 @@ render_input_field <- function(
 		  element_id,
 		  label_ui,
 		  choices = c("", "rf", "gbm", "glm", "svmRadial", "nnet", "rpart"),
+		  selected = uploaded_value,
+		  info_text = info_text),
+		"sampling_design" = render_select_input(
+		  element_id,
+		  label_ui,
+		  choices = c("", "clustered", "random", "stratified"),
 		  selected = uploaded_value,
 		  info_text = info_text),
 		"samples_crs" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),

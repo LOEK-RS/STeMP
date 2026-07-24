@@ -27,7 +27,10 @@ test_that("Uploading a protocol CSV automatically fills relevant fields", {
 			geo_metadata = reactiveValues(
 				samples_sf = reactive(NULL),
 				training_area_sf = reactive(NULL),
-				prediction_area_sf = reactive(NULL)
+				prediction_area_sf = reactive(NULL),
+				has_samples = shiny::reactive(FALSE),
+				has_training_area = shiny::reactive(FALSE),
+				has_prediction_area = shiny::reactive(FALSE)
 			),
 			output_dir = tempdir(),
 			model_deleted = reactive(FALSE),

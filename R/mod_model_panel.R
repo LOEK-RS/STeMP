@@ -54,14 +54,6 @@ mod_model_panel_server <- function(
 	shiny::moduleServer(id, function(input, output, session) {
 		ns <- session$ns
 
-		# Update sampling_design input when geodist_sel changes
-		shiny::observe({
-			selected_val <- geodist_sel()
-			if (!is.null(selected_val)) {
-				shiny::updateSelectInput(session, "sampling_design", selected = selected_val)
-			}
-		})
-
 		# Validate metadata subsets
 		valid_model_metadata <- validate_model_metadata(model_metadata, "has_model")
 		valid_geo_samples_metadata <- validate_geo_metadata(geo_metadata, "has_samples")
@@ -128,23 +120,6 @@ mod_model_panel_server <- function(
 					    label = row$element,
 					    info_text = row$info_text
 					  )
-					} else if (row$element_type == "sampling_design") {
-						# Look for uploaded CSV value
-						uploaded_val <- NULL
-						if (!is.null(uploaded_df)) {
-							val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
-							if (length(val) == 1 && nzchar(val)) {
-								uploaded_val <- val
-							}
-						}
-						selected_val <- uploaded_val
-
-						render_design(
-							element_id = ns(row$element_id),
-							element = make_label(row$element, row$optional),
-							selected = selected_val,
-							info_text = row$info_text
-						)
 					} else {
 						render_input_field(
 							element_type = row$element_type,
@@ -243,17 +218,27 @@ mod_model_panel_server <- function(
 		
 		# Sampling design server
 		shiny::observe({
+		  input[["ui_rendered"]]
+		  geodist_sel()
 			shiny::req(model_data())
 			df <- model_data()
 			design_id <- df$element_id[df$element_type == "sampling_design"]
-
+			uploaded_df <- uploaded_values()
+			
+			# Override default value if uploaded
+			uploaded_val <- NULL
+			if (!is.null(uploaded_df)) {
+			  uploaded_val <- uploaded_df$value[uploaded_df$element_id == design_id]
+			}
+			
 			if (length(design_id) == 1) {
-				render_design_server(
+				render_select_input_design_server(
 					input = input,
 					output = output,
 					session = session,
 					element_id = design_id,
-					geodist_sel = geodist_sel
+					geodist_sel = geodist_sel,
+					uploaded_value = uploaded_val
 				)
 			}
 		})
