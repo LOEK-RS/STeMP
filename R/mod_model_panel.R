@@ -125,10 +125,8 @@ mod_model_panel_server <- function(
 							element_type = row$element_type,
 							element_id = ns(row$element_id),
 							label = row$element,
-							# o_objective_1 = o_objective_1_val(),
 							suggestions = row$suggestions,
 							info_text = row$info_text,
-							ns = ns,
 							row = row
 						)
 					}

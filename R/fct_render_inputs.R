@@ -94,6 +94,7 @@ render_text_input <- function(element_id, element, info_text = NULL, value = NUL
 #' @param element_id Input element ID
 #' @param element_type Type of input element
 #' @param model_metadata Reactive or reactiveValues containing model metadata
+#' @param uploaded_value Value from uploaded input
 #' @noRd
 render_text_input_model_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
                                            uploaded_value = NULL) {
@@ -123,6 +124,7 @@ render_text_input_model_server <- function(input, output, session, element_id, e
 #' @param session Shiny session object
 #' @param element_id Input element ID
 #' @param element_type Type of input element
+#' @param uploaded_value Value from uploaded input
 #' @param geo_metadata Reactive or reactiveValues containing geographic metadata
 #' @noRd
 render_text_input_geo_server <- function(input, output, session, element_id, element_type,
@@ -171,6 +173,7 @@ render_numeric_input <- function(element_id, element, info_text = NULL, value = 
 #' @param element_id Input element ID
 #' @param element_type Type of input element
 #' @param model_metadata Reactive or reactiveValues containing model metadata
+#' @param uploaded_value Value from uploaded input
 #' @noRd
 render_numeric_input_model_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
                                         uploaded_value = NULL) {
@@ -213,6 +216,7 @@ render_select_input <- function(element_id, element, choices = c(""), selected =
 #' @param element_id Input element ID
 #' @param element_type Type of input element
 #' @param model_metadata Reactive or reactiveValues containing model metadata
+#' @param uploaded_value Value from uploaded input
 #' @param default_choices Vector with default choices as strings
 #' @noRd
 render_select_input_model_server <- function(input, output, session, element_id, element_type, model_metadata = NULL,
@@ -249,6 +253,7 @@ render_select_input_model_server <- function(input, output, session, element_id,
 #' @param session Shiny session object
 #' @param element_id ID of the design select input to update
 #' @param geodist_sel Reactive providing selected design value
+#' @param uploaded_value Value from uploaded input
 #' @noRd
 render_select_input_design_server <- function(input, output, session, element_id, geodist_sel = shiny::reactive(NULL),
                                  uploaded_value = NULL) {
@@ -385,12 +390,8 @@ render_plot_server <- function(
 #' @param element_type Type of input element (e.g., "text", "suggestion", "num_training_samples")
 #' @param element_id Input element ID
 #' @param label Label text for the input
-#' @param o_objective_1 Unused in this function but required by caller
 #' @param suggestions Optional suggestions for select inputs
 #' @param info_text Optional tooltip/help text
-#' @param model_metadata Optional model metadata object for default values
-#' @param geo_metadata Optional geographic metadata object
-#' @param ns Namespace function for UI IDs
 #' @param row Data row containing a \code{value} field for overrides
 #' @return Shiny input UI element
 #' @noRd
@@ -398,10 +399,8 @@ render_input_field <- function(
 	element_type,
 	element_id,
 	label,
-	o_objective_1,
 	suggestions = NULL,
 	info_text = NULL,
-	ns = identity,
 	row
 ) {
 	uploaded_value <- if (!is.null(row$value) && nzchar(row$value)) row$value else NULL
@@ -466,6 +465,7 @@ render_input_field <- function(
 #' @param element_id Input element ID
 #' @param model_metadata Reactive or reactiveValues containing model metadata
 #' @param geo_metadata Reactive or reactiveValues containing geo metadata
+#' @param uploaded_value Value from uploaded input
 #' @noRd
 render_input_field_server <- function(
     input, 

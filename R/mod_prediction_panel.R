@@ -78,11 +78,6 @@ mod_prediction_panel_server <- function(
 				return(shiny::tags$p("No prediction data available"))
 			}
 
-			# meta_geo_prediction_area_list <- valid_geo_prediction_area_metadata()
-			# if (is.null(meta_geo_prediction_area_list)) {
-			# 	meta_geo_prediction_area_list <- list()
-			# }
-
 			uploaded_df <- uploaded_values()
 
 			panels <- lapply(subs, function(subsec) {
@@ -114,10 +109,8 @@ mod_prediction_panel_server <- function(
 							element_type = row$element_type,
 							element_id = ns(row$element_id),
 							label = row$element,
-							o_objective_1 = o_objective_1_val(),
 							suggestions = row$suggestions,
 							info_text = row$info_text,
-							ns = ns,
 							row = row
 						)
 					}
