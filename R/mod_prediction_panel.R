@@ -99,11 +99,11 @@ mod_prediction_panel_server <- function(
 
 					# Render specific plots or inputs
 					content <- if (row$element_type %in% c("prediction_area_plot", "geodist_plot_prediction")) {
-					  render_plot(
-					    element_id = ns(row$element_id),
-					    label = row$element,
-					    info_text = row$info_text
-					  )
+						render_plot(
+							element_id = ns(row$element_id),
+							label = row$element,
+							info_text = row$info_text
+						)
 					} else {
 						render_input_field(
 							element_type = row$element_type,
@@ -123,10 +123,10 @@ mod_prediction_panel_server <- function(
 
 			# Signal to trigger observers after dynamic UI render (timestamp ensures a change).
 			shinyjs::runjs(sprintf(
-			  "Shiny.onInputChange('%s', new Date().getTime());",
-			  ns("ui_rendered")
+				"Shiny.onInputChange('%s', new Date().getTime());",
+				ns("ui_rendered")
 			))
-			
+
 			do.call(shinyBS::bsCollapse, panels)
 		})
 
@@ -138,54 +138,54 @@ mod_prediction_panel_server <- function(
 				shinyjs::removeClass(selector = "body", class = "hide_optional")
 			}
 		})
-		
+
 		# Observers for plots
 		shiny::observe({
-		  input[["ui_rendered"]]
-		  shiny::req(o_objective_1_val() == "Model and prediction")
-		  render_plot_server(
-		    file = "prediction_area.png",
-		    valid_geo_metadata = valid_geo_prediction_area_metadata(),
-		    element_id = "prediction_map",
-		    objective = o_objective_1_val(),
-		    uploaded_zip = uploaded_zip(),
-		    output_dir = output_dir,
-		    ns = ns,
-		    output = output,
-		    plot_fn = function() {
-		      geo_map(
-		        output = output,
-		        element_id = "prediction_map",
-		        geo_metadata = valid_geo_prediction_area_metadata() %||% list(),
-		        what = "prediction_area_sf",
-		        output_dir = output_dir
-		      )
-		    }
-		  )
+			input[["ui_rendered"]]
+			shiny::req(o_objective_1_val() == "Model and prediction")
+			render_plot_server(
+				file = "prediction_area.png",
+				valid_geo_metadata = valid_geo_prediction_area_metadata(),
+				element_id = "prediction_map",
+				objective = o_objective_1_val(),
+				uploaded_zip = uploaded_zip(),
+				output_dir = output_dir,
+				ns = ns,
+				output = output,
+				plot_fn = function() {
+					geo_map(
+						output = output,
+						element_id = "prediction_map",
+						geo_metadata = valid_geo_prediction_area_metadata() %||% list(),
+						what = "prediction_area_sf",
+						output_dir = output_dir
+					)
+				}
+			)
 		})
-		
+
 		shiny::observe({
-		  input[["ui_rendered"]]
-		  shiny::req(o_objective_1_val() == "Model and prediction")
-		  render_plot_server(
-		    file = "geodist_prediction_area.png",
-		    valid_geo_metadata = valid_geo_all_metadata(),
-		    element_id = "geodistance_plot_prediction_area",
-		    objective = o_objective_1_val(),
-		    uploaded_zip = uploaded_zip(),
-		    output_dir = output_dir,
-		    ns = ns,
-		    output = output,
-		    plot_fn = function() {
-		      geodist_plot(
-		        output = output,
-		        element_id = "geodistance_plot_prediction_area",
-		        geo_metadata = valid_geo_all_metadata() %||% list(),
-		        objective = "Model and prediction",
-		        output_dir = output_dir
-		      )
-		    }
-		  )
+			input[["ui_rendered"]]
+			shiny::req(o_objective_1_val() == "Model and prediction")
+			render_plot_server(
+				file = "geodist_prediction_area.png",
+				valid_geo_metadata = valid_geo_all_metadata(),
+				element_id = "geodistance_plot_prediction_area",
+				objective = o_objective_1_val(),
+				uploaded_zip = uploaded_zip(),
+				output_dir = output_dir,
+				ns = ns,
+				output = output,
+				plot_fn = function() {
+					geodist_plot(
+						output = output,
+						element_id = "geodistance_plot_prediction_area",
+						geo_metadata = valid_geo_all_metadata() %||% list(),
+						objective = "Model and prediction",
+						output_dir = output_dir
+					)
+				}
+			)
 		})
 
 		# Reactive collection of prediction input values

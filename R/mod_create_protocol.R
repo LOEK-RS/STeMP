@@ -84,28 +84,33 @@ mod_create_protocol_server <- function(
 
 		# 3) Reactive selection classification based on geographic metadata and modeling objective
 		geodist_sel <- shiny::reactive({
-		  shiny::req(overview$o_objective_1())
-		  
-		  obj <- overview$o_objective_1()
-		  
-		  # Gate first
-		  if (!geo_metadata$has_samples()) return(NULL)
-		  
-		  if (obj == "Model only") {
-		    if (!geo_metadata$has_training_area()) return(NULL)
-		    samples_sf <- geo_metadata$samples_sf()
-		    area_sf <- geo_metadata$training_area_sf()
-		  } else if (obj == "Model and prediction") {
-		    if (!geo_metadata$has_prediction_area()) return(NULL)
-		    samples_sf <- geo_metadata$samples_sf()
-		    area_sf <- geo_metadata$prediction_area_sf()
-		  } else {
-		    stop("Unsupported objective for geodist calculation")
-		  }
-		  
-		  calculate_geodist_classification(samples_sf, area_sf)
+			shiny::req(overview$o_objective_1())
+
+			obj <- overview$o_objective_1()
+
+			# Gate first
+			if (!geo_metadata$has_samples()) {
+				return(NULL)
+			}
+
+			if (obj == "Model only") {
+				if (!geo_metadata$has_training_area()) {
+					return(NULL)
+				}
+				samples_sf <- geo_metadata$samples_sf()
+				area_sf <- geo_metadata$training_area_sf()
+			} else if (obj == "Model and prediction") {
+				if (!geo_metadata$has_prediction_area()) {
+					return(NULL)
+				}
+				samples_sf <- geo_metadata$samples_sf()
+				area_sf <- geo_metadata$prediction_area_sf()
+			} else {
+				stop("Unsupported objective for geodist calculation")
+			}
+
+			calculate_geodist_classification(samples_sf, area_sf)
 		})
-		
 
 		# 4) Initialize Prediction panel submodule
 		prediction_results <- mod_prediction_panel_server(
