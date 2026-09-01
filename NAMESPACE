@@ -5,8 +5,10 @@ export(protocol_read)
 export(run_app)
 export(sanitize_text)
 import(shiny)
-importFrom(golem,add_resource_path)
-importFrom(golem,bundle_resources)
-importFrom(golem,favicon)
-importFrom(golem,with_golem_options)
+importFrom(golem,
+  add_resource_path,
+  bundle_resources,
+  favicon,
+  with_golem_options
+)
 importFrom(shiny,shinyApp)
