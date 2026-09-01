@@ -371,8 +371,8 @@ render_plot_server <- function(
 	plot_fn
 ) {
 	valid_objective_plot_combination <- !isTRUE(
-		(identical(element_id, "geodistance_plot_training_area") && identical(objective, "Model and prediction")) ||
-			(identical(element_id, "geodistance_plot_prediction_area") && identical(objective, "Model only"))
+		(identical(element_id, "geodist_training_area") && identical(objective, "Model and prediction")) ||
+			(identical(element_id, "geodist_prediction_area") && identical(objective, "Model only"))
 	)
 
 	if (valid_objective_plot_combination && !is.null(uploaded_zip) && file.exists(file.path(output_dir, file))) {

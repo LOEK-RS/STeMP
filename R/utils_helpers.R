@@ -63,17 +63,7 @@ save_figure <- function(figure, element_id, temp_dir = NULL) {
 		dir.create(fig_dir, recursive = TRUE)
 	}
 
-	fig_name <- switch(
-		element_id,
-		"protocol-prediction-geodistance_plot_prediction_area" = "geodist_prediction_area",
-		"protocol-prediction-prediction_map" = "prediction_area",
-		"protocol-model-training_area_map" = "training_area",
-		"protocol-model-training_locations" = "training_locations",
-		"protocol-model-geodistance_plot_training_area" = "geodist_training_area",
-		element_id
-	)
-
-	plot_path <- file.path(fig_dir, paste0(fig_name, ".png"))
+	plot_path <- file.path(fig_dir, paste0(element_id, ".png"))
 
 	ggplot2::ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
 

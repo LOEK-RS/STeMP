@@ -176,7 +176,7 @@ mod_model_panel_server <- function(
 			render_plot_server(
 				file = "training_area.png",
 				valid_geo_metadata = valid_geo_training_area_metadata(),
-				element_id = "training_area_map",
+				element_id = "training_area",
 				objective = o_objective_1_val(),
 				uploaded_zip = uploaded_zip(),
 				output_dir = output_dir,
@@ -185,7 +185,7 @@ mod_model_panel_server <- function(
 				plot_fn = function() {
 					geo_map(
 						output = output,
-						element_id = "training_area_map",
+						element_id = "training_area",
 						geo_metadata = valid_geo_training_area_metadata() %||% list(),
 						what = "training_area_sf",
 						output_dir = output_dir
@@ -199,7 +199,7 @@ mod_model_panel_server <- function(
 			render_plot_server(
 				file = "geodist_training_area.png",
 				valid_geo_metadata = valid_geo_all_metadata(),
-				element_id = "geodistance_plot_training_area",
+				element_id = "geodist_training_area",
 				objective = o_objective_1_val(),
 				uploaded_zip = uploaded_zip(),
 				output_dir = output_dir,
@@ -208,7 +208,7 @@ mod_model_panel_server <- function(
 				plot_fn = function() {
 					geodist_plot(
 						output = output,
-						element_id = "geodistance_plot_training_area",
+						element_id = "geodist_training_area",
 						geo_metadata = valid_geo_all_metadata() %||% list(),
 						objective = "Model only",
 						output_dir = output_dir
