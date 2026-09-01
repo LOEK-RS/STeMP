@@ -80,10 +80,8 @@ mod_overview_panel_server <- function(
 						element_type = row$element_type,
 						element_id = ns(row$element_id),
 						label = row$element,
-						o_objective_1 = input$o_objective_1,
 						suggestions = row$suggestions,
 						info_text = row$info_text,
-						ns = ns,
 						row = row
 					)
 				)

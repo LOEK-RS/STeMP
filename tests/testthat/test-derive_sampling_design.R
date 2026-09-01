@@ -8,13 +8,19 @@ test_that("Sampling design is correctly derived from geo_metadata (both objectiv
 	geo_metadata_training <- shiny::reactiveValues(
 		samples_sf = shiny::reactive(samples),
 		training_area_sf = shiny::reactive(training_area),
-		prediction_area_sf = shiny::reactive(training_area) # just placeholder
+		prediction_area_sf = shiny::reactive(training_area), # just placeholder
+		has_samples = shiny::reactive(TRUE),
+		has_training_area = shiny::reactive(TRUE),
+		has_prediction_area = shiny::reactive(TRUE)
 	)
 
 	geo_metadata_prediction <- shiny::reactiveValues(
 		samples_sf = shiny::reactive(samples),
 		training_area_sf = shiny::reactive(training_area), # just placeholder
-		prediction_area_sf = shiny::reactive(prediction_area)
+		prediction_area_sf = shiny::reactive(prediction_area),
+		has_samples = shiny::reactive(TRUE),
+		has_training_area = shiny::reactive(TRUE),
+		has_prediction_area = shiny::reactive(TRUE)
 	)
 
 	# ---- Model only ----
@@ -24,6 +30,7 @@ test_that("Sampling design is correctly derived from geo_metadata (both objectiv
 			id = "protocol",
 			protocol_data = shiny::reactive(protocol_df),
 			uploaded_csv = shiny::reactive(NULL),
+			uploaded_zip = shiny::reactive(NULL),
 			model_metadata = shiny::reactiveValues(),
 			geo_metadata = geo_metadata_training,
 			output_dir = tempdir(),
@@ -58,6 +65,7 @@ test_that("Sampling design is correctly derived from geo_metadata (both objectiv
 			id = "protocol",
 			protocol_data = shiny::reactive(protocol_df),
 			uploaded_csv = shiny::reactive(NULL),
+			uploaded_zip = shiny::reactive(NULL),
 			model_metadata = shiny::reactiveValues(),
 			geo_metadata = geo_metadata_prediction,
 			output_dir = tempdir(),

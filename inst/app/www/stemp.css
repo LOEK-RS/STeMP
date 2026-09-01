@@ -80,6 +80,11 @@ table.dataTable tbody td {
   display: none;
 }
 
+/* Hide plot fields dynamically */
+.hide_plot_field {
+  display: none;
+}
+
 /* Label required fields */
 .required {
 	color: #000;

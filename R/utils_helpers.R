@@ -42,7 +42,7 @@ normalize_id <- function(x) {
 #' @return The uploaded value, fallback function result, or NULL.
 #' @noRd
 get_value <- function(uploaded_value, fallback_fn) {
-	if (!is.null(uploaded_value)) {
+	if (!is.null(uploaded_value) && !is.na(uploaded_value[1])) {
 		return(uploaded_value)
 	} else if (!is.null(fallback_fn)) {
 		return(fallback_fn())
@@ -63,17 +63,7 @@ save_figure <- function(figure, element_id, temp_dir = NULL) {
 		dir.create(fig_dir, recursive = TRUE)
 	}
 
-	fig_name <- switch(
-		element_id,
-		"protocol-prediction-geodistance_plot_prediction_area" = "geodist_prediction_area",
-		"protocol-prediction-prediction_map" = "prediction_area",
-		"protocol-model-training_area_map" = "training_area",
-		"protocol-model-training_locations" = "training_locations",
-		"protocol-model-geodistance_plot_training_area" = "geodist_training_area",
-		element_id
-	)
-
-	plot_path <- file.path(fig_dir, paste0(fig_name, ".png"))
+	plot_path <- file.path(fig_dir, paste0(element_id, ".png"))
 
 	ggplot2::ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
 
@@ -166,4 +156,75 @@ apply_required <- function(input_tag, required) {
 	} else {
 		input_tag
 	}
+}
+
+#' Extract a single uploaded value for one element
+#'
+#' Returns NULL unless the uploaded data frame holds exactly one non-empty,
+#' non-NA value for `element_id`. NULL means "nothing uploaded", which lets
+#' get_value() fall back to the model / geo metadata.
+#'
+#' @param uploaded_df Data frame with element_id and value columns, or NULL
+#' @param element_id Character scalar identifying the protocol element
+#' @return A character scalar, or NULL
+#' @noRd
+get_uploaded_value <- function(uploaded_df, element_id) {
+	if (is.null(uploaded_df) || length(element_id) != 1 || is.na(element_id)) {
+		return(NULL)
+	}
+	if (!all(c("element_id", "value") %in% names(uploaded_df))) {
+		return(NULL)
+	}
+
+	value <- uploaded_df$value[uploaded_df$element_id == element_id]
+	value <- value[!is.na(value)]
+
+	if (length(value) != 1 || !nzchar(trimws(value))) {
+		return(NULL)
+	}
+
+	value
+}
+
+#' Check whether a value is usable as an input value
+#'
+#' Usable means: a single, non-NA, non-empty element.
+#' @noRd
+has_value <- function(x) {
+	!is.null(x) && length(x) == 1 && !is.na(x) && (!is.character(x) || nzchar(trimws(x)))
+}
+
+#' Get Value from Uploaded Input or Fallback
+#'
+#' @param uploaded_value Value from uploaded input.
+#' @param fallback_fn Function to call if uploaded_value is empty.
+#' @return The uploaded value, fallback function result, or NULL.
+#' @noRd
+get_value <- function(uploaded_value, fallback_fn) {
+	if (has_value(uploaded_value)) {
+		return(uploaded_value)
+	} else if (!is.null(fallback_fn)) {
+		return(fallback_fn())
+	} else {
+		return(NULL)
+	}
+}
+
+#' Resolve the sampling design value to apply to the select input
+#'
+#' Precedence: uploaded protocol value, then the automatically derived value.
+#' Returns NULL when neither is available, which refers to the current selection.
+#'
+#' @param uploaded_value Value from an uploaded protocol CSV, or NULL
+#' @param derived_value Value from calculate_geodist_classification(), or NULL
+#' @return A character scalar, or NULL
+#' @noRd
+resolve_design_value <- function(uploaded_value, derived_value) {
+	if (has_value(uploaded_value)) {
+		return(uploaded_value)
+	}
+	if (has_value(derived_value)) {
+		return(derived_value)
+	}
+	NULL
 }

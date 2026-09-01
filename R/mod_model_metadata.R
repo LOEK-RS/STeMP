@@ -34,7 +34,6 @@ mod_model_metadata_ui <- function(id) {
 mod_model_metadata_server <- function(id, input_model_object) {
 	shiny::moduleServer(id, function(input, output, session) {
 		# Initialize reactive values for metadata
-		model_object <- shiny::reactiveVal(NULL)
 		num_training_samples <- shiny::reactiveVal(NULL)
 		num_predictors <- shiny::reactiveVal(NULL)
 		names_predictors <- shiny::reactiveVal(NULL)
@@ -48,7 +47,7 @@ mod_model_metadata_server <- function(id, input_model_object) {
 
 		# Logical reactive indicating if model is present
 		has_model <- shiny::reactive({
-			!is.null(model_object())
+			!is.null(input_model_object())
 		})
 
 		shiny::observeEvent(input_model_object(), {
@@ -56,7 +55,6 @@ mod_model_metadata_server <- function(id, input_model_object) {
 			shiny::req(model)
 
 			# Reset all metadata fields before processing new model
-			model_object(NULL)
 			num_training_samples(NULL)
 			num_predictors(NULL)
 			names_predictors(NULL)
@@ -67,8 +65,6 @@ mod_model_metadata_server <- function(id, input_model_object) {
 			num_samples_per_class(NULL)
 			interpolation_range(NULL)
 			validation_results(NULL)
-
-			model_object(model)
 
 			# ----------- Caret Model -----------
 			if (inherits(model, "train")) {

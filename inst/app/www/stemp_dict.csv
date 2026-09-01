@@ -10,8 +10,8 @@
 9,Model,m,Learning method,m_algorithms,Algorithm,algorithm,Name of the applied algorithm,model_algorithm,,0,0,0
 10,Model,m,Learning method,m_algorithms,Architecture,architecture,"Outline the model's architecture (nodes, layers etc.)",text,,1,0,0
 4,Model,m,Response,m_response,Sampling locations,training_locations,Map of training locations,training_plot,,0,0,0
-5,Model,m,Response,m_response,Training area map,training_area_map,Map of training area,training_area_plot,,0,0,0
-6,Model,m,Response,m_response,Sampling pattern plot,geodistance_plot_training_area,Plot of nearest neighbour distances in geographic space (see <a href='https://hannameyer.github.io/CAST/reference/geodist.html' target='_blank'>documentation of the function</a> for more information),geodist_plot_training,,0,0,0
+5,Model,m,Response,m_response,Training area map,training_area,Map of training area,training_area_plot,,0,0,0
+6,Model,m,Response,m_response,Sampling pattern plot,geodist_training_area,Plot of nearest neighbour distances in geographic space (see <a href='https://hannameyer.github.io/CAST/reference/geodist.html' target='_blank'>documentation of the function</a> for more information),geodist_plot_training,,0,0,0
 6,Model,m,Response,m_response,Sampling extent,training_extent,The spatial/temporal extent at which the training points were collected,suggestion,"global, regional, landscape, local",0,0,0
 1,Model,m,Response,m_response,Sample acquisition,sample_acquisition,How were the training points collected?,suggestion,"In-Situ, Image interpretation, Simulation",0,0,0
 2,Model,m,Response,m_response,Sample geometry,sample_geometry,"The geometry type of the training points (e.g., Polygons of Land-Cover classes, Points of climate stations)",suggestion,"Point, Polygon, Raster, Image Tiles",1,0,0
@@ -42,8 +42,8 @@
 19,Model,m,Software,m_software,Software,software,Programming language and versioning of key software libraries,text,,0,0,0
 20,Model,m,Software,m_software,Code availability,code_availability,"Code availability (e.g., Link to Code Repository (such as GitHub))",text,,0,0,0
 21,Model,m,Software,m_software,Data availability,data_availability,"Data availability (e.g., Link to Data repository (such as Figshare))",text,,0,0,0
-1,Prediction,p,Prediction domain,p_pred,Prediction map,prediction_map,Map of prediction area,prediction_area_plot,,0,0,0
-1,Prediction,p,Prediction domain,p_pred,Sampling pattern plot,geodistance_plot_prediction_area,Plot of nearest neighbour distances in geographic space (see <a href='https://hannameyer.github.io/CAST/reference/geodist.html' target='_blank'>documentation of the function</a> for more information),geodist_plot_prediction,,0,0,0
+1,Prediction,p,Prediction domain,p_pred,Prediction map,prediction_area,Map of prediction area,prediction_area_plot,,0,0,0
+1,Prediction,p,Prediction domain,p_pred,Sampling pattern plot,geodist_prediction_area,Plot of nearest neighbour distances in geographic space (see <a href='https://hannameyer.github.io/CAST/reference/geodist.html' target='_blank'>documentation of the function</a> for more information),geodist_plot_prediction,,0,0,0
 1,Prediction,p,Prediction domain,p_pred,Prediction extent,prediction_extent,Spatial / Temporal extent of the prediction domain,suggestion,"global, regional, landscape, local",0,0,0
 1,Prediction,p,Prediction domain,p_pred,Prediction resolution,prediction_resolution,Spatial / Temporal resolution of the prediction domain,text,,0,0,0
 2,Prediction,p,Map evaluation and uncertainty assessment,p_uncertainty,Map evaluation strategy,evaluation_strategy,Details on the evaluation of the prediction,suggestion_single,"Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Prediction-domain adaptive Cross-Validation, Random Train/Test Split, Spatial Train/Test Split, Spatio-Temporal Train/Test Split, Prediction-domain adaptive Train/Test Split, None",0,0,0

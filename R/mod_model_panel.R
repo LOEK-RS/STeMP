@@ -41,8 +41,8 @@ mod_model_panel_ui <- function(id) {
 mod_model_panel_server <- function(
 	id,
 	protocol_data,
-	model_metadata = NULL,
-	geo_metadata = NULL,
+	model_metadata = reactiveVal(NULL),
+	geo_metadata = reactiveVal(NULL),
 	o_objective_1_val,
 	geodist_sel = shiny::reactive(NULL),
 	uploaded_values = shiny::reactive(NULL),
@@ -53,14 +53,6 @@ mod_model_panel_server <- function(
 ) {
 	shiny::moduleServer(id, function(input, output, session) {
 		ns <- session$ns
-
-		# Update sampling_design input when geodist_sel changes
-		shiny::observe({
-			selected_val <- geodist_sel()
-			if (!is.null(selected_val)) {
-				shiny::updateSelectInput(session, "sampling_design", selected = selected_val)
-			}
-		})
 
 		# Validate metadata subsets
 		valid_model_metadata <- validate_model_metadata(model_metadata, "has_model")
@@ -98,10 +90,6 @@ mod_model_panel_server <- function(
 				return(shiny::tags$p("No model data available"))
 			}
 
-			meta_model_list <- valid_model_metadata() %||% list()
-			meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
-			meta_geo_training_area_list <- valid_geo_training_area_metadata() %||% list()
-
 			uploaded_df <- uploaded_values()
 
 			panels <- lapply(subs, function(subsec) {
@@ -126,97 +114,10 @@ mod_model_panel_server <- function(
 					div_class_optional <- if (row$optional == 1) "optional_field" else NULL
 
 					# Render field
-					content <- if (row$element_type == "training_plot") {
-						file <- "training_locations.png"
-						if (
-							!is.null(uploaded_zip()) &&
-								file.exists(file.path(output_dir, file))
-						) {
-							render_plot_png(
-								element_id = ns(row$element_id),
-								element = row$element,
-								file = file,
-								info_text = row$info_text
-							)
-						} else if (!is.null(valid_geo_samples_metadata())) {
-							render_samples_plot(
-								element_id = ns(row$element_id),
-								element = row$element,
-								geo_metadata = meta_geo_samples_list,
-								ns = ns,
-								info_text = row$info_text
-							)
-						}
-					} else if (row$element_type == "training_area_plot") {
-						file <- "training_area.png"
-						if (
-							!is.null(uploaded_zip()) &&
-								file.exists(file.path(output_dir, file))
-						) {
-							render_plot_png(
-								element_id = ns(row$element_id),
-								element = row$element,
-								file = file,
-								info_text = row$info_text
-							)
-						} else if (!is.null(valid_geo_training_area_metadata())) {
-							render_training_area_plot(
-								element_id = ns(row$element_id),
-								element = row$element,
-								geo_metadata = meta_geo_training_area_list,
-								ns = ns,
-								info_text = row$info_text
-							)
-						}
-					} else if (row$element_type == "geodist_plot_training") {
-						file <- "geodist_training_area.png"
-						if (
-							o_objective_1_val() == "Model only" &&
-								!is.null(uploaded_zip()) &&
-								file.exists(file.path(output_dir, file))
-						) {
-							render_plot_png(
-								element_id = ns(row$element_id),
-								element = row$element,
-								file = file,
-								info_text = row$info_text
-							)
-						} else if (o_objective_1_val() == "Model only" && !is.null(valid_geo_all_metadata())) {
-							render_geodist_plot(
-								element_id = ns(row$element_id),
-								element = row$element,
-								ns = ns,
-								info_text = row$info_text
-							)
-						}
-					} else if (row$element_type == "sampling_design") {
-						# 1. Look for uploaded CSV value
-						uploaded_val <- NULL
-						if (!is.null(uploaded_df)) {
-							val <- uploaded_df$value[uploaded_df$element_id == row$element_id]
-							if (length(val) == 1 && nzchar(val)) {
-								uploaded_val <- val
-							}
-						}
-
-						# 2. Fallback to auto-derived value (geodist_sel)
-						auto_val <- NULL
-						try(
-							{
-								if (!is.null(geodist_sel())) {
-									auto_val <- geodist_sel()
-								}
-							},
-							silent = TRUE
-						)
-
-						# 3. Final selected value: uploaded CSV takes precedence
-						selected_val <- uploaded_val %||% auto_val
-
-						render_design(
+					content <- if (row$element_type %in% c("training_plot", "training_area_plot", "geodist_plot_training")) {
+						render_plot(
 							element_id = ns(row$element_id),
-							element = make_label(row$element, row$optional),
-							selected = selected_val,
+							label = row$element,
 							info_text = row$info_text
 						)
 					} else {
@@ -224,12 +125,8 @@ mod_model_panel_server <- function(
 							element_type = row$element_type,
 							element_id = ns(row$element_id),
 							label = row$element,
-							o_objective_1 = o_objective_1_val(),
 							suggestions = row$suggestions,
 							info_text = row$info_text,
-							model_metadata = meta_model_list,
-							geo_metadata = meta_geo_samples_list,
-							ns = ns,
 							row = row
 						)
 					}
@@ -241,69 +138,168 @@ mod_model_panel_server <- function(
 				shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
 			})
 
+			# Signal to trigger observers after dynamic UI render (timestamp ensures a change).
+			shinyjs::runjs(sprintf(
+				"Shiny.onInputChange('%s', new Date().getTime());",
+				ns("ui_rendered")
+			))
+
 			do.call(shinyBS::bsCollapse, panels)
 		})
 
 		# Observers for plots
 		shiny::observe({
-			df <- model_data()
-			meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
-			training_plot_ids <- df$element_id[df$element_type == "training_plot"]
-			render_samples_plot_server(
-				output,
-				ns(training_plot_ids),
-				meta_geo_samples_list,
-				what = "samples_sf",
-				output_dir = output_dir
-			)
-		})
-
-		shiny::observe({
-			df <- model_data()
-			meta_geo_training_area_list <- valid_geo_training_area_metadata() %||% list()
-			training_area_plot_ids <- df$element_id[df$element_type == "training_area_plot"]
-			render_training_area_plot_server(
-				output,
-				ns(training_area_plot_ids),
-				meta_geo_training_area_list,
-				what = "training_area_sf",
-				output_dir = output_dir
-			)
-		})
-
-		shiny::observe({
-			shiny::req(o_objective_1_val())
-			if (o_objective_1_val() == "Model only") {
-				df <- model_data()
-				meta_geo_all_list <- valid_geo_all_metadata() %||% list()
-				pid <- df$element_id[df$element_type == "geodist_plot_training"]
-				if (length(pid) == 1) {
-					render_geodist_plot_server(
+			input[["ui_rendered"]]
+			render_plot_server(
+				file = "training_locations.png",
+				valid_geo_metadata = valid_geo_samples_metadata(),
+				element_id = "training_locations",
+				objective = o_objective_1_val(),
+				uploaded_zip = uploaded_zip(),
+				output_dir = output_dir,
+				ns = ns,
+				output = output,
+				plot_fn = function() {
+					geo_map(
 						output = output,
-						element_id = ns(pid),
-						geo_metadata = meta_geo_all_list,
+						element_id = "training_locations",
+						geo_metadata = valid_geo_samples_metadata() %||% list(),
+						what = "samples_sf",
+						output_dir = output_dir
+					)
+				}
+			)
+		})
+
+		shiny::observe({
+			input[["ui_rendered"]]
+			render_plot_server(
+				file = "training_area.png",
+				valid_geo_metadata = valid_geo_training_area_metadata(),
+				element_id = "training_area",
+				objective = o_objective_1_val(),
+				uploaded_zip = uploaded_zip(),
+				output_dir = output_dir,
+				ns = ns,
+				output = output,
+				plot_fn = function() {
+					geo_map(
+						output = output,
+						element_id = "training_area",
+						geo_metadata = valid_geo_training_area_metadata() %||% list(),
+						what = "training_area_sf",
+						output_dir = output_dir
+					)
+				}
+			)
+		})
+
+		# Sampling design: single observer, driven by the reactives themselves.
+		# Creating it inside observe() would register a new observer on every
+		# re-render and each one would overwrite the user's choice on creation.
+		design_id <- shiny::reactive({
+			id <- model_data()$element_id[model_data()$element_type == "sampling_design"]
+			if (length(id) == 1) id else NULL
+		})
+
+		render_select_input_design_server(
+			input = input,
+			session = session,
+			element_id = design_id,
+			geodist_sel = geodist_sel,
+			uploaded_value = shiny::reactive(get_uploaded_value(uploaded_values(), design_id()))
+		)
+
+		shiny::observe({
+			input[["ui_rendered"]]
+			render_plot_server(
+				file = "geodist_training_area.png",
+				valid_geo_metadata = valid_geo_all_metadata(),
+				element_id = "geodist_training_area",
+				objective = o_objective_1_val(),
+				uploaded_zip = uploaded_zip(),
+				output_dir = output_dir,
+				ns = ns,
+				output = output,
+				plot_fn = function() {
+					geodist_plot(
+						output = output,
+						element_id = "geodist_training_area",
+						geo_metadata = valid_geo_all_metadata() %||% list(),
 						objective = "Model only",
 						output_dir = output_dir
 					)
 				}
-			}
+			)
 		})
 
-		# Sampling design server
+		# Update of inputs based on uploaded model metadata
 		shiny::observe({
+			input[["ui_rendered"]]
 			shiny::req(model_data())
 			df <- model_data()
-			design_id <- df$element_id[df$element_type == "sampling_design"]
+			meta_model_list <- valid_model_metadata() %||% list()
+			uploaded_df <- uploaded_values()
 
-			if (length(design_id) == 1) {
-				render_design_server(
+			element_types <- c(
+				"num_training_samples",
+				"num_predictors",
+				"num_classes",
+				"num_samples_per_class",
+				"interpolation_range",
+				"names_predictors",
+				"model_hyperparams",
+				"model_type",
+				"model_algorithm",
+				"validation_results"
+			)
+
+			lapply(element_types, function(element_type) {
+				element_id <- df$element_id[df$element_type == element_type]
+
+				# Override default value if uploaded
+				uploaded_val <- NULL
+				if (!is.null(uploaded_df)) {
+					uploaded_val <- uploaded_df$value[uploaded_df$element_id == element_id]
+				}
+
+				render_input_field_server(
 					input = input,
 					output = output,
 					session = session,
-					element_id = design_id,
-					geodist_sel = geodist_sel
+					element_type = element_type,
+					element_id = element_id,
+					model_metadata = meta_model_list,
+					uploaded_value = uploaded_val
 				)
+			})
+		})
+
+		# Update input for CRS based on geo metadata
+		shiny::observe({
+			input[["ui_rendered"]]
+			shiny::req(model_data())
+			df <- model_data()
+			meta_geo_samples_list <- valid_geo_samples_metadata() %||% list()
+			uploaded_df <- uploaded_values()
+			element_type <- "samples_crs"
+			element_id <- df$element_id[df$element_type == element_type]
+
+			# Override default value if uploaded
+			uploaded_val <- NULL
+			if (!is.null(uploaded_df)) {
+				uploaded_val <- uploaded_df$value[uploaded_df$element_id == element_id]
 			}
+
+			render_input_field_server(
+				input = input,
+				output = output,
+				session = session,
+				element_type = element_type,
+				element_id = element_id,
+				geo_metadata = meta_geo_samples_list,
+				uploaded_value = uploaded_val
+			)
 		})
 
 		# Collect input values
@@ -339,28 +335,6 @@ mod_model_panel_server <- function(
 		})
 		predictor_types <- shiny::reactive({
 			input[["predictor_types"]]
-		})
-
-		# Reset inputs when model is deleted
-		shiny::observeEvent(model_deleted(), {
-			if (model_deleted()) {
-				df <- model_data()
-				ids <- df$element_id
-				if (!is.null(ids) && length(ids) > 0) {
-					for (element_id in ids) {
-						if (grepl("num|classes", element_id)) {
-							shiny::updateNumericInput(session, element_id, value = NA)
-						} else if (
-							element_id %in%
-								c("model_type", "model_algorithm", "sampling_design", "validation_strategy", "predictor_types")
-						) {
-							shiny::updateSelectInput(session, element_id, selected = "")
-						} else {
-							shiny::updateTextInput(session, element_id, value = "")
-						}
-					}
-				}
-			}
 		})
 
 		# Hide range/classes fields dynamically in dependence of model type
