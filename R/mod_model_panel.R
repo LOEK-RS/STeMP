@@ -120,6 +120,12 @@ mod_model_panel_server <- function(
 							label = row$element,
 							info_text = row$info_text
 						)
+					} else if (row$element_type == "uploaded_figure") {
+						render_uploaded_figure(
+							element_id = ns(row$element_id),
+							label = row$element,
+							info_text = row$info_text
+						)
 					} else {
 						render_input_field(
 							element_type = row$element_type,
@@ -232,6 +238,27 @@ mod_model_panel_server <- function(
 				}
 			)
 		})
+
+		# Uploaded-figure slots. Created once: the dictionary is static per
+		# session, and creating these inside observe() would register duplicate
+		# upload handlers on every panel re-render.
+		shiny::observeEvent(
+			model_data(),
+			{
+				figure_ids <- model_data()$element_id[model_data()$element_type == "uploaded_figure"]
+
+				lapply(figure_ids, function(figure_id) {
+					uploaded_figure_server(
+						input = input,
+						output = output,
+						session = session,
+						element_id = figure_id,
+						output_dir = output_dir
+					)
+				})
+			},
+			once = TRUE
+		)
 
 		# Update of inputs based on uploaded model metadata
 		shiny::observe({

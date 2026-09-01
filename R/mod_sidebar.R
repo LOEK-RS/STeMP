@@ -64,6 +64,7 @@ mod_sidebar_ui <- function(id) {
 mod_sidebar_server <- function(
 	id,
 	protocol_data,
+	protocol_dict,
 	o_objective_1_val,
 	output_dir,
 	generate_html
@@ -235,7 +236,15 @@ mod_sidebar_server <- function(
 					)
 				} else if (input$document_format == "figures") {
 					subdir_zip <- "figures_for_zip"
-					allowed_ids <- get_allowed_element_ids(o_objective_1_val())
+					allowed_ids <- get_allowed_element_ids(
+						o_objective_1_val(),
+						uploaded_figure_ids = visible_uploaded_figure_ids(
+							protocol_dict = protocol_dict(),
+							output_dir = output_dir,
+							hide_optional = isTRUE(input$hide_optional)
+						)
+					)
+
 					figures_to_zip <- get_selected_plot_files(
 						output_dir,
 						allowed_ids,

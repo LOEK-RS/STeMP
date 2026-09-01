@@ -40,15 +40,18 @@ app_server <- function(input, output, session) {
 	# Render HTML used for downloading a PDF and for previewing the protocol
 	render_protocol_html <- make_protocol_html(
 		protocol_data = protocol$protocol_updated,
+		protocol_dict = protocol_data,
 		o_objective_1_val = protocol$o_objective_1,
 		output_dir = temp_dir,
-		session_token = session$token
+		session_token = session$token,
+		hide_optional = sidebar$hide_optional
 	)
 
 	# Initialize sidebar module with updated protocol data
 	sidebar <- mod_sidebar_server(
 		"sidebar",
 		protocol_data = protocol$protocol_updated,
+		protocol_dict = protocol_data,
 		o_objective_1_val = protocol$o_objective_1,
 		output_dir = temp_dir,
 		generate_html = render_protocol_html

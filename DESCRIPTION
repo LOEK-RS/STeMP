@@ -28,7 +28,9 @@ Imports:
     stats,
     utils,
     workflows,
-    pagedown
+    pagedown,
+    png,
+    jpeg
 Suggests: 
     knitr,
     pkgload,

@@ -8,6 +8,7 @@ format:
 params:
   data: null
   plot_files: null
+  plot_captions: null
 header-includes:
   - '<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>'
 ---
@@ -34,7 +35,6 @@ knitr::opts_chunk$set(echo = TRUE)
 # Table
 ```{r echo=FALSE, message=FALSE}
 df <- params$data
-message(df)
 
 # Force data.frame if Quarto reconstructed a list
 if (is.list(df) && !is.data.frame(df)) {
@@ -110,32 +110,27 @@ tbl
 
 # Figures
 ```{r echo=FALSE, message=FALSE, out.width="80%", fig.align='center'}
-if (!is.null(params$plot_files) && length(params$plot_files) > 0) {
-	caption_text <- function(file) {
-		if (grepl("training_locations", file)) {
-			"Map of training locations."
-		} else if (grepl("training_area", file)) {
-			"Map of training area."
-		} else if (grepl("geodist", file)) {
-			"Plot of nearest neighbour distances in geographic space."
-		} else if (grepl("prediction_area", file)) {
-			"Map of prediction area."
-		} else {
-			tools::file_path_sans_ext(basename(file))
-		}
+plot_files <- as.character(params$plot_files)
+
+if (length(plot_files) > 0) {
+	# Captions are built in R and passed in parallel to plot_files, so no
+	# filename matching is needed here.
+	plot_captions <- as.character(params$plot_captions)
+	if (length(plot_captions) != length(plot_files)) {
+		plot_captions <- tools::file_path_sans_ext(basename(plot_files))
 	}
 
 	out <- vapply(
-		as.character(params$plot_files),
-		function(file) {
-			img_file <- normalizePath(file, winslash = "/", mustWork = FALSE)
+		seq_along(plot_files),
+		function(i) {
+			img_file <- normalizePath(plot_files[i], winslash = "/", mustWork = FALSE)
 			paste0(
 				"<div style='margin-bottom: 3em; text-align: center;'>\n",
 				"  <img src='",
 				img_file,
 				"' style='width: 80%; display: block; margin: 0 auto;' />\n",
 				"  <p><em>",
-				caption_text(file),
+				plot_captions[i],
 				"</em></p>\n",
 				"</div>"
 			)

@@ -14,6 +14,12 @@ run_app <- function(
 	uiPattern = "/",
 	...
 ) {
+	# Upload limit for user-supplied figures; slightly above the per-file limit
+	# enforced in uploaded_figure_server(), so oversized files reach our handler
+	# and get a readable message instead of a Shiny error page.
+	old_max <- options(shiny.maxRequestSize = get_golem_config("max_upload_mb") * 1024^2)
+	on.exit(options(old_max), add = TRUE)
+
 	# Increase max upload size
 	#options(shiny.maxRequestSize = 30 * 1024^2)  # 30 MB
 
