@@ -287,37 +287,32 @@ render_select_input_model_server <- function(
 #' @param session Shiny session object
 #' @param element_id ID of the design select input to update
 #' @param geodist_sel Reactive providing selected design value
-#' @param uploaded_value Value from uploaded input
+#' @param uploaded_value Reactive providing the uploaded design value
 #' @noRd
 render_select_input_design_server <- function(
 	input,
-	output,
 	session,
 	element_id,
 	geodist_sel = shiny::reactive(NULL),
-	uploaded_value = NULL
+	uploaded_value = shiny::reactive(NULL)
 ) {
-	shiny::observeEvent(
-		geodist_sel(),
-		{
-			selected_val <- get_value(uploaded_value = uploaded_value, function() {
-				if (!is.null(geodist_sel())) {
-					geodist_sel()
-				} else {
-					""
-				}
-			})
-
-			shinyjs::delay(100, {
-				shiny::updateSelectInput(session, inputId = element_id, selected = selected_val)
-			})
-		},
-		ignoreInit = FALSE,
-		ignoreNULL = FALSE
-	)
-
 	shiny::observe({
-		val <- input[[element_id]]
+		# Re-apply after the collapse UI has been re-rendered
+		input[["ui_rendered"]]
+
+		id <- element_id()
+		if (is.null(id)) {
+			return(invisible(NULL))
+		}
+
+		selected_val <- resolve_design_value(uploaded_value(), geodist_sel())
+		if (is.null(selected_val)) {
+			return(invisible(NULL))
+		}
+
+		shinyjs::delay(100, {
+			shiny::updateSelectInput(session, inputId = id, selected = selected_val)
+		})
 	})
 }
 

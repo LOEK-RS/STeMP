@@ -157,3 +157,74 @@ apply_required <- function(input_tag, required) {
 		input_tag
 	}
 }
+
+#' Extract a single uploaded value for one element
+#'
+#' Returns NULL unless the uploaded data frame holds exactly one non-empty,
+#' non-NA value for `element_id`. NULL means "nothing uploaded", which lets
+#' get_value() fall back to the model / geo metadata.
+#'
+#' @param uploaded_df Data frame with element_id and value columns, or NULL
+#' @param element_id Character scalar identifying the protocol element
+#' @return A character scalar, or NULL
+#' @noRd
+get_uploaded_value <- function(uploaded_df, element_id) {
+	if (is.null(uploaded_df) || length(element_id) != 1 || is.na(element_id)) {
+		return(NULL)
+	}
+	if (!all(c("element_id", "value") %in% names(uploaded_df))) {
+		return(NULL)
+	}
+
+	value <- uploaded_df$value[uploaded_df$element_id == element_id]
+	value <- value[!is.na(value)]
+
+	if (length(value) != 1 || !nzchar(trimws(value))) {
+		return(NULL)
+	}
+
+	value
+}
+
+#' Check whether a value is usable as an input value
+#'
+#' Usable means: a single, non-NA, non-empty element.
+#' @noRd
+has_value <- function(x) {
+	!is.null(x) && length(x) == 1 && !is.na(x) && (!is.character(x) || nzchar(trimws(x)))
+}
+
+#' Get Value from Uploaded Input or Fallback
+#'
+#' @param uploaded_value Value from uploaded input.
+#' @param fallback_fn Function to call if uploaded_value is empty.
+#' @return The uploaded value, fallback function result, or NULL.
+#' @noRd
+get_value <- function(uploaded_value, fallback_fn) {
+	if (has_value(uploaded_value)) {
+		return(uploaded_value)
+	} else if (!is.null(fallback_fn)) {
+		return(fallback_fn())
+	} else {
+		return(NULL)
+	}
+}
+
+#' Resolve the sampling design value to apply to the select input
+#'
+#' Precedence: uploaded protocol value, then the automatically derived value.
+#' Returns NULL when neither is available, which refers to the current selection.
+#'
+#' @param uploaded_value Value from an uploaded protocol CSV, or NULL
+#' @param derived_value Value from calculate_geodist_classification(), or NULL
+#' @return A character scalar, or NULL
+#' @noRd
+resolve_design_value <- function(uploaded_value, derived_value) {
+	if (has_value(uploaded_value)) {
+		return(uploaded_value)
+	}
+	if (has_value(derived_value)) {
+		return(derived_value)
+	}
+	NULL
+}

@@ -194,6 +194,22 @@ mod_model_panel_server <- function(
 			)
 		})
 
+		# Sampling design: single observer, driven by the reactives themselves.
+		# Creating it inside observe() would register a new observer on every
+		# re-render and each one would overwrite the user's choice on creation.
+		design_id <- shiny::reactive({
+			id <- model_data()$element_id[model_data()$element_type == "sampling_design"]
+			if (length(id) == 1) id else NULL
+		})
+
+		render_select_input_design_server(
+			input = input,
+			session = session,
+			element_id = design_id,
+			geodist_sel = geodist_sel,
+			uploaded_value = shiny::reactive(get_uploaded_value(uploaded_values(), design_id()))
+		)
+
 		shiny::observe({
 			input[["ui_rendered"]]
 			render_plot_server(
@@ -215,33 +231,6 @@ mod_model_panel_server <- function(
 					)
 				}
 			)
-		})
-
-		# Sampling design server
-		shiny::observe({
-			input[["ui_rendered"]]
-			geodist_sel()
-			shiny::req(model_data())
-			df <- model_data()
-			design_id <- df$element_id[df$element_type == "sampling_design"]
-			uploaded_df <- uploaded_values()
-
-			# Override default value if uploaded
-			uploaded_val <- NULL
-			if (!is.null(uploaded_df)) {
-				uploaded_val <- uploaded_df$value[uploaded_df$element_id == design_id]
-			}
-
-			if (length(design_id) == 1) {
-				render_select_input_design_server(
-					input = input,
-					output = output,
-					session = session,
-					element_id = design_id,
-					geodist_sel = geodist_sel,
-					uploaded_value = uploaded_val
-				)
-			}
 		})
 
 		# Update of inputs based on uploaded model metadata

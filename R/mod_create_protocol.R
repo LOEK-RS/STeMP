@@ -180,9 +180,15 @@ mod_create_protocol_server <- function(
 			}
 
 			# Remove plot elements from combined protocol data
-			exclude_elements <- c("Training locations", "Training area map", "Geodistance plot", "Prediction map")
-			pattern <- paste0("\\b(", paste(exclude_elements, collapse = "|"), ")\\b")
-			df <- df[!grepl(pattern, df$element, fixed = FALSE), ]
+			plot_types <- c(
+				"training_plot",
+				"training_area_plot",
+				"geodist_plot_training",
+				"prediction_area_plot",
+				"geodist_plot_prediction"
+			)
+			plot_ids <- protocol_data()$element_id[protocol_data()$element_type %in% plot_types]
+			df <- df[!df$element_id %in% plot_ids, ]
 			df
 		})
 
