@@ -145,11 +145,17 @@ mod_sidebar_server <- function(
 			"protocol_csv",
 			filetype = "csv",
 			read_fn = function(path, ...) {
-				df <- utils::read.csv(path)
-				df$element_id <- normalize_id(df$element)
+				df <- utils::read.csv(path, stringsAsFactors = FALSE)
+				if (!"element_id" %in% names(df) || all(!nzchar(trimws(df$element_id)))) {
+					df$element_id <- normalize_id(df$element)
+				}
+
+				df$element_id <- trimws(df$element_id)
+				df$value <- as.character(df$value)
+				df$value[is.na(df$value)] <- ""
 				df
 			},
-			delete_fn = function(...) {} # no extra CSV cleanup
+			delete_fn = function(...) {}
 		)
 
 		## ZIP (figures) upload via nested module
