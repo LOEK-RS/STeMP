@@ -185,7 +185,8 @@ mod_create_protocol_server <- function(
 				"training_area_plot",
 				"geodist_plot_training",
 				"prediction_area_plot",
-				"geodist_plot_prediction"
+				"geodist_plot_prediction",
+				"uploaded_figure"
 			)
 			plot_ids <- protocol_data()$element_id[protocol_data()$element_type %in% plot_types]
 			df <- df[!df$element_id %in% plot_ids, ]

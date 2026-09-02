@@ -444,6 +444,7 @@ render_input_field <- function(
 		"text" = render_text_input(element_id, label_ui, info_text, value = uploaded_value, required = required),
 		"author" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
 		"hyperparams" = render_text_area(element_id, label_ui, info_text, value = uploaded_value),
+		"figure_caption" = render_text_area(element_id, label_ui, info_text, value = uploaded_value),
 		"suggestion" = render_suggestion(element_id, label_ui, suggestions, info_text, selected = uploaded_value),
 		"suggestion_single" = render_suggestion_single(
 			element_id,

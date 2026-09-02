@@ -3,12 +3,15 @@
 test_that("Progress bar percentages are correctly calculated", {
 	csv_path_fixture <- test_path("fixtures", "protocol_example.csv")
 	protocol_df <- utils::read.csv(csv_path_fixture, stringsAsFactors = FALSE)
+	# The dictionary supplies element_type, which the sidebar needs to exclude
+	protocol_dict_df <- utils::read.csv(app_sys("app/www/stemp_dict.csv"), stringsAsFactors = FALSE)
 
 	shiny::testServer(
 		mod_sidebar_server,
 		args = list(
 			id = "sidebar",
 			protocol_data = reactive(protocol_df),
+			protocol_dict = reactive(protocol_dict_df),
 			o_objective_1_val = reactive("Model and prediction"),
 			output_dir = tempdir()
 		),

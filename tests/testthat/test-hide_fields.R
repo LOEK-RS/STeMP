@@ -15,30 +15,35 @@ test_that("Hide optional fields toggle filters out optional rows", {
 		args = list(
 			id = "sidebar",
 			protocol_data = reactive(protocol_df),
+			protocol_dict = reactive(protocol_df),
 			o_objective_1_val = reactive("dummy"),
 			output_dir = tempdir()
 		),
 		{
-			# Default: hide_optional is FALSE → all rows visible
+			caption_ids <- protocol_df$element_id[protocol_df$element_type == "figure_caption"]
+
+			# Default: hide_optional is FALSE -> everything except figure captions
 			session$flushReact()
 			df_default <- isolate(filtered_protocol_data())
-			expect_true(all(df_default$visible))
+			expect_true(all(df_default$visible[!df_default$element_id %in% caption_ids]))
+			expect_true(all(!df_default$visible[df_default$element_id %in% caption_ids]))
 
 			# Toggle ON: hide optional fields
 			session$setInputs(hide_optional = TRUE)
 			session$flushReact()
 			df_hidden <- isolate(filtered_protocol_data())
 
-			# Rows with optional == 1 must have visible == FALSE
 			expect_true(all(!df_hidden$visible[df_hidden$optional == 1]))
-			# Rows with optional == 0 must remain visible
-			expect_true(all(df_hidden$visible[df_hidden$optional == 0]))
+			expect_true(all(df_hidden$visible[
+				df_hidden$optional == 0 &
+					!df_hidden$element_id %in% caption_ids
+			]))
 
-			# Toggle OFF again: optional fields come back
+			# Toggle OFF again
 			session$setInputs(hide_optional = FALSE)
 			session$flushReact()
 			df_restored <- isolate(filtered_protocol_data())
-			expect_true(all(df_restored$visible))
+			expect_true(all(df_restored$visible[!df_restored$element_id %in% caption_ids]))
 		}
 	)
 })

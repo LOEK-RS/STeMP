@@ -1,19 +1,8 @@
-#' Get Allowed Plot Element IDs Based on Objective
-#'
-#' Returns a character vector of allowed plot element IDs depending on the selected objective.
-#' Used to determine which plots are relevant for rendering or deletion in the app.
-#'
-#' @param objective A character string, either `"Model and prediction"` or `"Model only"`.
-#'
-#' @return A character vector of element IDs relevant to the specified objective.
-#' If the objective does not match a known case, an empty character vector is returned.
-#'
-#' @examples
-#' get_allowed_element_ids("Model only")
-#'
+#' @param uploaded_figure_ids Character vector of user-uploaded figure IDs that
+#'   are currently visible in the protocol
 #' @noRd
-get_allowed_element_ids <- function(objective) {
-	switch(
+get_allowed_element_ids <- function(objective, uploaded_figure_ids = character(0)) {
+	derived <- switch(
 		objective,
 		"Model and prediction" = c(
 			"training_locations",
@@ -28,6 +17,8 @@ get_allowed_element_ids <- function(objective) {
 		),
 		character(0)
 	)
+
+	c(derived, uploaded_figure_ids)
 }
 
 
@@ -65,4 +56,26 @@ get_selected_plot_files <- function(output_dir, allowed_ids, copy_subdir = "figu
 	} else {
 		file.path(target_dir, basename(selected_files))
 	}
+}
+
+
+#' IDs of uploaded figures that exist on disk and are currently visible
+#'
+#' Visibility cannot be read from the filtered protocol, because figure rows are
+#' deliberately removed from it before rendering. It is therefore derived from
+#' the dictionary's `optional` flag and the "hide optional fields" toggle.
+#'
+#' @param protocol_dict The dictionary data frame
+#' @param output_dir Directory holding the figure PNGs
+#' @param hide_optional Logical; TRUE when optional fields are hidden
+#' @noRd
+visible_uploaded_figure_ids <- function(protocol_dict, output_dir, hide_optional = FALSE) {
+	rows <- protocol_dict[protocol_dict$element_type == "uploaded_figure", , drop = FALSE]
+
+	if (isTRUE(hide_optional)) {
+		rows <- rows[rows$optional == 0, , drop = FALSE]
+	}
+
+	figure_ids <- rows$element_id
+	figure_ids[file.exists(file.path(output_dir, paste0(figure_ids, ".png")))]
 }

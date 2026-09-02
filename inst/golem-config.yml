@@ -2,6 +2,7 @@ default:
   golem_name: STeMP
   golem_version: '0.9'
   app_prod: no
+  max_upload_mb: 12
 production:
   app_prod: yes
 dev:
