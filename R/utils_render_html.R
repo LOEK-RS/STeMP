@@ -57,13 +57,19 @@ make_protocol_html <- function(
 			".html"
 		)
 
+		# Figure captions are rendered under their figure, not as protocol rows
 		plot_captions <- build_figure_captions(
 			plot_files = plot_files_abs,
 			protocol_dict = protocol_dict(),
 			protocol_values = protocol_data()
 		)
 
-		df_sanitized <- protocol_data() |>
+		caption_ids <- protocol_dict()$element_id[protocol_dict()$element_type == "figure_caption"]
+
+		table_df <- protocol_data()
+		table_df <- table_df[!table_df$element_id %in% caption_ids, , drop = FALSE]
+
+		df_sanitized <- table_df |>
 			dplyr::mutate(dplyr::across(dplyr::everything(), ~ ifelse(is.na(.x), "", .x))) |>
 			dplyr::mutate(dplyr::across(dplyr::everything(), sanitize_text)) |>
 			dplyr::select(-dplyr::all_of(c("subsection", "element_id")))

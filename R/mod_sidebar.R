@@ -79,6 +79,8 @@ mod_sidebar_server <- function(
 			if (isTRUE(input$hide_optional)) {
 				df$visible[df$optional == 1] <- FALSE
 			}
+			caption_ids <- protocol_dict()$element_id[protocol_dict()$element_type == "figure_caption"]
+			df$visible[df$element_id %in% caption_ids] <- FALSE
 			df
 		})
 
