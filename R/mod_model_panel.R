@@ -253,7 +253,8 @@ mod_model_panel_server <- function(
 						output = output,
 						session = session,
 						element_id = figure_id,
-						output_dir = output_dir
+						output_dir = output_dir,
+						uploaded_zip = uploaded_zip
 					)
 				})
 			},

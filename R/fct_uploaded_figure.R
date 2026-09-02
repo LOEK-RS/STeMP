@@ -89,7 +89,15 @@ render_uploaded_figure <- function(element_id, label, info_text = NULL) {
 #' @param output_dir Directory holding the protocol figures
 #' @param max_bytes Maximum accepted upload size
 #' @noRd
-uploaded_figure_server <- function(input, output, session, element_id, output_dir, max_bytes = 10 * 1024^2) {
+uploaded_figure_server <- function(
+	input,
+	output,
+	session,
+	element_id,
+	output_dir,
+	uploaded_zip = shiny::reactive(NULL),
+	max_bytes = 10 * 1024^2
+) {
 	target_path <- file.path(output_dir, paste0(element_id, ".png"))
 	upload_id <- paste0(element_id, "_upload")
 	remove_id <- paste0(element_id, "_remove")
@@ -136,6 +144,7 @@ uploaded_figure_server <- function(input, output, session, element_id, output_di
 
 	output[[paste0(element_id, "_img")]] <- shiny::renderUI({
 		figure_version()
+		uploaded_zip()
 		if (!file.exists(target_path)) {
 			return(NULL)
 		}
