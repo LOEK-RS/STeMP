@@ -39,7 +39,7 @@ mod_sidebar_ui <- function(id) {
 		shiny::radioButtons(
 			ns("document_format"),
 			label = NULL,
-			choices = c("csv", "pdf", "figures")
+			choices = c("csv", "html", "pdf", "figures")
 		),
 		shiny::downloadButton(ns("protocol_download"))
 	)
@@ -215,6 +215,7 @@ mod_sidebar_server <- function(
 				ext <- switch(
 					input$document_format,
 					"csv" = "csv",
+					"html" = "html",
 					"pdf" = "pdf",
 					"figures" = "zip"
 				)
@@ -227,6 +228,8 @@ mod_sidebar_server <- function(
 						df <- df[, setdiff(names(df), "visible"), drop = FALSE]
 					}
 					utils::write.csv(df, file, row.names = FALSE)
+				} else if (input$document_format == "html") {
+					file.copy(generate_html("sections"), file, overwrite = TRUE)
 				} else if (input$document_format == "pdf") {
 					# Always generate fresh HTML, independent of viewer
 					html_file <- generate_html()
