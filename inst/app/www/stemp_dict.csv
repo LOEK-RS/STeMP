@@ -36,10 +36,11 @@
 12,Model,m,Model evaluation and selection,m_validation,Model evaluation results,validation_results,Results of the model evaluation,validation_results,,0,0,0
 13,Model,m,Model evaluation and selection,m_validation,Hyperparameter tuning,hyperparameter_tuning,Methods for hyperparameter tuning (List tuning range and final value),model_hyperparams,,0,0,0
 14,Model,m,Model evaluation and selection,m_validation,Predictor selection,predictor_selection,Methods for selection of predictors,suggestion,"FFS, RFE, LASSO, Ridge, None",0,0,0
-17,Model,m,Model interpretation,m_interpretation,Explainability,explainability,Methods of explainable AI used to gain insights into the models behaviour,suggestion,"SHAP, Permutation Importance, ALE, ICE, PDP, H-statistic, Grad-CAM, Saliency map",1,0,0
-18,Model,m,Model interpretation,m_interpretation,Scientific interpretation,scientific_interpretation,Discuss the implications of the model in the context of ecological theory / processes / management decisions,text,,1,0,0
-19,Model,m,Model interpretation,m_interpretation,Explainability figure,xai_figure,"Upload a figure produced by an explainability method. PNG or JPEG.",uploaded_figure,,1,0,0
-20,Model,m,Model interpretation,m_interpretation,Caption explainability figure,xai_figure_caption,Describe what the figure shows and which method produced it,figure_caption,,1,0,0
+17,Model,m,Model interpretation,m_interpretation,Methods of explainable AI (xAI),explainability,Methods used to gain insights into the model behaviour,suggestion,"SHAP, Permutation importance, Impurity-based importance, PDP, ICE, ALE, H-statistic, Grad-CAM, Saliency map, Integrated Gradients, Occlusion sensitivity, Attention rollout",0,0,0
+18,Model,m,Model interpretation,m_interpretation,Data used for xAI,explainability_data,"Which data were used to compute the xAI results? Match to the xAI method (e.g., Training data (SHAP), Validation data (Permutation importance))",hyperparams,,1,0,0
+19,Model,m,Model interpretation,m_interpretation,Scientific interpretation,scientific_interpretation,Discuss the implications of the model in the context of ecological theory / processes / management decisions,hyperparams,,1,0,0
+20,Model,m,Model interpretation,m_interpretation,Explainability figure,xai_figure,"Upload a figure produced by an explainability method. PNG or JPEG.",uploaded_figure,,1,0,0
+21,Model,m,Model interpretation,m_interpretation,Caption explainability figure,xai_figure_caption,Describe what the figure shows and which method produced it,figure_caption,,1,0,0
 8,Model,m,Model uncertainty and biases,m_bias,Potential biases,potential_biases,Specify potential biases in the data or algorithmic decision-making,text,,0,0,0
 5,Model,m,Model uncertainty and biases,m_bias,Sensitivity assessment,sensitivity_assessment,Assessment of the impact of varying input parameters or assumptions on the prediction,text,,1,0,0
 9,Model,m,Model uncertainty and biases,m_bias,Limitations,limitations,Describe limitations in the use of the model,text,,0,0,0
