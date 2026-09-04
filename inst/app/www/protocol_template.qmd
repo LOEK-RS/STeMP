@@ -83,6 +83,9 @@ if (is.data.frame(items) && nrow(items) > 0) {
 ```{r table-layout, output='asis'}
 #| eval: !expr identical(params$layout, "table")
 
+# Currently not used, but kept for possible roll-backs
+# The tabular layout previously used in HTML preview and PDF download
+
 df <- params$data
 if (is.list(df) && !is.data.frame(df)) {
 	df <- as.data.frame(df, stringsAsFactors = FALSE)
