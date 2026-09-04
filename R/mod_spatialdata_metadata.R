@@ -82,6 +82,50 @@ mod_spatialdata_metadata_server <- function(id, samples, training_area, predicti
 			prediction_area$data()
 		})
 
+		# --- Temporal metadata -------------------------------------------------
+		samples_time <- shiny::reactive({
+			shiny::req(has_samples())
+			parse_time_column(samples$data())
+		})
+
+		prediction_time <- shiny::reactive({
+			shiny::req(has_prediction_area())
+			parse_time_column(prediction_area$data())
+		})
+
+		has_samples_time <- shiny::reactive({
+			isTRUE(has_samples()) && !is.null(tryCatch(samples_time(), error = function(e) NULL))
+		})
+
+		has_prediction_time <- shiny::reactive({
+			isTRUE(has_prediction_area()) && !is.null(tryCatch(prediction_time(), error = function(e) NULL))
+		})
+
+		temporal_extent <- shiny::reactive({
+			shiny::req(has_samples_time())
+			format_time_extent(samples_time())
+		})
+
+		temporal_resolution <- shiny::reactive({
+			shiny::req(has_samples_time())
+			format_time_resolution(samples_time())
+		})
+
+		n_timesteps <- shiny::reactive({
+			shiny::req(has_samples_time())
+			count_timesteps(samples_time())
+		})
+
+		prediction_temporal_extent <- shiny::reactive({
+			shiny::req(has_prediction_time())
+			format_time_extent(prediction_time())
+		})
+
+		prediction_temporal_resolution <- shiny::reactive({
+			shiny::req(has_prediction_time())
+			format_time_resolution(prediction_time())
+		})
+
 		# Return a list of reactives for use elsewhere in app
 		return(list(
 			has_samples = has_samples,
@@ -90,7 +134,16 @@ mod_spatialdata_metadata_server <- function(id, samples, training_area, predicti
 			samples_crs = samples_crs,
 			samples_sf = samples_sf,
 			training_area_sf = training_area_sf,
-			prediction_area_sf = prediction_area_sf
+			prediction_area_sf = prediction_area_sf,
+			samples_time = samples_time,
+			prediction_time = prediction_time,
+			has_samples_time = has_samples_time,
+			has_prediction_time = has_prediction_time,
+			temporal_extent = temporal_extent,
+			temporal_resolution = temporal_resolution,
+			n_timesteps = n_timesteps,
+			prediction_temporal_extent = prediction_temporal_extent,
+			prediction_temporal_resolution = prediction_temporal_resolution
 		))
 	})
 }

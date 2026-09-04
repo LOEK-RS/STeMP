@@ -82,6 +82,58 @@ mod_create_protocol_server <- function(
 			hide_optional = hide_optional
 		)
 
+		shiny::observe({
+			if (isTRUE(overview$is_temporal())) {
+				shinyjs::removeClass(selector = "body", class = "hide_temporal")
+			} else {
+				shinyjs::addClass(selector = "body", class = "hide_temporal")
+			}
+		})
+
+		shiny::observe({
+			if (isTRUE(overview$is_temporal())) {
+				shinyjs::removeClass(selector = "body", class = "hide_temporal")
+			} else {
+				shinyjs::addClass(selector = "body", class = "hide_temporal")
+			}
+		})
+
+		# Spatio-Temporal requested but the uploaded data carries no parseable 'time' column
+		shiny::observe({
+			if (!isTRUE(overview$is_temporal())) {
+				return(NULL)
+			}
+			shiny::req(overview$o_objective_1())
+
+			if (!isTRUE(geo_metadata$has_samples())) {
+				return(NULL) # nothing uploaded yet
+			}
+
+			area_sf <- if (overview$o_objective_1() == "Model only") {
+				if (isTRUE(geo_metadata$has_training_area())) geo_metadata$training_area_sf() else NULL
+			} else {
+				if (isTRUE(geo_metadata$has_prediction_area())) geo_metadata$prediction_area_sf() else NULL
+			}
+
+			has_time <- has_usable_time(geo_metadata$samples_sf()) ||
+				(!is.null(area_sf) && has_usable_time(area_sf))
+
+			if (has_time) {
+				return(NULL)
+			}
+
+			shiny::showNotification(
+				ui = shiny::HTML(
+					"Spatio-Temporal mode is active, but the uploaded data has no usable
+					<b>time</b> column. Temporal fields and plots stay empty. Add a
+					<b>time</b> column with ISO dates (YYYY-MM-DD) or a DATE/DATETIME field."
+				),
+				type = "warning",
+				duration = 12,
+				id = "no_time_warning"
+			)
+		})
+
 		# 3) Reactive selection classification based on geographic metadata and modeling objective
 		geodist_sel <- shiny::reactive({
 			shiny::req(overview$o_objective_1())
@@ -112,6 +164,27 @@ mod_create_protocol_server <- function(
 			calculate_geodist_classification(samples_sf, area_sf)
 		})
 
+		temporal_geodist_sel <- shiny::reactive({
+			shiny::req(overview$o_objective_1())
+			if (!isTRUE(overview$is_temporal()) || !geo_metadata$has_samples()) {
+				return(NULL)
+			}
+
+			area_sf <- if (overview$o_objective_1() == "Model only") {
+				if (!geo_metadata$has_training_area()) {
+					return(NULL)
+				}
+				geo_metadata$training_area_sf()
+			} else {
+				if (!geo_metadata$has_prediction_area()) {
+					return(NULL)
+				}
+				geo_metadata$prediction_area_sf()
+			}
+
+			calculate_temporal_geodist_classification(geo_metadata$samples_sf(), area_sf)
+		})
+
 		# 4) Initialize Prediction panel submodule
 		prediction_results <- mod_prediction_panel_server(
 			"prediction",
@@ -123,7 +196,8 @@ mod_create_protocol_server <- function(
 			}),
 			output_dir = output_dir,
 			hide_optional = hide_optional,
-			uploaded_zip = uploaded_zip
+			uploaded_zip = uploaded_zip,
+			is_temporal = overview$is_temporal
 		)
 
 		# 5) Initialize Model panel submodule, pass protocol_data, metadata, reactive selections and uploaded Model values
@@ -140,7 +214,9 @@ mod_create_protocol_server <- function(
 			output_dir = output_dir,
 			model_deleted = model_deleted,
 			hide_optional = hide_optional,
-			uploaded_zip = uploaded_zip
+			uploaded_zip = uploaded_zip,
+			is_temporal = overview$is_temporal,
+			temporal_geodist_sel = temporal_geodist_sel
 		)
 
 		# 6) Combine data frames from Overview, Model, and (conditionally) Prediction panels into updated protocol
@@ -160,6 +236,13 @@ mod_create_protocol_server <- function(
 				optional_ids <- optional_elements$element_id
 				# Filter out optional rows
 				df <- df[!df$element_id %in% lapply(optional_ids, function(id) id), ]
+			}
+
+			# Don't show temporal fields if not toggled
+			if (!isTRUE(overview$is_temporal())) {
+				dict <- protocol_data()
+				temporal_ids <- dict$element_id[as.integer(dict$temporal_only %||% 0) == 1]
+				df <- df[!df$element_id %in% temporal_ids, , drop = FALSE]
 			}
 
 			model_type <- model_df[model_df$element_id == "model_type", "value"]
@@ -217,6 +300,8 @@ mod_create_protocol_server <- function(
 		mod_warnings_server(
 			id = "warnings",
 			sampling_design = model_results$sampling_design,
+			temporal_sampling_design = model_results$temporal_sampling_design,
+			is_temporal = overview$is_temporal,
 			validation_method = model_results$validation_method,
 			evaluation_method = prediction_results$evaluation_method,
 			uncertainty_quantification = prediction_results$uncertainty_quantification,

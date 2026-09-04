@@ -45,7 +45,8 @@ mod_prediction_panel_server <- function(
 	uploaded_values = shiny::reactive(NULL),
 	output_dir = NULL,
 	hide_optional = shiny::reactive(FALSE),
-	uploaded_zip = NULL
+	uploaded_zip = NULL,
+	is_temporal = shiny::reactive(FALSE)
 ) {
 	shiny::moduleServer(id, function(input, output, session) {
 		ns <- session$ns
@@ -97,6 +98,9 @@ mod_prediction_panel_server <- function(
 					# Wrap optional fields
 					div_class <- if (!is.null(row$optional) && as.integer(row$optional) == 1) "optional_field" else NULL
 
+					# Wrap temporal fields
+					div_class_temporal <- if (isTRUE(as.integer(row$temporal_only %||% 0) == 1)) "temporal_field" else NULL
+
 					# Render specific plots or inputs
 					content <- if (row$element_type %in% c("prediction_area_plot", "geodist_plot_prediction")) {
 						render_plot(
@@ -115,7 +119,7 @@ mod_prediction_panel_server <- function(
 						)
 					}
 
-					shiny::tags$div(class = div_class, content)
+					shiny::tags$div(class = c(div_class, div_class_temporal), content)
 				})
 
 				shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
@@ -143,6 +147,9 @@ mod_prediction_panel_server <- function(
 		shiny::observe({
 			input[["ui_rendered"]]
 			shiny::req(o_objective_1_val() == "Model and prediction")
+			meta <- valid_geo_prediction_area_metadata() %||% list()
+			temporal <- isTRUE(is_temporal()) && has_usable_time(geo_sf(meta, "prediction_area_sf"))
+
 			render_plot_server(
 				file = "prediction_area.png",
 				valid_geo_metadata = valid_geo_prediction_area_metadata(),
@@ -153,13 +160,22 @@ mod_prediction_panel_server <- function(
 				ns = ns,
 				output = output,
 				plot_fn = function() {
-					geo_map(
-						output = output,
-						element_id = "prediction_area",
-						geo_metadata = valid_geo_prediction_area_metadata() %||% list(),
-						what = "prediction_area_sf",
-						output_dir = output_dir
-					)
+					if (temporal) {
+						geo_map_timesteps(
+							output = output,
+							element_id = "prediction_area",
+							geo_metadata = meta,
+							output_dir = output_dir
+						)
+					} else {
+						geo_map(
+							output = output,
+							element_id = "prediction_area",
+							geo_metadata = meta,
+							what = "prediction_area_sf",
+							output_dir = output_dir
+						)
+					}
 				}
 			)
 		})
@@ -167,6 +183,8 @@ mod_prediction_panel_server <- function(
 		shiny::observe({
 			input[["ui_rendered"]]
 			shiny::req(o_objective_1_val() == "Model and prediction")
+			temporal <- isTRUE(is_temporal())
+
 			render_plot_server(
 				file = "geodist_prediction_area.png",
 				valid_geo_metadata = valid_geo_all_metadata(),
@@ -182,7 +200,8 @@ mod_prediction_panel_server <- function(
 						element_id = "geodist_prediction_area",
 						geo_metadata = valid_geo_all_metadata() %||% list(),
 						objective = "Model and prediction",
-						output_dir = output_dir
+						output_dir = output_dir,
+						temporal = temporal
 					)
 				}
 			)
@@ -220,10 +239,20 @@ mod_prediction_panel_server <- function(
 			input[["evaluation_strategy"]]
 		})
 
+		prediction_temporal_extent <- shiny::reactive({
+			input[["prediction_temporal_extent"]]
+		})
+
+		prediction_temporal_resolution <- shiny::reactive({
+			input[["prediction_temporal_resolution"]]
+		})
+
 		return(list(
 			"prediction_inputs" = shiny::reactive(inputs_reactive()),
 			"uncertainty_quantification" = uncertainty_quantification,
-			"evaluation_method" = evaluation_method
+			"evaluation_method" = evaluation_method,
+			"prediction_temporal_extent" = prediction_temporal_extent,
+			"prediction_temporal_resolution" = prediction_temporal_resolution
 		))
 	})
 }

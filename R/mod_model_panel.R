@@ -49,7 +49,9 @@ mod_model_panel_server <- function(
 	output_dir = NULL,
 	model_deleted = shiny::reactive(FALSE),
 	hide_optional = shiny::reactive(FALSE),
-	uploaded_zip = NULL
+	uploaded_zip = NULL,
+	is_temporal = shiny::reactive(FALSE),
+	temporal_geodist_sel = shiny::reactive(NULL)
 ) {
 	shiny::moduleServer(id, function(input, output, session) {
 		ns <- session$ns
@@ -113,6 +115,9 @@ mod_model_panel_server <- function(
 					# Decide if this row is optional
 					div_class_optional <- if (row$optional == 1) "optional_field" else NULL
 
+					# Decide if this row is temporal only
+					div_class_temporal <- if (isTRUE(as.integer(row$temporal_only %||% 0) == 1)) "temporal_field" else NULL
+
 					# Render field
 					content <- if (row$element_type %in% c("training_plot", "training_area_plot", "geodist_plot_training")) {
 						render_plot(
@@ -138,7 +143,10 @@ mod_model_panel_server <- function(
 					}
 
 					# Wrap with optional/classification/regression class if flagged
-					shiny::tags$div(class = c(div_class_optional, div_class_classification, div_class_regression), content)
+					shiny::tags$div(
+						class = c(div_class_optional, div_class_classification, div_class_regression, div_class_temporal),
+						content
+					)
 				})
 
 				shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
@@ -156,6 +164,9 @@ mod_model_panel_server <- function(
 		# Observers for plots
 		shiny::observe({
 			input[["ui_rendered"]]
+			meta <- valid_geo_samples_metadata() %||% list()
+			temporal <- isTRUE(is_temporal()) && has_usable_time(geo_sf(meta, "samples_sf"))
+
 			render_plot_server(
 				file = "training_locations.png",
 				valid_geo_metadata = valid_geo_samples_metadata(),
@@ -166,36 +177,22 @@ mod_model_panel_server <- function(
 				ns = ns,
 				output = output,
 				plot_fn = function() {
-					geo_map(
-						output = output,
-						element_id = "training_locations",
-						geo_metadata = valid_geo_samples_metadata() %||% list(),
-						what = "samples_sf",
-						output_dir = output_dir
-					)
-				}
-			)
-		})
-
-		shiny::observe({
-			input[["ui_rendered"]]
-			render_plot_server(
-				file = "training_area.png",
-				valid_geo_metadata = valid_geo_training_area_metadata(),
-				element_id = "training_area",
-				objective = o_objective_1_val(),
-				uploaded_zip = uploaded_zip(),
-				output_dir = output_dir,
-				ns = ns,
-				output = output,
-				plot_fn = function() {
-					geo_map(
-						output = output,
-						element_id = "training_area",
-						geo_metadata = valid_geo_training_area_metadata() %||% list(),
-						what = "training_area_sf",
-						output_dir = output_dir
-					)
+					if (temporal) {
+						geo_map_repetitions(
+							output = output,
+							element_id = "training_locations",
+							geo_metadata = meta,
+							output_dir = output_dir
+						)
+					} else {
+						geo_map(
+							output = output,
+							element_id = "training_locations",
+							geo_metadata = meta,
+							what = "samples_sf",
+							output_dir = output_dir
+						)
+					}
 				}
 			)
 		})
@@ -208,6 +205,12 @@ mod_model_panel_server <- function(
 			if (length(id) == 1) id else NULL
 		})
 
+		temporal_design_id <- shiny::reactive({
+			id <- model_data()$element_id[model_data()$element_type == "sampling_design_temporal"]
+			if (length(id) == 1) id else NULL
+		})
+
+		# Spatial sampling design
 		render_select_input_design_server(
 			input = input,
 			session = session,
@@ -216,8 +219,19 @@ mod_model_panel_server <- function(
 			uploaded_value = shiny::reactive(get_uploaded_value(uploaded_values(), design_id()))
 		)
 
+		# Temporal sampling design
+		render_select_input_design_server(
+			input = input,
+			session = session,
+			element_id = temporal_design_id,
+			geodist_sel = temporal_geodist_sel,
+			uploaded_value = shiny::reactive(get_uploaded_value(uploaded_values(), temporal_design_id()))
+		)
+
 		shiny::observe({
 			input[["ui_rendered"]]
+			temporal <- isTRUE(is_temporal())
+
 			render_plot_server(
 				file = "geodist_training_area.png",
 				valid_geo_metadata = valid_geo_all_metadata(),
@@ -233,7 +247,8 @@ mod_model_panel_server <- function(
 						element_id = "geodist_training_area",
 						geo_metadata = valid_geo_all_metadata() %||% list(),
 						objective = "Model only",
-						output_dir = output_dir
+						output_dir = output_dir,
+						temporal = temporal
 					)
 				}
 			)
@@ -330,6 +345,32 @@ mod_model_panel_server <- function(
 			)
 		})
 
+		# Update fields based on temporal metadata
+		shiny::observe({
+			input[["ui_rendered"]]
+			shiny::req(model_data())
+			df <- model_data()
+			meta_geo <- valid_geo_samples_metadata() %||% list()
+			uploaded_df <- uploaded_values()
+
+			lapply(c("temporal_extent", "temporal_resolution", "n_timesteps"), function(element_type) {
+				element_id <- df$element_id[df$element_type == element_type]
+				if (length(element_id) != 1) {
+					return(NULL)
+				}
+
+				render_input_field_server(
+					input = input,
+					output = output,
+					session = session,
+					element_type = element_type,
+					element_id = element_id,
+					geo_metadata = meta_geo,
+					uploaded_value = get_uploaded_value(uploaded_df, element_id)
+				)
+			})
+		})
+
 		# Collect input values
 		inputs_reactive <- shiny::reactive({
 			df <- model_data()
@@ -364,6 +405,9 @@ mod_model_panel_server <- function(
 		predictor_types <- shiny::reactive({
 			input[["predictor_types"]]
 		})
+		temporal_sampling_design <- shiny::reactive({
+			input[["temporal_sampling_design"]]
+		})
 
 		# Hide range/classes fields dynamically in dependence of model type
 		shiny::observe({
@@ -394,7 +438,8 @@ mod_model_panel_server <- function(
 			"model_inputs" = inputs_reactive,
 			"validation_method" = validation_method,
 			"sampling_design" = sampling_design,
-			"predictor_types" = predictor_types
+			"predictor_types" = predictor_types,
+			"temporal_sampling_design" = temporal_sampling_design
 		))
 	})
 }

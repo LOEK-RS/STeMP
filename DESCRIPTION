@@ -30,7 +30,8 @@ Imports:
     workflows,
     pagedown,
     png,
-    jpeg
+    jpeg,
+    cowplot
 Suggests: 
     knitr,
     pkgload,

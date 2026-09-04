@@ -484,11 +484,69 @@ render_input_field <- function(
 		"samples_crs" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
 		"validation_results" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
 
+		"radio" = render_radio_input(element_id, label_ui, suggestions, info_text, selected = uploaded_value),
+		"temporal_extent" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
+		"temporal_resolution" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
+		"prediction_temporal_extent" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
+		"prediction_temporal_resolution" = render_text_input(element_id, label_ui, info_text, value = uploaded_value),
+		"n_timesteps" = render_numeric_input(element_id, label_ui, info_text, value = uploaded_value),
+		"sampling_design_temporal" = render_select_input(
+			element_id,
+			label_ui,
+			choices = c("", "clustered", "random"),
+			selected = uploaded_value,
+			info_text = info_text
+		),
+
 		# fallback to text input
 		render_text_input(element_id, label_ui, info_text, value = uploaded_value)
 	)
 
 	return(input_tag)
+}
+
+#' Render a radio button group
+#' @noRd
+render_radio_input <- function(element_id, label, suggestions, info_text = NULL, selected = NULL) {
+	choices <- trimws(unlist(strsplit(suggestions, ",")))
+	input <- shiny::radioButtons(
+		inputId = element_id,
+		label = label,
+		choices = choices,
+		selected = if (!is.null(selected) && selected %in% choices) selected else choices[1],
+		inline = TRUE
+	)
+	with_tooltip(input, info_text)
+}
+
+#' Server logic to update a numeric input from geographic metadata
+#' @noRd
+render_numeric_input_geo_server <- function(
+	input,
+	output,
+	session,
+	element_id,
+	element_type,
+	uploaded_value = NULL,
+	geo_metadata = reactiveVal(NULL)
+) {
+	shiny::observeEvent(
+		geo_metadata,
+		{
+			val <- get_value(uploaded_value = uploaded_value, function() {
+				if (!is.null(geo_metadata) && !is.null(geo_metadata[[element_type]])) {
+					geo_metadata[[element_type]]()
+				} else {
+					NA
+				}
+			})
+
+			shinyjs::delay(100, {
+				shiny::updateNumericInput(session, inputId = element_id, value = val)
+			})
+		},
+		ignoreInit = FALSE
+	)
 }
 
 #' Dispatch update of input based on model metadata and element_type
@@ -614,7 +672,52 @@ render_input_field_server <- function(
 			element_type = element_type,
 			model_metadata = model_metadata,
 			uploaded_value = uploaded_value
-		)
+		),
+		"temporal_extent" = render_text_input_geo_server(
+			input,
+			output,
+			session,
+			element_id = element_id,
+			element_type = element_type,
+			geo_metadata = geo_metadata,
+			uploaded_value = uploaded_value
+		),
+		"temporal_resolution" = render_text_input_geo_server(
+			input,
+			output,
+			session,
+			element_id = element_id,
+			element_type = element_type,
+			geo_metadata = geo_metadata,
+			uploaded_value = uploaded_value
+		),
+		"prediction_temporal_extent" = render_text_input_geo_server(
+			input,
+			output,
+			session,
+			element_id = element_id,
+			element_type = element_type,
+			geo_metadata = geo_metadata,
+			uploaded_value = uploaded_value
+		),
+		"prediction_temporal_resolution" = render_text_input_geo_server(
+			input,
+			output,
+			session,
+			element_id = element_id,
+			element_type = element_type,
+			geo_metadata = geo_metadata,
+			uploaded_value = uploaded_value
+		),
+		"n_timesteps" = render_numeric_input_geo_server(
+			input,
+			output,
+			session,
+			element_id = element_id,
+			element_type = element_type,
+			geo_metadata = geo_metadata,
+			uploaded_value = uploaded_value
+		),
 	)
 
 	return(update_input_tag)

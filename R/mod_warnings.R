@@ -28,6 +28,8 @@ mod_warnings_ui <- function(id) {
 mod_warnings_server <- function(
 	id,
 	sampling_design,
+	temporal_sampling_design,
+	is_temporal,
 	validation_method,
 	evaluation_method,
 	uncertainty_quantification,
@@ -233,6 +235,35 @@ mod_warnings_server <- function(
 					ref_ploton_2020,
 					ref_mila_2022
 				)
+			)
+		)
+
+		# ---------------------------------------------------------------------
+		# Warning: Temporal clustering but no temporal evaluation
+		# ---------------------------------------------------------------------
+
+		register_warning(
+			flag_name = "temporal_clustered_no_temporal_cv",
+			condition = function() {
+				if (!isTRUE(is_temporal())) {
+					return(FALSE)
+				}
+				shiny::req(temporal_sampling_design(), validation_method())
+
+				temporal_sampling_design() == "clustered" &&
+					!grepl("Temporal", validation_method(), fixed = TRUE)
+			},
+			message = make_warning_message(
+				issue = paste(
+					"The training samples are clustered in time relative to the prediction period,",
+					"but the evaluation strategy does not account for temporal dependence.",
+					"This can yield overly optimistic performance estimates."
+				),
+				sections = c(
+					"Model > Response",
+					"Model > Model evaluation and selection"
+				),
+				refs = list(ref_roberts_2017, ref_mila_2022)
 			)
 		)
 

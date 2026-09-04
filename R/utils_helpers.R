@@ -57,7 +57,7 @@ get_value <- function(uploaded_value, fallback_fn) {
 #' @param figure ggplot object.
 #' @param element_id Character ID to determine filename.
 #' @noRd
-save_figure <- function(figure, element_id, temp_dir = NULL) {
+save_figure <- function(figure, element_id, temp_dir = NULL, width = 6, height = 4) {
 	fig_dir <- file.path(temp_dir)
 	if (!dir.exists(fig_dir)) {
 		dir.create(fig_dir, recursive = TRUE)
@@ -65,7 +65,7 @@ save_figure <- function(figure, element_id, temp_dir = NULL) {
 
 	plot_path <- file.path(fig_dir, paste0(element_id, ".png"))
 
-	ggplot2::ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
+	ggplot2::ggsave(plot_path, plot = figure, width = width, height = height, dpi = 300, limitsize = FALSE)
 
 	return(plot_path)
 }

@@ -72,7 +72,10 @@ mod_overview_panel_server <- function(
 				}
 
 				# Always assign optional_field class if optional
-				div_class <- if (!is.null(row$optional) && as.integer(row$optional) == 1) "optional_field" else NULL
+				div_class <- c(
+					if (!is.null(row$optional) && as.integer(row$optional) == 1) "optional_field",
+					if (!is.null(row$temporal_only) && as.integer(row$temporal_only) == 1) "temporal_field"
+				)
 
 				shiny::tags$div(
 					class = div_class,
@@ -126,6 +129,8 @@ mod_overview_panel_server <- function(
 		# Return reactive outputs
 		list(
 			o_objective_1 = shiny::reactive(input$o_objective_1),
+			model_domain = shiny::reactive(input[["model_domain"]] %||% "Spatial"),
+			is_temporal = shiny::reactive(identical(input[["model_domain"]], "Spatio-Temporal")),
 			overview_inputs = inputs_reactive
 		)
 	})
