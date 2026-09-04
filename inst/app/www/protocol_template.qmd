@@ -1,144 +1,142 @@
 ---
-title: "STeMP: Spatio-TEmporal Modelling Protocol"
+title: "STeMP: Spatio-Temporal Modelling Protocol"
 format:
   html:
-    toc: false
+    toc: true
+    toc-location: left
+    toc-depth: 2
     number-sections: false
     self-contained: true
+    theme: [default, stemp_report.scss]
 params:
+  layout: sections
+  structure: null
   data: null
   plot_files: null
   plot_captions: null
-header-includes:
-  - '<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>'
 ---
 
-
-<!--
-  This R Quarto template generates the STeMP protocol HTML report.
-  
-  It renders:
-  - A formatted table of protocol data (params$data).
-  - Figures included from the provided plot file paths (params$plot_files).
-  
-  Usage:
-  - Pass a data.frame to `params$data` with columns expected by the table renderer.
-  - Provide vector of plot file paths to `params$plot_files` to include figures.
--->
-
-
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
+```{r sections-layout, output='asis'}
+#| eval: !expr identical(params$layout, "sections")
 
-# Table
-```{r echo=FALSE, message=FALSE}
+items <- params$structure
+if (is.list(items) && !is.data.frame(items)) {
+	items <- as.data.frame(items, stringsAsFactors = FALSE)
+}
+
+if (is.data.frame(items) && nrow(items) > 0) {
+	for (section_name in unique(items$section)) {
+		section_items <- items[items$section == section_name, , drop = FALSE]
+		cat("\n\n# ", section_name, "\n\n", sep = "")
+
+		show_subsections <- isTRUE(section_items$show_subsection[1])
+
+		for (subsection_name in unique(section_items$subsection)) {
+			sub_items <- section_items[section_items$subsection == subsection_name, , drop = FALSE]
+
+			if (show_subsections) {
+				cat("\n\n## ", subsection_name, "\n\n", sep = "")
+			}
+
+			for (i in seq_len(nrow(sub_items))) {
+				item <- sub_items[i, ]
+
+				if (identical(item$kind, "field")) {
+					# Values are already HTML-escaped, so raw HTML is emitted
+					# rather than markdown
+					cat(
+						"::: {.protocol-field}\n",
+						"<span class='protocol-label'>",
+						item$element,
+						"</span>\n",
+						"<span class='protocol-value'>",
+						item$value,
+						"</span>\n",
+						":::\n\n",
+						sep = ""
+					)
+				} else {
+					cat(
+						"<figure class='protocol-figure'>\n",
+						"<img src='",
+						item$path,
+						"' />\n",
+						"<figcaption>",
+						item$caption,
+						"</figcaption>\n",
+						"</figure>\n\n",
+						sep = ""
+					)
+				}
+			}
+		}
+	}
+} else {
+	cat("_No protocol content to display._\n")
+}
+```
+
+```{r table-layout, output='asis'}
+#| eval: !expr identical(params$layout, "table")
+
+# Currently not used, but kept for possible roll-backs
+# The tabular layout previously used in HTML preview and PDF download
+
 df <- params$data
-
-# Force data.frame if Quarto reconstructed a list
 if (is.list(df) && !is.data.frame(df)) {
 	df <- as.data.frame(df, stringsAsFactors = FALSE)
 }
-
-# Handle empty / missing
 if (!is.data.frame(df) || nrow(df) == 0) {
-	df <- data.frame(
-		section = character(0),
-		subsection = character(0),
-		element = character(0),
-		value = character(0),
-		stringsAsFactors = FALSE
-	)
+	df <- data.frame(section = character(0), element = character(0), value = character(0), stringsAsFactors = FALSE)
 }
-
-# Replace NA safely
 df[] <- lapply(df, function(col) {
 	col[is.na(col)] <- ""
 	col
 })
-```
 
-```{r echo=FALSE, message=FALSE}
-# Wrap and escape only if there are rows
 if (nrow(df) > 0) {
-	# Ensure 'value' column exists
 	if (!"value" %in% names(df)) {
 		df$value <- character(nrow(df))
 	}
-
-	# Convert to character before wrapping
-	df$value <- stringr::str_wrap(as.character(df$value), width = 30)
-
-	# Replace newline with LaTeX line break wrapped in \makecell{}
-	df$value <- gsub("\n", "<br>", df$value)
+	df$$value <- gsub("\n", "<br>", stringr::str_wrap(as.character(df$$value), width = 30))
 }
-
-# Remove 'visible' column if exists
 if ("visible" %in% names(df)) {
 	df$visible <- NULL
 }
-
 row.names(df) <- NULL
-
 names(df) <- sapply(names(df), STeMP::sanitize_text)
 
-tbl <- knitr::kable(
-	df,
-	format = "html",
-	escape = FALSE
-) |>
+tbl <- knitr::kable(df, format = "html", escape = FALSE) |>
 	kableExtra::kable_styling(font_size = 12)
-
-n_cols <- ncol(df)
-
-if (n_cols >= 1) {
-	tbl <- kableExtra::column_spec(tbl, 1, width = "2cm")
-}
-if (n_cols >= 2) {
-	tbl <- kableExtra::column_spec(tbl, 2, width = "4cm")
-}
-if (n_cols >= 3) {
-	tbl <- kableExtra::column_spec(tbl, 3, width = "4cm")
-}
-if (n_cols >= 4) {
-	tbl <- kableExtra::column_spec(tbl, 4, width = "6cm")
+for (i in seq_len(min(ncol(df), 4))) {
+	tbl <- kableExtra::column_spec(tbl, i, width = c("2cm", "4cm", "4cm", "6cm")[i])
 }
 
-tbl
-```
+cat("# Table\n\n")
+print(tbl)
 
-# Figures
-```{r echo=FALSE, message=FALSE, out.width="80%", fig.align='center'}
 plot_files <- as.character(params$plot_files)
-
 if (length(plot_files) > 0) {
-	# Captions are built in R and passed in parallel to plot_files, so no
-	# filename matching is needed here.
 	plot_captions <- as.character(params$plot_captions)
 	if (length(plot_captions) != length(plot_files)) {
 		plot_captions <- tools::file_path_sans_ext(basename(plot_files))
 	}
-
-	out <- vapply(
-		seq_along(plot_files),
-		function(i) {
-			img_file <- normalizePath(plot_files[i], winslash = "/", mustWork = FALSE)
-			paste0(
-				"<div style='margin-bottom: 3em; text-align: center;'>\n",
-				"  <img src='",
-				img_file,
-				"' style='width: 80%; display: block; margin: 0 auto;' />\n",
-				"  <p><em>",
-				plot_captions[i],
-				"</em></p>\n",
-				"</div>"
-			)
-		},
-		character(1)
-	)
-
-	knitr::asis_output(paste(out, collapse = "\n\n"))
+	cat("\n\n# Figures\n\n")
+	for (i in seq_along(plot_files)) {
+		cat(
+			"<div style='margin-bottom: 3em; text-align: center;'>\n",
+			"<img src='",
+			normalizePath(plot_files[i], winslash = "/", mustWork = FALSE),
+			"' style='max-width: 100%; height: auto; display: block; margin: 0 auto;' />\n",
+			"<p><em>",
+			plot_captions[i],
+			"</em></p>\n</div>\n\n",
+			sep = ""
+		)
+	}
 }
 ```
-

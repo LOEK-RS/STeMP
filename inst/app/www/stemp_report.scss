@@ -1,0 +1,228 @@
+/*-- scss:defaults --*/
+
+/* Base colours */
+$body-color: #212529;
+$link-color: #337ab7;
+
+/* Report accent colours */
+$report-orange: #e67e22;
+$report-orange-dark: #d35400;
+$report-orange-light: #fff7ef;
+
+/* Supporting colours */
+$report-grey: #37474f;
+$report-border: #eceff1;
+$report-caption: #546e7a;
+
+/* Typography */
+$font-size-root: 16px;
+
+
+
+/*-- scss:rules --*/
+
+/* -------------------------
+   General document layout
+   ------------------------- */
+
+/*
+ * Quarto's default article layout constrains the main content column.
+ * Expand the content area so that text uses the available page width.
+ */
+
+#quarto-document-content {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+main.content {
+  width: 100%;
+  max-width: none;
+}
+
+
+/* Make the main page-column layout use the available width */
+#quarto-content {
+  width: 100%;
+  max-width: none;
+}
+
+
+/* -------------------------
+   General document styling
+   ------------------------- */
+
+body {
+  color: $body-color;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+
+/* -------------------------
+   Protocol fields
+   ------------------------- */
+
+.protocol-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #eceff1;
+  page-break-inside: avoid;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.protocol-label {
+  font-weight: 600;
+  color: #37474f;
+  flex: 0 0 25%;
+  min-width: 10em;
+}
+
+.protocol-value {
+  flex: 1;
+  white-space: pre-wrap;
+  min-width: 0;   /* prevents flex item overflowing its container */
+}
+
+
+
+/* -------------------------
+   Headings
+   ------------------------- */
+
+h1 {
+  margin-top: 2.5rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 3px solid $report-orange;
+  color: $report-orange-dark;
+}
+
+h2 {
+  margin-top: 1.8rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: $report-orange-dark;
+  background-color: $report-orange-light;
+  border-left: 5px solid $report-orange;
+  border-radius: 0 4px 4px 0;
+}
+
+h3 {
+  margin-top: 1.5rem;
+  color: $report-grey;
+}
+
+
+/* -------------------------
+   Figures
+   ------------------------- */
+
+.protocol-figure {
+  width: 100%;
+  max-width: 100%;
+  margin: 1.5rem auto;
+  text-align: center;
+  page-break-inside: avoid;
+  box-sizing: border-box;
+
+  img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  figcaption {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: $report-caption;
+    font-size: 0.9rem;
+  }
+}
+
+
+/* -------------------------
+   Links
+   ------------------------- */
+
+a {
+  color: $link-color;
+}
+
+
+/* -------------------------
+   Tables
+   ------------------------- */
+
+table {
+  width: 100%;
+  max-width: 100%;
+}
+
+th {
+  font-weight: 600;
+}
+
+
+/* -------------------------
+   Responsive layout
+   ------------------------- */
+
+/*
+ * On smaller screens, let the content naturally fill the viewport
+ * rather than preserving a wide article layout.
+ */
+
+@media screen and (max-width: 991px) {
+
+  #quarto-document-content,
+  main.content,
+  #quarto-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .protocol-field {
+    grid-template-columns: minmax(9em, 30%) 1fr;
+  }
+}
+
+
+/* -------------------------
+   Print
+   ------------------------- */
+
+@media print {
+
+  #quarto-document-content,
+  main.content,
+  #quarto-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  h1 {
+    break-before: page;
+  }
+
+  h1:first-of-type {
+    break-before: avoid;
+  }
+
+  .protocol-figure {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .protocol-figure img {
+    max-width: 100%;
+  }
+}
