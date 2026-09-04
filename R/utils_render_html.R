@@ -228,6 +228,20 @@ build_report_structure <- function(protocol_values, protocol_dict, figures_df, h
 		items[[column]][is.na(items[[column]])] <- ""
 	}
 
+	items$show_subsection <- !items$section %in% "Overview"
+
+	report_columns <- c(
+		"section",
+		"subsection",
+		"element",
+		"element_id",
+		"kind",
+		"value",
+		"path",
+		"caption",
+		"show_subsection"
+	)
+
 	items[, report_columns, drop = FALSE]
 }
 

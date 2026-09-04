@@ -33,9 +33,14 @@ if (is.data.frame(items) && nrow(items) > 0) {
 		section_items <- items[items$section == section_name, , drop = FALSE]
 		cat("\n\n# ", section_name, "\n\n", sep = "")
 
+		show_subsections <- isTRUE(section_items$show_subsection[1])
+
 		for (subsection_name in unique(section_items$subsection)) {
 			sub_items <- section_items[section_items$subsection == subsection_name, , drop = FALSE]
-			cat("\n\n## ", subsection_name, "\n\n", sep = "")
+
+			if (show_subsections) {
+				cat("\n\n## ", subsection_name, "\n\n", sep = "")
+			}
 
 			for (i in seq_len(nrow(sub_items))) {
 				item <- sub_items[i, ]
