@@ -129,56 +129,103 @@ mod_create_protocol_server <- function(
 			)
 		})
 
-		# 3) Reactive selection classification based on geographic metadata and modeling objective
-		geodist_sel <- shiny::reactive({
+		# 3) Distance distributions, and the classification derived from them.
+		# Held as reactives so the refusal reason can be reported without recomputing
+		geo_distances <- shiny::reactive({
 			shiny::req(overview$o_objective_1())
-
 			obj <- overview$o_objective_1()
 
-			# Gate first
-			if (!geo_metadata$has_samples()) {
+			if (!isTRUE(geo_metadata$has_samples())) {
 				return(NULL)
 			}
 
-			if (obj == "Model only") {
-				if (!geo_metadata$has_training_area()) {
+			area_sf <- if (obj == "Model only") {
+				if (!isTRUE(geo_metadata$has_training_area())) {
 					return(NULL)
 				}
-				samples_sf <- geo_metadata$samples_sf()
-				area_sf <- geo_metadata$training_area_sf()
+				geo_metadata$training_area_sf()
 			} else if (obj == "Model and prediction") {
-				if (!geo_metadata$has_prediction_area()) {
+				if (!isTRUE(geo_metadata$has_prediction_area())) {
 					return(NULL)
 				}
-				samples_sf <- geo_metadata$samples_sf()
-				area_sf <- geo_metadata$prediction_area_sf()
+				geo_metadata$prediction_area_sf()
 			} else {
-				stop("Unsupported objective for geodist calculation")
+				return(NULL)
 			}
 
-			calculate_geodist_classification(samples_sf, area_sf)
+			tryCatch(
+				geodist_geographic_data(geo_metadata$samples_sf(), area_sf),
+				error = function(e) paste("Geographical distance calculation failed:", conditionMessage(e))
+			)
 		})
 
-		temporal_geodist_sel <- shiny::reactive({
+		time_distances <- shiny::reactive({
 			shiny::req(overview$o_objective_1())
-			if (!isTRUE(overview$is_temporal()) || !geo_metadata$has_samples()) {
+			if (!isTRUE(overview$is_temporal()) || !isTRUE(geo_metadata$has_samples())) {
 				return(NULL)
 			}
 
 			area_sf <- if (overview$o_objective_1() == "Model only") {
-				if (!geo_metadata$has_training_area()) {
+				if (!isTRUE(geo_metadata$has_training_area())) {
 					return(NULL)
 				}
 				geo_metadata$training_area_sf()
 			} else {
-				if (!geo_metadata$has_prediction_area()) {
+				if (!isTRUE(geo_metadata$has_prediction_area())) {
 					return(NULL)
 				}
 				geo_metadata$prediction_area_sf()
 			}
 
-			calculate_temporal_geodist_classification(geo_metadata$samples_sf(), area_sf)
+			tryCatch(
+				geodist_temporal_data(geo_metadata$samples_sf(), area_sf),
+				error = function(e) paste("Temporal distance calculation failed:", conditionMessage(e))
+			)
 		})
+
+		geodist_sel <- shiny::reactive(classify_geodist(geo_distances()))
+		temporal_geodist_sel <- shiny::reactive(classify_geodist(time_distances()))
+
+		# The distance calculation was declined. Reported here rather than in
+		# mod_warnings, which is about modelling properties rather than what the
+		# app was able to compute.
+		shiny::observeEvent(
+			geo_distances(),
+			{
+				g <- geo_distances()
+				if (!is.character(g)) {
+					shiny::removeNotification("geodist_refused")
+					return(NULL)
+				}
+				shiny::showNotification(
+					ui = shiny::HTML(paste0(g, " Please select the <b>sampling pattern</b> manually.")),
+					type = "warning",
+					duration = NULL,
+					id = "geodist_refused"
+				)
+			},
+			ignoreNULL = FALSE
+		)
+
+		shiny::observeEvent(
+			time_distances(),
+			{
+				g <- time_distances()
+				# "No usable 'time' column" is already covered by no_time_warning.
+				# TODO: string match is fragile; give the data functions a typed reason.
+				if (!is.character(g) || startsWith(g, "No usable")) {
+					shiny::removeNotification("temporal_geodist_refused")
+					return(NULL)
+				}
+				shiny::showNotification(
+					ui = shiny::HTML(paste0(g, " Please select the <b>temporal sampling pattern</b> manually.")),
+					type = "warning",
+					duration = NULL,
+					id = "temporal_geodist_refused"
+				)
+			},
+			ignoreNULL = FALSE
+		)
 
 		# 4) Initialize Prediction panel submodule
 		prediction_results <- mod_prediction_panel_server(
@@ -241,7 +288,7 @@ mod_create_protocol_server <- function(
 			}
 
 			model_type <- model_df[model_df$element_id == "model_type", "value"]
-			if (is.null(model_type) || model_type == "" || is.na(model_type)) {
+			if (length(model_type) != 1 || is.na(model_type) || model_type == "") {
 				# Do nothing
 			} else if (model_type == "Classification") {
 				protocol_data_df <- protocol_data()

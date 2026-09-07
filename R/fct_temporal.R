@@ -140,11 +140,17 @@ format_time_resolution <- function(times) {
 #' distances would otherwise be dominated by zeros.
 #' @noRd
 unique_geometries <- function(x) {
-	if (!inherits(x, "sf")) {
-		return(NULL)
+	if (is.null(x) || nrow(x) < 2L) {
+		return(x)
 	}
-	geom <- sf::st_geometry(x)
-	sf::st_as_sf(geom[!duplicated(sf::st_as_binary(geom, hex = TRUE))])
+
+	key <- if (all(sf::st_geometry_type(x) == "POINT")) {
+		do.call(paste, c(as.data.frame(sf::st_coordinates(x)), sep = "\r"))
+	} else {
+		sf::st_as_text(sf::st_geometry(x))
+	}
+
+	x[!duplicated(key), , drop = FALSE]
 }
 
 #' Count observations per distinct location
@@ -166,4 +172,19 @@ count_sample_repetitions <- function(samples_sf) {
 		n = as.integer(counts[geom_key[keep]]),
 		geometry = geom[keep]
 	)
+}
+
+#' One Row per Distinct Timestamp
+#'
+#' The temporal counterpart of `unique_geometries()`. With many locations on a
+#' shared clock, every sample has another sample at the same instant, so the
+#' sample-to-sample nearest-neighbour distance would be zero everywhere. The
+#' distances of interest are between distinct times.
+#'
+#' @noRd
+unique_times <- function(x, time_col = stemp_time_column()) {
+	if (is.null(x) || nrow(x) < 2L || !time_col %in% names(x)) {
+		return(x)
+	}
+	x[!duplicated(x[[time_col]]), , drop = FALSE]
 }
