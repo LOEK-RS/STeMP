@@ -32,9 +32,9 @@
 32,"Model","m","Predictors","m_predictors","Predictor types","predictor_types","What types of predictor data were used to predict the response?","suggestion","Remote Sensing Images, Simulated Data, Spatial Proxies",0,0,0,0
 33,"Model","m","Predictors","m_predictors","Number of predictors","number_of_predictors","The initial  number of predictor variables (before predictor selection)","num_predictors","",0,0,0,0
 34,"Model","m","Predictors","m_predictors","Names of predictors","names_of_predictors","List the names of all initial predictor variables  (before predictor selection)","names_predictors","",1,0,0,0
-35,"Model","m","Predictors","m_predictors","Resolution of predictors","resolution_of_predictors","The spatial resolution of predictors","text","",0,0,0,0
+35,"Model","m","Predictors","m_predictors","Spatial resolution of predictors","resolution_of_predictors","The spatial resolution of predictors","text","",0,0,0,0
 36,"Model","m","Predictors","m_predictors","Temporal resolution of predictors","temporal_resolution_of_predictors","The temporal resolution of predictors","text","",0,0,0,1
-37,"Model","m","Predictors","m_predictors","Preprocessing","preprocessing","Detail on preprocessing steps taken","suggestion","Cloud removal, Normalization, Filtering, Resampling, Outlier removal",1,0,0,0
+37,"Model","m","Predictors","m_predictors","Preprocessing","preprocessing","Detail on preprocessing steps taken (e.g., resampling, cloud removal)","text",,1,0,0,0
 38,"Model","m","Predictors","m_predictors","Temporal alignment","alignment","Temporal alignment of the predictors with the response","text","",1,0,0,1
 39,"Model","m","Predictors","m_predictors","Data sources of predictors","data_sources_of_predictors","Data sources of the predictors (e.g., Worldclim)","text","",1,0,0,0
 40,"Model","m","Model evaluation and selection","m_validation","Model evaluation strategy","validation_strategy","Details on the evaluation strategy used for model selection","suggestion_single","Independent probability sample, Random Cross-Validation, Spatial Cross-Validation, Spatio-Temporal Cross-Validation, Prediction-domain adaptive Cross-Validation, Random Train/Test Split, Spatial Train/Test Split, Spatio-Temporal Train/Test Split, Prediction-domain adaptive Train/Test Split, None",0,0,0,0
