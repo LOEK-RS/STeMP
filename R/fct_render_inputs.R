@@ -261,6 +261,12 @@ render_select_input_model_server <- function(
 				}
 			})
 
+			# A model that yielded no metadata leaves this NULL or NA
+			if (length(selected_val) != 1 || is.na(selected_val)) {
+				selected_val <- ""
+			}
+			selected_val <- as.character(selected_val)
+
 			choices <- if (selected_val != "" && !(selected_val %in% default_choices)) {
 				c(default_choices, selected_val)
 			} else {
