@@ -63,11 +63,21 @@ parse_time_column <- function(x) {
 parse_time_strings <- function(values) {
 	values[!nzchar(trimws(values))] <- NA_character_
 
-	iso <- suppressWarnings(
-		as.POSIXct(values, tz = "UTC", format = "%Y-%m-%dT%H:%M:%OSZ")
+	# strptime() ignores trailing characters, so "%Y-%m-%d" happily matches
+	# "2020-03-01T09:30:00" and discards the clock time without complaint.
+	# The ISO 8601 variants therefore have to be tried before as.POSIXct()
+	# reaches its own, more permissive, format list.
+	iso_formats <- c(
+		"%Y-%m-%dT%H:%M:%OSZ",
+		"%Y-%m-%dT%H:%M:%OS",
+		"%Y-%m-%dT%H:%M"
 	)
-	if (any(!is.na(iso)) && all(is.na(iso) == is.na(values))) {
-		return(iso)
+
+	for (fmt in iso_formats) {
+		iso <- suppressWarnings(as.POSIXct(values, tz = "UTC", format = fmt))
+		if (any(!is.na(iso)) && all(is.na(iso) == is.na(values))) {
+			return(iso)
+		}
 	}
 
 	tryCatch(
