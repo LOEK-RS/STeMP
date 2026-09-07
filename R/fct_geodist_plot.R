@@ -31,35 +31,47 @@ geodist_plot <- function(
 		}
 
 		geod_geo <- geodist_geographic_data(samples_data, area_data)
-		p_geo <- plot(geod_geo) + ggplot2::theme(aspect.ratio = 0.8)
-		p_geo <- add_log_scale_if_needed(p_geo, geod_geo)
+		p_geo <- add_log_scale_if_needed(plot(geod_geo), geod_geo)
 
-		if (!isTRUE(temporal)) {
-			save_figure(p_geo, element_id, output_dir)
-			return(p_geo)
+		if (!temporal) {
+			p <- p_geo + ggplot2::theme(aspect.ratio = 0.8)
+			save_figure(p, element_id, output_dir)
+			return(p)
 		}
 
 		geod_time <- geodist_temporal_data(samples_data, area_data)
 
 		if (is.null(geod_time)) {
 			p <- p_geo +
-				ggplot2::labs(caption = "No usable 'time' column found - temporal panel omitted.")
+				ggplot2::theme(aspect.ratio = 0.8) +
+				ggplot2::labs(caption = "No usable 'time' column found, temporal panel omitted.")
 			save_figure(p, element_id, output_dir)
 			return(p)
 		}
 
-		p_time <- plot(geod_time) + ggplot2::theme(aspect.ratio = 0.8)
-		p_time <- add_log_scale_if_needed(p_time, geod_time)
+		p_time <- add_log_scale_if_needed(plot(geod_time), geod_time)
 
-		p <- cowplot::plot_grid(
-			p_geo + ggplot2::ggtitle("Geographic space"),
-			p_time + ggplot2::ggtitle("Time"),
-			nrow = 1,
+		legend <- cowplot::get_legend(p_time)
+
+		body <- cowplot::plot_grid(
+			p_geo +
+				ggplot2::ggtitle("Geographic space") +
+				ggplot2::theme(legend.position = "none"),
+			p_time +
+				ggplot2::ggtitle("Temporal space") +
+				ggplot2::theme(legend.position = "none", axis.title.y = ggplot2::element_blank()),
+			ncol = 2,
 			align = "h",
-			axis = "tb"
+			axis = "tr"
 		)
 
-		save_figure(p, element_id, output_dir, width = 11, height = 4)
+		p <- if (is.null(legend)) {
+			body
+		} else {
+			cowplot::plot_grid(body, legend, ncol = 1, rel_heights = c(1, NULL, 0.2))
+		}
+
+		save_figure(p, element_id, output_dir, width = 8, height = 4)
 		p
 	})
 }
