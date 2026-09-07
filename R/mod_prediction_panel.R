@@ -207,6 +207,33 @@ mod_prediction_panel_server <- function(
 			)
 		})
 
+		# Update fields based on temporal metadata of the prediction area
+		shiny::observe({
+			input[["ui_rendered"]]
+			shiny::req(prediction_data())
+			shiny::req(o_objective_1_val() == "Model and prediction")
+			df <- prediction_data()
+			meta_geo <- valid_geo_prediction_area_metadata() %||% list()
+			uploaded_df <- uploaded_values()
+
+			lapply(c("prediction_temporal_extent", "prediction_temporal_resolution"), function(element_type) {
+				element_id <- df$element_id[df$element_type == element_type]
+				if (length(element_id) != 1) {
+					return(NULL)
+				}
+
+				render_input_field_server(
+					input = input,
+					output = output,
+					session = session,
+					element_type = element_type,
+					element_id = element_id,
+					geo_metadata = meta_geo,
+					uploaded_value = get_uploaded_value(uploaded_df, element_id)
+				)
+			})
+		})
+
 		# Reactive collection of prediction input values
 		inputs_reactive <- shiny::reactive({
 			df <- prediction_data()
