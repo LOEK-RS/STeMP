@@ -82,12 +82,8 @@ mod_sidebar_server <- function(
 				df$visible[df$optional == 1] <- FALSE
 			}
 
-			caption_ids <- dict$element_id[dict$element_type == "figure_caption"]
-			df$visible[df$element_id %in% caption_ids] <- FALSE
-
-			# Remove "spatio-temporal" vs "spatial" toggle from the progress bar
-			switch_ids <- dict$element_id[dict$element_type == "radio"]
-			df$visible[df$element_id %in% switch_ids] <- FALSE
+			# Remove "spatio-temporal" vs "spatial" toggle and fig captions from the progress bar
+			df$visible[df$element_id %in% non_progress_ids(dict)] <- FALSE
 
 			df
 		})

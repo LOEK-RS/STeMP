@@ -228,3 +228,19 @@ resolve_design_value <- function(uploaded_value, derived_value) {
 	}
 	NULL
 }
+
+#' Element IDs that must not count toward the progress bars
+#'
+#' Figure captions are metadata for a plot rather than protocol answers.
+#' Mode switches always carry a default selection, so counting them would
+#' lift every bar above zero on a fresh session.
+#'
+#' @param protocol_dict Data frame of the protocol dictionary
+#' @return Character vector of element IDs
+#' @noRd
+non_progress_ids <- function(protocol_dict) {
+	if (is.null(protocol_dict) || !"element_type" %in% names(protocol_dict)) {
+		return(character(0))
+	}
+	unique(protocol_dict$element_id[protocol_dict$element_type %in% c("figure_caption", "radio")])
+}

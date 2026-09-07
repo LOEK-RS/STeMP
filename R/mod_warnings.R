@@ -28,8 +28,8 @@ mod_warnings_ui <- function(id) {
 mod_warnings_server <- function(
 	id,
 	sampling_design,
-	temporal_sampling_design,
-	is_temporal,
+	temporal_sampling_design = shiny::reactive(NULL),
+	is_temporal = shiny::reactive(FALSE),
 	validation_method,
 	evaluation_method,
 	uncertainty_quantification,

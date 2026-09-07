@@ -113,3 +113,24 @@ test_that("CV for model selection and final prediction assessment triggers warni
 		}
 	)
 })
+
+test_that("temporal clustered + random CV triggers warning flag", {
+	shiny::testServer(
+		mod_warnings_server,
+		args = list(
+			sampling_design = shiny::reactive("random"),
+			temporal_sampling_design = shiny::reactive("clustered"),
+			is_temporal = shiny::reactive(TRUE),
+			validation_method = shiny::reactive("random CV"),
+			evaluation_method = shiny::reactive(NULL),
+			uncertainty_quantification = shiny::reactive(NULL),
+			predictor_types = shiny::reactive(NULL),
+			show_warnings = shiny::reactive(TRUE),
+			o_objective_1_val = shiny::reactive("Model only")
+		),
+		{
+			session$flushReact()
+			expect_true(!is.null(warning_flags$temporal_clustered_no_temporal_cv))
+		}
+	)
+})
