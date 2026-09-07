@@ -16,16 +16,15 @@
 15,"Model","m","Response","m_response","Training area map","training_area","Map of training area","training_area_plot","",0,0,0,0
 16,"Model","m","Response","m_response","Sampling pattern plot","geodist_training_area","Plot of nearest neighbour distances in geographic space (see <a href='https://hannameyer.github.io/CAST/reference/geodist.html' target='_blank'>documentation of the function</a> for more information)","geodist_plot_training","",0,0,0,0
 17,"Model","m","Response","m_response","Sampling extent","training_extent","The spatial extent at which the training points were collected","suggestion","global, regional, landscape, local",0,0,0,0
-18,"Model","m","Response","m_response","Temporal sampling extent","temporal_training_extent","The temporal extent at which the training points were collected","suggestion","global, regional, landscape, local",0,0,0,1
+18,"Model","m","Response","m_response","Temporal extent","temporal_extent","Time span covered by the training samples","temporal_extent","",0,0,0,1
+19,"Model","m","Response","m_response","Temporal resolution","temporal_resolution","Spacing between training time stamps","temporal_resolution","",0,0,0,1
 19,"Model","m","Response","m_response","Sample acquisition","sample_acquisition","How were the training points collected?","suggestion","In-Situ, Image interpretation, Simulation",0,0,0,0
 20,"Model","m","Response","m_response","Sample geometry","sample_geometry","The geometry type of the training points (e.g., Polygons of Land-Cover classes, Points of climate stations)","suggestion","Point, Polygon, Raster, Image Tiles",1,0,0,0
 21,"Model","m","Response","m_response","Sample size","sample_size","The number of training points","num_training_samples","",0,0,0,0
 22,"Model","m","Response","m_response","Classes","classes","The number of response classes","num_classes","",1,0,1,0
 23,"Model","m","Response","m_response","Samples per class","samples_per_class","The number of training points in each class","num_samples_per_class","",1,0,1,0
 24,"Model","m","Response","m_response","Range","range","The range of response values represented in the training data","interpolation_range","",1,1,0,0
-25,"Model","m","Response","m_response","Temporal extent","temporal_extent","Time span covered by the training samples","temporal_extent","",0,0,0,1
 26,"Model","m","Response","m_response","Number of time steps","n_timesteps","Number of distinct time stamps in the training data","n_timesteps","",1,0,0,1
-27,"Model","m","Response","m_response","Temporal resolution","temporal_resolution","Spacing between training time stamps","temporal_resolution","",0,0,0,1
 28,"Model","m","Response","m_response","Sampling pattern","sampling_design","The sampling design (will be automatically filled when training locations and prediction area are provided as .gpkg)","sampling_design","",0,0,0,0
 29,"Model","m","Response","m_response","Temporal sampling pattern","temporal_sampling_design","Temporal counterpart of the sampling pattern. Filled automatically from nearest-neighbour distances in time when both the training samples and the prediction domain carry a time column.","sampling_design_temporal","",0,0,0,1
 30,"Model","m","Response","m_response","Coordinate Reference System","coordinate_reference_system","The coordinate reference system used to reference the samples (epsg code)","samples_crs","",1,0,0,0
@@ -33,8 +32,8 @@
 32,"Model","m","Predictors","m_predictors","Predictor types","predictor_types","What types of predictor data were used to predict the response?","suggestion","Remote Sensing Images, Simulated Data, Spatial Proxies",0,0,0,0
 33,"Model","m","Predictors","m_predictors","Number of predictors","number_of_predictors","The initial  number of predictor variables (before predictor selection)","num_predictors","",0,0,0,0
 34,"Model","m","Predictors","m_predictors","Names of predictors","names_of_predictors","List the names of all initial predictor variables  (before predictor selection)","names_predictors","",1,0,0,0
-35,"Model","m","Predictors","m_predictors","Resolution of predictors","resolution_of_predictors","The spatial resolution of predictors","text","",1,0,0,0
-36,"Model","m","Predictors","m_predictors","Temporal resolution of predictors","temporal_resolution_of_predictors","The temporal resolution of predictors","text","",1,0,0,1
+35,"Model","m","Predictors","m_predictors","Resolution of predictors","resolution_of_predictors","The spatial resolution of predictors","text","",0,0,0,0
+36,"Model","m","Predictors","m_predictors","Temporal resolution of predictors","temporal_resolution_of_predictors","The temporal resolution of predictors","text","",0,0,0,1
 37,"Model","m","Predictors","m_predictors","Preprocessing","preprocessing","Detail on preprocessing steps taken","suggestion","Cloud removal, Normalization, Filtering, Resampling, Outlier removal",1,0,0,0
 38,"Model","m","Predictors","m_predictors","Temporal alignment","alignment","Temporal alignment of the predictors with the response","text","",1,0,0,1
 39,"Model","m","Predictors","m_predictors","Data sources of predictors","data_sources_of_predictors","Data sources of the predictors (e.g., Worldclim)","text","",1,0,0,0
