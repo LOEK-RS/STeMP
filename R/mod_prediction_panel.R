@@ -266,20 +266,10 @@ mod_prediction_panel_server <- function(
 			input[["evaluation_strategy"]]
 		})
 
-		prediction_temporal_extent <- shiny::reactive({
-			input[["prediction_temporal_extent"]]
-		})
-
-		prediction_temporal_resolution <- shiny::reactive({
-			input[["prediction_temporal_resolution"]]
-		})
-
 		return(list(
 			"prediction_inputs" = shiny::reactive(inputs_reactive()),
 			"uncertainty_quantification" = uncertainty_quantification,
-			"evaluation_method" = evaluation_method,
-			"prediction_temporal_extent" = prediction_temporal_extent,
-			"prediction_temporal_resolution" = prediction_temporal_resolution
+			"evaluation_method" = evaluation_method
 		))
 	})
 }

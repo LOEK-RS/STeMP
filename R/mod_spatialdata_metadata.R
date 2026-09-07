@@ -94,36 +94,46 @@ mod_spatialdata_metadata_server <- function(id, samples, training_area, predicti
 		})
 
 		has_samples_time <- shiny::reactive({
-			isTRUE(has_samples()) && !is.null(tryCatch(samples_time(), error = function(e) NULL))
+			isTRUE(has_samples()) && has_usable_time(samples$data())
 		})
 
 		has_prediction_time <- shiny::reactive({
-			isTRUE(has_prediction_area()) && !is.null(tryCatch(prediction_time(), error = function(e) NULL))
+			isTRUE(has_prediction_area()) && has_usable_time(prediction_area$data())
 		})
 
 		temporal_extent <- shiny::reactive({
-			shiny::req(has_samples_time())
-			format_time_extent(samples_time())
+			if (!isTRUE(has_samples_time())) {
+				return("")
+			}
+			format_time_extent(samples_time()) %||% ""
 		})
 
 		temporal_resolution <- shiny::reactive({
-			shiny::req(has_samples_time())
-			format_time_resolution(samples_time())
+			if (!isTRUE(has_samples_time())) {
+				return("")
+			}
+			format_time_resolution(samples_time()) %||% ""
 		})
 
 		n_timesteps <- shiny::reactive({
-			shiny::req(has_samples_time())
-			count_timesteps(samples_time())
+			if (!isTRUE(has_samples_time())) {
+				return(NA_integer_)
+			}
+			count_timesteps(samples_time()) %||% NA_integer_
 		})
 
 		prediction_temporal_extent <- shiny::reactive({
-			shiny::req(has_prediction_time())
-			format_time_extent(prediction_time())
+			if (!isTRUE(has_prediction_time())) {
+				return("")
+			}
+			format_time_extent(prediction_time()) %||% ""
 		})
 
 		prediction_temporal_resolution <- shiny::reactive({
-			shiny::req(has_prediction_time())
-			format_time_resolution(prediction_time())
+			if (!isTRUE(has_prediction_time())) {
+				return("")
+			}
+			format_time_resolution(prediction_time()) %||% ""
 		})
 
 		# Return a list of reactives for use elsewhere in app

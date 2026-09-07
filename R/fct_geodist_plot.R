@@ -85,16 +85,19 @@ geodist_geographic_data <- function(samples_sf, area_sf) {
 
 #' Temporal geodistance for one samples / area pair
 #'
-#' Returns NULL when either side lacks a usable time column.
+#' Returns NULL when either side lacks at least two parseable timestamps.
 #' @noRd
 geodist_temporal_data <- function(samples_sf, area_sf) {
-	if (!has_usable_time(samples_sf) || !has_usable_time(area_sf)) {
+	samples_time <- coerce_time_column(samples_sf)
+	area_time <- coerce_time_column(area_sf)
+
+	if (is.null(samples_time) || is.null(area_time)) {
 		return(NULL)
 	}
 
 	CAST::geodist(
-		coerce_time_column(samples_sf),
-		preddata = coerce_time_column(area_sf),
+		samples_time,
+		preddata = area_time,
 		dist_space = "time",
 		time_var = stemp_time_column()
 	)
@@ -118,16 +121,19 @@ add_log_scale_if_needed <- function(p, geod) {
 	p
 }
 
-#' Replace the time column with its parsed form
-#'
-#' parse_time_column() only reads; CAST::geodist() needs the column itself to
-#' be Date / POSIXct / numeric, which a GeoPackage TEXT field is not.
 #' @noRd
-coerce_time_column <- function(x) {
+coerce_time_column <- function(x, min_rows = 2) {
 	parsed <- parse_time_column(x)
 	if (is.null(parsed)) {
-		return(x)
+		return(NULL)
 	}
-	x[[stemp_time_column()]] <- parsed
-	x
+
+	keep <- !is.na(parsed)
+	if (sum(keep) < min_rows) {
+		return(NULL)
+	}
+
+	out <- x[keep, , drop = FALSE]
+	out[[stemp_time_column()]] <- parsed[keep]
+	out
 }

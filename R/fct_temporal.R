@@ -2,18 +2,6 @@
 #' @noRd
 stemp_time_column <- function() "time"
 
-#' Does an sf object carry the expected time column?
-#' @noRd
-has_time_column <- function(x) {
-	inherits(x, "sf") && stemp_time_column() %in% names(x)
-}
-
-#' Does an sf object carry a parseable time column?
-#' @noRd
-has_usable_time <- function(x) {
-	!is.null(parse_time_column(x))
-}
-
 #' Pull one sf element out of validated geo metadata, or NULL
 #'
 #' The elements are reactives and may be absent entirely, so both the
@@ -26,58 +14,71 @@ geo_sf <- function(meta, what) {
 	tryCatch(meta[[what]](), error = function(e) NULL)
 }
 
-#' Parse the time column into Date / POSIXct / numeric
+#' Extract the time column as POSIXct
 #'
-#' GeoPackage DATE and DATETIME fields come back as Date / POSIXct, but a
-#' plain TEXT column does not, so character input is parsed here. Returns NULL
-#' when the column is missing or unparseable, which callers treat as
-#' "no temporal information available".
+#' STeMP accepts only date-time information. Typed Date and POSIXct columns
+#' are used directly, character columns are parsed, and everything else is
+#' rejected -- notably numeric, which has no origin and so cannot be turned
+#' into a duration.
 #'
-#' @param x An sf object
-#' @return A vector of times, or NULL
+#' @param x An sf object or data frame
+#' @return A POSIXct vector, or NULL when no usable time information exists
 #' @noRd
 parse_time_column <- function(x) {
-	if (!has_time_column(x)) {
+	col <- stemp_time_column()
+	if (is.null(x) || !col %in% names(x)) {
 		return(NULL)
 	}
 
-	values <- x[[stemp_time_column()]]
+	values <- x[[col]]
 
-	if (inherits(values, c("Date", "POSIXct"))) {
-		return(values)
-	}
-	if (is.numeric(values)) {
-		return(values)
+	parsed <- if (inherits(values, "POSIXt")) {
+		as.POSIXct(values)
+	} else if (inherits(values, "Date")) {
+		# Explicit rather than as.POSIXct.Date, whose tz default has moved
+		# between R versions.
+		.POSIXct(unclass(values) * 86400, tz = "UTC")
+	} else if (is.character(values) || is.factor(values)) {
+		parse_time_strings(as.character(values))
+	} else {
+		NULL
 	}
 
-	values <- as.character(values)
-
-	parsed <- suppressWarnings(as.POSIXct(values, tz = "UTC"))
-	if (all(is.na(parsed))) {
-		parsed <- suppressWarnings(as.Date(values))
-	}
-	if (all(is.na(parsed))) {
+	if (is.null(parsed) || all(is.na(parsed))) {
 		return(NULL)
 	}
 
 	parsed
 }
 
-#' One-column data frame of times, shaped for CAST::geodist()
+#' Parse character timestamps without signalling
 #'
-#' The column must be named "time" because that name is passed on as the
-#' time variable.
+#' as.POSIXct.character stop()s unless one standard format matches every
+#' non-NA element, so the call is wrapped. NA entries are permitted and
+#' survive into the result.
+#'
+#' @param values A character vector
+#' @return A POSIXct vector, or NULL when no format matches
 #' @noRd
-time_table <- function(x) {
-	parsed <- parse_time_column(x)
-	if (is.null(parsed)) {
-		return(NULL)
+parse_time_strings <- function(values) {
+	values[!nzchar(trimws(values))] <- NA_character_
+
+	iso <- suppressWarnings(
+		as.POSIXct(values, tz = "UTC", format = "%Y-%m-%dT%H:%M:%OSZ")
+	)
+	if (any(!is.na(iso)) && all(is.na(iso) == is.na(values))) {
+		return(iso)
 	}
-	parsed <- parsed[!is.na(parsed)]
-	if (length(parsed) == 0) {
-		return(NULL)
-	}
-	stats::setNames(data.frame(parsed), stemp_time_column())
+
+	tryCatch(
+		suppressWarnings(as.POSIXct(values, tz = "UTC")),
+		error = function(e) NULL
+	)
+}
+
+#' @noRd
+has_usable_time <- function(x) {
+	!is.null(parse_time_column(x))
 }
 
 #' Human-readable time span
@@ -101,7 +102,7 @@ count_timesteps <- function(times) {
 #' Median spacing between distinct time stamps, as a readable string
 #' @noRd
 format_time_resolution <- function(times) {
-	if (is.null(times)) {
+	if (is.null(times) || length(times) == 0) {
 		return(NULL)
 	}
 	unique_times <- sort(unique(times))
@@ -109,19 +110,17 @@ format_time_resolution <- function(times) {
 		return(NULL)
 	}
 
-	if (inherits(unique_times, "Date")) {
-		step_seconds <- stats::median(as.numeric(diff(unique_times), units = "days")) * 86400
-	} else if (inherits(unique_times, "POSIXct")) {
-		step_seconds <- stats::median(as.numeric(diff(unique_times), units = "secs"))
-	} else {
-		return(paste(stats::median(diff(unique_times)), "(unitless)"))
+	step_seconds <- stats::median(as.numeric(diff(unique_times), units = "secs"))
+	if (!is.finite(step_seconds) || step_seconds <= 0) {
+		return(NULL)
 	}
 
 	breaks <- c(1, 60, 3600, 86400, 86400 * 7, 86400 * 30, 86400 * 365)
 	labels <- c("second", "minute", "hour", "day", "week", "month", "year")
-	idx <- max(which(step_seconds >= breaks * 0.9))
-	value <- round(step_seconds / breaks[idx], 1)
+	idx <- which(step_seconds >= breaks * 0.9)
+	idx <- if (length(idx) == 0) 1L else max(idx)
 
+	value <- round(step_seconds / breaks[idx], 1)
 	paste0(value, " ", labels[idx], if (value != 1) "s" else "")
 }
 

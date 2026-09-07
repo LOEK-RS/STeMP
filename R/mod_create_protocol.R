@@ -90,14 +90,6 @@ mod_create_protocol_server <- function(
 			}
 		})
 
-		shiny::observe({
-			if (isTRUE(overview$is_temporal())) {
-				shinyjs::removeClass(selector = "body", class = "hide_temporal")
-			} else {
-				shinyjs::addClass(selector = "body", class = "hide_temporal")
-			}
-		})
-
 		# Spatio-Temporal requested but the uploaded data carries no parseable 'time' column
 		shiny::observe({
 			if (!isTRUE(overview$is_temporal())) {
@@ -125,8 +117,11 @@ mod_create_protocol_server <- function(
 			shiny::showNotification(
 				ui = shiny::HTML(
 					"Spatio-Temporal mode is active, but the uploaded data has no usable
-					<b>time</b> column. Temporal fields and plots stay empty. Add a
-					<b>time</b> column with ISO dates (YYYY-MM-DD) or a DATE/DATETIME field."
+					<b>time</b> column. Temporal fields and plots stay empty. The
+					<b>time</b> column must hold dates or date-times &mdash; ISO text
+					(<code>2020-03-01</code>, <code>2020-03-01 09:30:00</code>) or a
+					DATE/DATETIME field. Plain numbers such as year values are not
+					accepted."
 				),
 				type = "warning",
 				duration = 12,

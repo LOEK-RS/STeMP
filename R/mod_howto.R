@@ -39,7 +39,7 @@ mod_howto_ui <- function(id) {
 					"You can always save your progress by clicking the ",
 					shiny::em("download"),
 					" button on the left. 
-                    It is possible to download a .csv table containing the elements and their values, as well as a .pdf file containing the 
+                    It is possible to download a .csv table containing the elements and their values, as well as a .pdf and .html file containing the 
                     table and the figures, or just the figures as .zip folder. The downloaded .csv file can be re-uploaded in the sidebar
 										later to continue working on the protocol, even after closing and re-starting the app.",
 					style = "font-size: 18px;"
@@ -50,8 +50,11 @@ mod_howto_ui <- function(id) {
 					shiny::em("Upload/Import"),
 					" tab, you can upload model objects (currently only .RDS files) to automatically
                     fill some of the protocol fields based on the models' metadata. Also, it is possible to upload the training locations,
-                    the training area and the prediction area as .gpkg files and generate plots from them. If training locations and the prediction
-                    area (if the objective is ",
+                    the training area and the prediction area as .gpkg files and generate plots from them. If the model domain is ",
+					shiny::em("spatio-temporal"),
+					" and the uploaded geodata contain a column named ",
+					shiny::em("time"),
+					", temporal information is automatically inferred. If training locations and the prediction area (if the objective is ",
 					shiny::em("Model and prediction"),
 					"), or training locations (if the objective is ",
 					shiny::em("Model only"),
