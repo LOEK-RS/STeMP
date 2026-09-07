@@ -263,7 +263,7 @@ mod_warnings_server <- function(
 					"Model > Response",
 					"Model > Model evaluation and selection"
 				),
-				refs = list(ref_roberts_2017, ref_mila_2022)
+				refs = list(ref_roberts_2017)
 			)
 		)
 

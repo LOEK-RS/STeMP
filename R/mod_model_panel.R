@@ -164,12 +164,12 @@ mod_model_panel_server <- function(
 		# Observers for plots
 		shiny::observe({
 			input[["ui_rendered"]]
-			meta <- valid_geo_samples_metadata() %||% list()
-			temporal <- isTRUE(is_temporal()) && has_usable_time(geo_sf(meta, "samples_sf"))
+			meta <- valid_geo_samples_metadata()
+			temporal <- isTRUE(is_temporal()) && has_usable_time(geo_sf(meta %||% list(), "samples_sf"))
 
 			render_plot_server(
 				file = "training_locations.png",
-				valid_geo_metadata = valid_geo_samples_metadata(),
+				valid_geo_metadata = meta,
 				element_id = "training_locations",
 				objective = o_objective_1_val(),
 				uploaded_zip = uploaded_zip(),
@@ -181,18 +181,43 @@ mod_model_panel_server <- function(
 						geo_map_repetitions(
 							output = output,
 							element_id = "training_locations",
-							geo_metadata = meta,
+							geo_metadata = meta %||% list(),
 							output_dir = output_dir
 						)
 					} else {
 						geo_map(
 							output = output,
 							element_id = "training_locations",
-							geo_metadata = meta,
+							geo_metadata = meta %||% list(),
 							what = "samples_sf",
 							output_dir = output_dir
 						)
 					}
+				}
+			)
+		})
+
+		shiny::observe({
+			input[["ui_rendered"]]
+			meta <- valid_geo_training_area_metadata()
+
+			render_plot_server(
+				file = "training_area.png",
+				valid_geo_metadata = meta,
+				element_id = "training_area",
+				objective = o_objective_1_val(),
+				uploaded_zip = uploaded_zip(),
+				output_dir = output_dir,
+				ns = ns,
+				output = output,
+				plot_fn = function() {
+					geo_map(
+						output = output,
+						element_id = "training_area",
+						geo_metadata = meta %||% list(),
+						what = "training_area_sf",
+						output_dir = output_dir
+					)
 				}
 			)
 		})
@@ -230,11 +255,12 @@ mod_model_panel_server <- function(
 
 		shiny::observe({
 			input[["ui_rendered"]]
+			meta <- valid_geo_all_metadata()
 			temporal <- isTRUE(is_temporal())
 
 			render_plot_server(
 				file = "geodist_training_area.png",
-				valid_geo_metadata = valid_geo_all_metadata(),
+				valid_geo_metadata = meta,
 				element_id = "geodist_training_area",
 				objective = o_objective_1_val(),
 				uploaded_zip = uploaded_zip(),
@@ -245,7 +271,7 @@ mod_model_panel_server <- function(
 					geodist_plot(
 						output = output,
 						element_id = "geodist_training_area",
-						geo_metadata = valid_geo_all_metadata() %||% list(),
+						geo_metadata = meta %||% list(),
 						objective = "Model only",
 						output_dir = output_dir,
 						temporal = temporal

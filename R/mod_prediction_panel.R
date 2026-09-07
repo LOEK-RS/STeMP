@@ -147,12 +147,12 @@ mod_prediction_panel_server <- function(
 		shiny::observe({
 			input[["ui_rendered"]]
 			shiny::req(o_objective_1_val() == "Model and prediction")
-			meta <- valid_geo_prediction_area_metadata() %||% list()
-			temporal <- isTRUE(is_temporal()) && has_usable_time(geo_sf(meta, "prediction_area_sf"))
+			meta <- valid_geo_prediction_area_metadata()
+			temporal <- isTRUE(is_temporal()) && has_usable_time(geo_sf(meta %||% list(), "prediction_area_sf"))
 
 			render_plot_server(
 				file = "prediction_area.png",
-				valid_geo_metadata = valid_geo_prediction_area_metadata(),
+				valid_geo_metadata = meta,
 				element_id = "prediction_area",
 				objective = o_objective_1_val(),
 				uploaded_zip = uploaded_zip(),
@@ -164,14 +164,14 @@ mod_prediction_panel_server <- function(
 						geo_map_timesteps(
 							output = output,
 							element_id = "prediction_area",
-							geo_metadata = meta,
+							geo_metadata = meta %||% list(),
 							output_dir = output_dir
 						)
 					} else {
 						geo_map(
 							output = output,
 							element_id = "prediction_area",
-							geo_metadata = meta,
+							geo_metadata = meta %||% list(),
 							what = "prediction_area_sf",
 							output_dir = output_dir
 						)
@@ -183,11 +183,12 @@ mod_prediction_panel_server <- function(
 		shiny::observe({
 			input[["ui_rendered"]]
 			shiny::req(o_objective_1_val() == "Model and prediction")
+			meta <- valid_geo_all_metadata()
 			temporal <- isTRUE(is_temporal())
 
 			render_plot_server(
 				file = "geodist_prediction_area.png",
-				valid_geo_metadata = valid_geo_all_metadata(),
+				valid_geo_metadata = meta,
 				element_id = "geodist_prediction_area",
 				objective = o_objective_1_val(),
 				uploaded_zip = uploaded_zip(),
@@ -198,7 +199,7 @@ mod_prediction_panel_server <- function(
 					geodist_plot(
 						output = output,
 						element_id = "geodist_prediction_area",
-						geo_metadata = valid_geo_all_metadata() %||% list(),
+						geo_metadata = meta %||% list(),
 						objective = "Model and prediction",
 						output_dir = output_dir,
 						temporal = temporal

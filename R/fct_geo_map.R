@@ -218,3 +218,11 @@ map_axis_style <- function(n_col = 1, datum = NULL) {
 		map_axis_theme()
 	)
 }
+
+#' @noRd
+integer_breaks <- function(n = 5) {
+	function(limits) {
+		brk <- pretty(limits, n = n)
+		brk[brk == as.integer(brk) & brk >= 1]
+	}
+}
