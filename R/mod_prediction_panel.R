@@ -45,7 +45,8 @@ mod_prediction_panel_server <- function(
 	uploaded_values = shiny::reactive(NULL),
 	output_dir = NULL,
 	hide_optional = shiny::reactive(FALSE),
-	uploaded_zip = NULL
+	uploaded_zip = NULL,
+	is_temporal = shiny::reactive(FALSE)
 ) {
 	shiny::moduleServer(id, function(input, output, session) {
 		ns <- session$ns
@@ -97,6 +98,9 @@ mod_prediction_panel_server <- function(
 					# Wrap optional fields
 					div_class <- if (!is.null(row$optional) && as.integer(row$optional) == 1) "optional_field" else NULL
 
+					# Wrap temporal fields
+					div_class_temporal <- if (isTRUE(as.integer(row$temporal_only %||% 0) == 1)) "temporal_field" else NULL
+
 					# Render specific plots or inputs
 					content <- if (row$element_type %in% c("prediction_area_plot", "geodist_plot_prediction")) {
 						render_plot(
@@ -115,7 +119,7 @@ mod_prediction_panel_server <- function(
 						)
 					}
 
-					shiny::tags$div(class = div_class, content)
+					shiny::tags$div(class = c(div_class, div_class_temporal), content)
 				})
 
 				shinyBS::bsCollapsePanel(title = subsec, do.call(shiny::tagList, inputs), style = "primary")
@@ -143,9 +147,12 @@ mod_prediction_panel_server <- function(
 		shiny::observe({
 			input[["ui_rendered"]]
 			shiny::req(o_objective_1_val() == "Model and prediction")
+			meta <- valid_geo_prediction_area_metadata()
+			temporal <- isTRUE(is_temporal()) && has_usable_time(geo_sf(meta %||% list(), "prediction_area_sf"))
+
 			render_plot_server(
 				file = "prediction_area.png",
-				valid_geo_metadata = valid_geo_prediction_area_metadata(),
+				valid_geo_metadata = meta,
 				element_id = "prediction_area",
 				objective = o_objective_1_val(),
 				uploaded_zip = uploaded_zip(),
@@ -153,13 +160,22 @@ mod_prediction_panel_server <- function(
 				ns = ns,
 				output = output,
 				plot_fn = function() {
-					geo_map(
-						output = output,
-						element_id = "prediction_area",
-						geo_metadata = valid_geo_prediction_area_metadata() %||% list(),
-						what = "prediction_area_sf",
-						output_dir = output_dir
-					)
+					if (temporal) {
+						geo_map_timesteps(
+							output = output,
+							element_id = "prediction_area",
+							geo_metadata = meta %||% list(),
+							output_dir = output_dir
+						)
+					} else {
+						geo_map(
+							output = output,
+							element_id = "prediction_area",
+							geo_metadata = meta %||% list(),
+							what = "prediction_area_sf",
+							output_dir = output_dir
+						)
+					}
 				}
 			)
 		})
@@ -167,9 +183,12 @@ mod_prediction_panel_server <- function(
 		shiny::observe({
 			input[["ui_rendered"]]
 			shiny::req(o_objective_1_val() == "Model and prediction")
+			meta <- valid_geo_all_metadata()
+			temporal <- isTRUE(is_temporal())
+
 			render_plot_server(
 				file = "geodist_prediction_area.png",
-				valid_geo_metadata = valid_geo_all_metadata(),
+				valid_geo_metadata = meta,
 				element_id = "geodist_prediction_area",
 				objective = o_objective_1_val(),
 				uploaded_zip = uploaded_zip(),
@@ -180,12 +199,40 @@ mod_prediction_panel_server <- function(
 					geodist_plot(
 						output = output,
 						element_id = "geodist_prediction_area",
-						geo_metadata = valid_geo_all_metadata() %||% list(),
+						geo_metadata = meta %||% list(),
 						objective = "Model and prediction",
-						output_dir = output_dir
+						output_dir = output_dir,
+						temporal = temporal
 					)
 				}
 			)
+		})
+
+		# Update fields based on temporal metadata of the prediction area
+		shiny::observe({
+			input[["ui_rendered"]]
+			shiny::req(prediction_data())
+			shiny::req(o_objective_1_val() == "Model and prediction")
+			df <- prediction_data()
+			meta_geo <- valid_geo_prediction_area_metadata() %||% list()
+			uploaded_df <- uploaded_values()
+
+			lapply(c("prediction_temporal_extent", "prediction_temporal_resolution"), function(element_type) {
+				element_id <- df$element_id[df$element_type == element_type]
+				if (length(element_id) != 1) {
+					return(NULL)
+				}
+
+				render_input_field_server(
+					input = input,
+					output = output,
+					session = session,
+					element_type = element_type,
+					element_id = element_id,
+					geo_metadata = meta_geo,
+					uploaded_value = get_uploaded_value(uploaded_df, element_id)
+				)
+			})
 		})
 
 		# Reactive collection of prediction input values

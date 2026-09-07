@@ -57,7 +57,7 @@ get_value <- function(uploaded_value, fallback_fn) {
 #' @param figure ggplot object.
 #' @param element_id Character ID to determine filename.
 #' @noRd
-save_figure <- function(figure, element_id, temp_dir = NULL) {
+save_figure <- function(figure, element_id, temp_dir = NULL, width = 6, height = 4) {
 	fig_dir <- file.path(temp_dir)
 	if (!dir.exists(fig_dir)) {
 		dir.create(fig_dir, recursive = TRUE)
@@ -65,7 +65,7 @@ save_figure <- function(figure, element_id, temp_dir = NULL) {
 
 	plot_path <- file.path(fig_dir, paste0(element_id, ".png"))
 
-	ggplot2::ggsave(plot_path, plot = figure, width = 6, height = 4, dpi = 300)
+	ggplot2::ggsave(plot_path, plot = figure, width = width, height = height, dpi = 300, limitsize = FALSE)
 
 	return(plot_path)
 }
@@ -227,4 +227,20 @@ resolve_design_value <- function(uploaded_value, derived_value) {
 		return(derived_value)
 	}
 	NULL
+}
+
+#' Element IDs that must not count toward the progress bars
+#'
+#' Figure captions are metadata for a plot rather than protocol answers.
+#' Mode switches always carry a default selection, so counting them would
+#' lift every bar above zero on a fresh session.
+#'
+#' @param protocol_dict Data frame of the protocol dictionary
+#' @return Character vector of element IDs
+#' @noRd
+non_progress_ids <- function(protocol_dict) {
+	if (is.null(protocol_dict) || !"element_type" %in% names(protocol_dict)) {
+		return(character(0))
+	}
+	unique(protocol_dict$element_id[protocol_dict$element_type %in% c("figure_caption", "radio")])
 }

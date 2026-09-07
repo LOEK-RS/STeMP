@@ -17,6 +17,7 @@ protocol_analyze <- function(protocol, render = TRUE) {
 	evaluation_strategy <- unname(vals["evaluation_strategy"])
 	predictor_types <- unname(vals["predictor_types"])
 	uncertainty_quantification <- unname(vals["uncertainty_quantification"])
+	temporal_sampling_design <- unname(vals["temporal_sampling_design"])
 
 	# list of possible problems:
 	# CV used for both model selection and final prediction assessment
@@ -36,6 +37,10 @@ protocol_analyze <- function(protocol, render = TRUE) {
 	# sampling_design == "clustered" + uncertainty_quantification == 'None'"
 	clustered_design_no_uncert <- sampling_design == "clustered" &&
 		(uncertainty_quantification == "None" | is.na(uncertainty_quantification))
+	# sampling design is temporally clustered but no temporal evaluation
+	temporal_clustered_no_temporal_cv <- !is.na(temporal_sampling_design) &&
+		temporal_sampling_design == "clustered" &&
+		!grepl("Temporal", validation_strategy, fixed = TRUE)
 
 	# Collect warnings
 	warnings <- list()
@@ -60,6 +65,16 @@ protocol_analyze <- function(protocol, render = TRUE) {
 			)
 		)
 		warnings <- append(warnings, warning_message)
+	}
+
+	if (isTRUE(temporal_clustered_no_temporal_cv)) {
+		warnings <- append(
+			warnings,
+			shiny::HTML(
+				"The training samples were clustered in time relative to the prediction period, but no
+				 temporally-aware evaluation strategy was reported. This might yield overly optimistic results."
+			)
+		)
 	}
 
 	if (isTRUE(random_design_spatial_Err)) {

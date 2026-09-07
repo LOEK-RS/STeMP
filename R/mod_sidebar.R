@@ -74,13 +74,17 @@ mod_sidebar_server <- function(
 		filtered_protocol_data <- shiny::reactive({
 			shiny::req(protocol_data())
 			df <- protocol_data()
-			# Keep all rows, but optionally mark optional rows
+			dict <- protocol_dict()
+
 			df$visible <- TRUE
+
 			if (isTRUE(input$hide_optional)) {
 				df$visible[df$optional == 1] <- FALSE
 			}
-			caption_ids <- protocol_dict()$element_id[protocol_dict()$element_type == "figure_caption"]
-			df$visible[df$element_id %in% caption_ids] <- FALSE
+
+			# Remove "spatio-temporal" vs "spatial" toggle and fig captions from the progress bar
+			df$visible[df$element_id %in% non_progress_ids(dict)] <- FALSE
+
 			df
 		})
 

@@ -85,6 +85,11 @@ table.dataTable tbody td {
   display: none;
 }
 
+/* Hide spatio-temporal-only fields when the model domain is purely spatial */
+.hide_temporal .temporal_field {
+  display: none !important;
+}
+
 /* Label required fields */
 .required {
 	color: #000;

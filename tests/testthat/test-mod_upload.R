@@ -124,3 +124,18 @@ test_that("Prediction area gpkg upload works", {
 		}
 	)
 })
+
+test_that("an unsupported model object yields no metadata", {
+	shiny::testServer(
+		mod_model_metadata_server,
+		args = list(input_model_object = shiny::reactive(list(a = 1))),
+		{
+			session$flushReact()
+			meta <- session$getReturned()
+
+			expect_null(meta$model_type())
+			expect_null(meta$model_algorithm())
+			expect_null(meta$num_training_samples())
+		}
+	)
+})
