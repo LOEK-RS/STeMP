@@ -7,7 +7,7 @@
 6,"Overview","o","Target variable","o_objective","Target variable","target_variable","The response variable the model aims to predict (e.g., temperature, plant biomass)","text","",0,0,0,0
 7,"Overview","o","Scientific Field","o_field","Scientific Field","scientific_field","The scientific field in which the model was developed","suggestion","Biogeosciences, Atmosphere, Oceanography, Cryosphere, Hydrology",0,0,0,0
 8,"Overview","o","Model domain","o_domain","Model domain","model_domain","Does the model operate purely in space, or in space and time? Spatio-temporal enables temporal fields and figures. Temporal information is read from a column named exactly ""time"" in the uploaded .gpkg files.","radio","Spatial, Spatio-Temporal",0,0,0,0
-9,"Model","m","Learning method","m_algorithms","Model type","model_type","Is the model developed for Regression or Classification tasks?","model_type","Regression, Classification",0,0,0,0
+9,"Model","m","Learning method","m_algorithms","Model type","model_type","Is the model developed for Regression or Classification tasks?","model_type","Regression, Classification, Object detection, Segmentation",0,0,0,0
 10,"Model","m","Learning method","m_algorithms","Algorithm","algorithm","Name of the applied algorithm","model_algorithm","",0,0,0,0
 11,"Model","m","Learning method","m_algorithms","Architecture","architecture","Outline the model's architecture (nodes, layers etc.)","text","",1,0,0,0
 12,"Model","m","Learning method","m_algorithms","Model architecture figure","architecture_figure","Upload a diagram of the model architecture (layer/block diagram, e.g. exported from Netron, PlotNeuralNet or a drawing tool). PNG or JPEG.","uploaded_figure","",1,0,0,0
