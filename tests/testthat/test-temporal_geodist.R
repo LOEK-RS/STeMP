@@ -21,23 +21,23 @@ test_that("numeric time yields no temporal geodist", {
 	fx <- temporal_fixtures()
 
 	# Each of these must return before reaching CAST::geodist().
-	expect_null(geodist_temporal_data(fx$numeric, fx$area_numeric))
-	expect_null(geodist_temporal_data(fx$posix, fx$area_numeric))
-	expect_null(geodist_temporal_data(fx$numeric, fx$area_posix))
-	expect_null(geodist_temporal_data(fx$integer_year, fx$area_posix))
+	expect_type(geodist_temporal_data(fx$numeric, fx$area_numeric), "character")
+	expect_type(geodist_temporal_data(fx$posix, fx$area_numeric), "character")
+	expect_type(geodist_temporal_data(fx$numeric, fx$area_posix), "character")
+	expect_type(geodist_temporal_data(fx$integer_year, fx$area_posix), "character")
 })
 
 test_that("unusable or too-short time yields no temporal geodist", {
 	fx <- temporal_fixtures()
 
-	expect_null(geodist_temporal_data(fx$no_time, fx$area_posix))
-	expect_null(geodist_temporal_data(fx$posix, fx$area_no_time))
-	expect_null(geodist_temporal_data(fx$unparseable, fx$area_posix))
+	expect_type(geodist_temporal_data(fx$no_time, fx$area_posix), "character")
+	expect_type(geodist_temporal_data(fx$posix, fx$area_no_time), "character")
+	expect_type(geodist_temporal_data(fx$unparseable, fx$area_posix), "character")
 
 	# has_usable_time() is TRUE here but coerce_time_column() is NULL: the gap
 	# that used to reach CAST::geodist(NULL, preddata = NULL).
 	expect_true(has_usable_time(fx$one_usable))
-	expect_null(geodist_temporal_data(fx$one_usable, fx$area_posix))
+	expect_type(geodist_temporal_data(fx$one_usable, fx$area_posix), "character")
 })
 
 test_that("date-time pairs produce a temporal geodist table", {

@@ -53,7 +53,7 @@ test_that("Sampling design is correctly derived from geo_metadata (both objectiv
 			session$flushReact()
 
 			df <- session$getReturned()$protocol_updated()
-			sd_value <- df$value[df$element == "Sampling pattern"]
+			sd_value <- df$value[df$element == "Geographical sampling pattern"]
 			expect_equal(sd_value, "clustered")
 		}
 	)
@@ -87,7 +87,7 @@ test_that("Sampling design is correctly derived from geo_metadata (both objectiv
 			session$flushReact()
 
 			df <- session$getReturned()$protocol_updated()
-			sd_value <- df$value[df$element == "Sampling pattern"]
+			sd_value <- df$value[df$element == "Geographical sampling pattern"]
 			expect_equal(sd_value, "random")
 		}
 	)
@@ -176,11 +176,69 @@ test_that("Refused distances leave the sampling design blank without erroring", 
 			expect_no_error(session$flushReact())
 
 			df <- session$getReturned()$protocol_updated()
-			sd_value <- df$value[df$element == "Sampling pattern"]
+			sd_value <- df$value[df$element == "Geographical sampling pattern"]
 
 			# Blank and editable, never the string "NULL" or a guessed answer.
 			expect_true(length(sd_value) == 0 || is.na(sd_value) || !nzchar(sd_value))
 			expect_false(isTRUE(sd_value %in% c("random", "clustered", "NULL")))
 		}
 	)
+})
+
+testthat::test_that("too many timestamps refuses the temporal side only", {
+	testthat::local_mocked_bindings(geodist_max_n = function() 100L)
+
+	s <- make_size_sf(n_locations = 20L, n_times = 300L)
+	a <- make_size_area()
+
+	expect_equal(nrow(unique_geometries(s)), 20)
+	expect_equal(nrow(unique_times(s)), 300)
+
+	expect_match(geodist_temporal_data(s, a), "Too many sample timestamps")
+	expect_null(calculate_temporal_geodist_classification(s, a))
+	expect_s3_class(geodist_geographic_data(s, a), "data.frame")
+	expect_type(calculate_geodist_classification(s, a), "character")
+})
+
+testthat::test_that("too many locations refuses the geographic side only", {
+	testthat::local_mocked_bindings(geodist_max_n = function() 100L)
+
+	s <- make_size_sf(n_locations = 300L, n_times = 24L)
+	a <- make_size_area()
+
+	expect_equal(nrow(unique_geometries(s)), 300)
+	expect_equal(nrow(unique_times(s)), 24)
+
+	expect_match(geodist_geographic_data(s, a), "Too many sample locations")
+	expect_null(calculate_geodist_classification(s, a))
+	expect_s3_class(geodist_temporal_data(s, a), "data.frame")
+	expect_type(calculate_temporal_geodist_classification(s, a), "character")
+})
+
+testthat::test_that("both dimensions can be refused at once", {
+	testthat::local_mocked_bindings(geodist_max_n = function() 100L)
+
+	s <- make_size_sf(n_locations = 300L, n_times = 300L)
+	a <- make_size_area()
+
+	geo <- geodist_geographic_data(s, a)
+	tim <- geodist_temporal_data(s, a)
+
+	expect_match(geo, "Too many sample locations")
+	expect_match(tim, "Too many sample timestamps")
+	expect_null(calculate_geodist_classification(s, a))
+	expect_null(calculate_temporal_geodist_classification(s, a))
+
+	msg <- geodist_refusal_message(geo, tim)
+	expect_match(msg, "Geographic dimension")
+	expect_match(msg, "Temporal dimension")
+	expect_match(msg, "and the <b>temporal sampling pattern</b>")
+})
+
+testthat::test_that("the refusal message names the affected dimension", {
+	expect_null(geodist_refusal_message())
+	expect_match(geodist_refusal_message(geo_reason = "x"), "Geographic dimension")
+	expect_false(grepl("Temporal", geodist_refusal_message(geo_reason = "x")))
+	expect_match(geodist_refusal_message(time_reason = "y"), "Temporal dimension")
+	expect_match(geodist_refusal_message("x", "y"), "and the <b>temporal sampling pattern</b>")
 })

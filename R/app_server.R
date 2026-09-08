@@ -83,15 +83,6 @@ app_server <- function(input, output, session) {
 		hide_optional = hide_optional
 	)
 
-	render_protocol_html <- make_protocol_html(
-		protocol_data = protocol$protocol_updated,
-		protocol_dict = protocol_data,
-		o_objective_1_val = protocol$o_objective_1,
-		output_dir = temp_dir,
-		session_token = session$token,
-		hide_optional = sidebar$hide_optional
-	)
-
 	# Render viewer from the updated protocol
 	mod_viewer_server(
 		"viewer",

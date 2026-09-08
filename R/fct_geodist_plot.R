@@ -31,28 +31,37 @@ geodist_plot <- function(
 		}
 
 		geod_geo <- geodist_geographic_data(samples_data, area_data)
+		geod_time <- if (temporal) geodist_temporal_data(samples_data, area_data) else NULL
 
-		if (!inherits(geod_geo, "data.frame")) {
+		has_geo <- inherits(geod_geo, "data.frame")
+		has_time <- inherits(geod_time, "data.frame")
+
+		# Only a refusal on every requested dimension removes the figure
+		if (!has_geo && !has_time) {
 			clear_figure(element_id, output_dir)
 			set_plot_visible(element_id, FALSE)
 			return(NULL)
 		}
 
 		set_plot_visible(element_id, TRUE)
-		p_geo <- add_log_scale_if_needed(plot(geod_geo), geod_geo)
 
-		if (!temporal) {
+		p_geo <- if (has_geo) add_log_scale_if_needed(plot(geod_geo), geod_geo) else NULL
+		p_time <- if (has_time) add_log_scale_if_needed(plot(geod_time), geod_time) else NULL
+
+		# Single panel: whichever dimension was computed
+		if (!has_time) {
 			p <- p_geo + ggplot2::theme(aspect.ratio = 0.8)
+			if (temporal) {
+				p <- p + ggplot2::ggtitle("Geographic space")
+			}
 			save_figure(p, element_id, output_dir)
 			return(p)
 		}
 
-		geod_time <- geodist_temporal_data(samples_data, area_data)
-
-		if (!inherits(geod_time, "data.frame")) {
-			# Geographic panel is still valid; the temporal refusal is reported
-			# through the warnings module.
-			p <- p_geo + ggplot2::theme(aspect.ratio = 0.8)
+		if (!has_geo) {
+			p <- p_time +
+				ggplot2::ggtitle("Temporal space") +
+				ggplot2::theme(aspect.ratio = 0.8)
 			save_figure(p, element_id, output_dir)
 			return(p)
 		}
@@ -108,11 +117,13 @@ geodist_geographic_data <- function(samples_sf, area_sf, max_n = geodist_max_n()
 	}
 
 	samples_geo <- sf::st_transform(samples_geo, sf::st_crs(area_geo))
-	set.seed(100)
-	CAST::geodist(
-		samples_geo,
-		modeldomain = area_geo,
-		dist_fun = infer_distfun(samples_geo)
+	with_stable_seed(
+		100,
+		CAST::geodist(
+			samples_geo,
+			modeldomain = area_geo,
+			dist_fun = infer_distfun(samples_geo)
+		)
 	)
 }
 
@@ -143,12 +154,14 @@ geodist_temporal_data <- function(samples_sf, area_sf, max_n = geodist_max_n()) 
 		return(reason)
 	}
 
-	set.seed(100)
-	CAST::geodist(
-		samples_time,
-		preddata = area_time,
-		dist_space = "time",
-		time_var = stemp_time_column()
+	with_stable_seed(
+		100,
+		CAST::geodist(
+			samples_time,
+			preddata = area_time,
+			dist_space = "time",
+			time_var = stemp_time_column()
+		)
 	)
 }
 
@@ -175,6 +188,34 @@ geodist_size_reason <- function(x, max_n, what) {
 		what,
 		format(nrow(x), big.mark = ","),
 		format(max_n, big.mark = ",")
+	)
+}
+
+#' Compose the refusal notice for one or both dimensions
+#'
+#' @param geo_reason,time_reason Reason strings, or NULL when that dimension
+#'   was computed successfully.
+#' @return An HTML string, or NULL when nothing was refused.
+#' @noRd
+geodist_refusal_message <- function(geo_reason = NULL, time_reason = NULL) {
+	parts <- c(
+		if (!is.null(geo_reason)) paste0("<b>Geographic dimension</b>: ", geo_reason),
+		if (!is.null(time_reason)) paste0("<b>Temporal dimension</b>: ", time_reason)
+	)
+	if (length(parts) == 0) {
+		return(NULL)
+	}
+
+	fields <- c(
+		if (!is.null(geo_reason)) "<b>geographic sampling pattern</b>",
+		if (!is.null(time_reason)) "<b>temporal sampling pattern</b>"
+	)
+
+	paste0(
+		paste(parts, collapse = "<br/>"),
+		"<br/>Please select the ",
+		paste(fields, collapse = " and the "),
+		" manually."
 	)
 }
 

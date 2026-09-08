@@ -183,49 +183,46 @@ mod_create_protocol_server <- function(
 			)
 		})
 
-		geodist_sel <- shiny::reactive(classify_geodist(geo_distances()))
-		temporal_geodist_sel <- shiny::reactive(classify_geodist(time_distances()))
+		# NULL = nothing was computed (no upload yet, no matching area) -> leave the field as the user left it
+		# "" = computed, but no verdict (refused, or too few distances) -> actively clear, so a value derived from an earlier dataset is removed
+		geodist_sel <- shiny::reactive({
+			d <- geo_distances()
+			if (is.null(d)) {
+				return(NULL)
+			}
+			classify_geodist(d) %||% ""
+		})
 
-		# The distance calculation was declined. Reported here rather than in
-		# mod_warnings, which is about modelling properties rather than what the
-		# app was able to compute.
-		shiny::observeEvent(
-			geo_distances(),
-			{
-				g <- geo_distances()
-				if (!is.character(g)) {
-					shiny::removeNotification("geodist_refused")
-					return(NULL)
-				}
-				shiny::showNotification(
-					ui = shiny::HTML(paste0(g, " Please select the <b>sampling pattern</b> manually.")),
-					type = "warning",
-					duration = NULL,
-					id = "geodist_refused"
-				)
-			},
-			ignoreNULL = FALSE
-		)
+		temporal_geodist_sel <- shiny::reactive({
+			d <- time_distances()
+			if (is.null(d)) {
+				return(NULL)
+			}
+			classify_geodist(d) %||% ""
+		})
 
-		shiny::observeEvent(
-			time_distances(),
-			{
-				g <- time_distances()
-				# "No usable 'time' column" is already covered by no_time_warning.
-				# TODO: string match is fragile; give the data functions a typed reason.
-				if (!is.character(g) || startsWith(g, "No usable")) {
-					shiny::removeNotification("temporal_geodist_refused")
-					return(NULL)
-				}
-				shiny::showNotification(
-					ui = shiny::HTML(paste0(g, " Please select the <b>temporal sampling pattern</b> manually.")),
-					type = "warning",
-					duration = NULL,
-					id = "temporal_geodist_refused"
-				)
-			},
-			ignoreNULL = FALSE
-		)
+		# Warning message if the uploaded dataset was too large
+		shiny::observe({
+			geo <- geo_distances()
+			tim <- time_distances()
+
+			geo_reason <- if (is.character(geo)) geo else NULL
+			time_reason <- if (is.character(tim) && !startsWith(tim, "No usable")) tim else NULL
+
+			msg <- geodist_refusal_message(geo_reason, time_reason)
+
+			if (is.null(msg)) {
+				shiny::removeNotification("geodist_refused")
+				return(NULL)
+			}
+
+			shiny::showNotification(
+				ui = shiny::HTML(msg),
+				type = "warning",
+				duration = NULL,
+				id = "geodist_refused"
+			)
+		})
 
 		# 4) Initialize Prediction panel submodule
 		prediction_results <- mod_prediction_panel_server(
