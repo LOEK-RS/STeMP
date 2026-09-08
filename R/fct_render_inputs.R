@@ -302,6 +302,8 @@ render_select_input_design_server <- function(
 	geodist_sel = shiny::reactive(NULL),
 	uploaded_value = shiny::reactive(NULL)
 ) {
+	last_pushed <- shiny::reactiveVal(NULL)
+
 	shiny::observe({
 		# Re-apply after the collapse UI has been re-rendered
 		input[["ui_rendered"]]
@@ -313,12 +315,20 @@ render_select_input_design_server <- function(
 
 		selected_val <- resolve_design_value(uploaded_value(), geodist_sel())
 		if (is.null(selected_val)) {
+			previous <- last_pushed()
+			if (!is.null(previous) && nzchar(previous)) {
+				shinyjs::delay(100, {
+					shiny::updateSelectInput(session, inputId = id, selected = "")
+				})
+				last_pushed("")
+			}
 			return(invisible(NULL))
 		}
 
 		shinyjs::delay(100, {
 			shiny::updateSelectInput(session, inputId = id, selected = selected_val)
 		})
+		last_pushed(selected_val)
 	})
 }
 
