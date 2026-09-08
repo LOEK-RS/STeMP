@@ -302,23 +302,57 @@ render_select_input_design_server <- function(
 	geodist_sel = shiny::reactive(NULL),
 	uploaded_value = shiny::reactive(NULL)
 ) {
+	last_pushed <- shiny::reactiveVal(NULL)
+
+	## "geodist" | "uploaded" | "neither" — whichever source most recently
+	## provided a valid value determines the winner when both are present.
+	last_source <- shiny::reactiveVal("neither")
+
 	shiny::observe({
-		# Re-apply after the collapse UI has been re-rendered
+		val <- geodist_sel()
+		if (!is.null(val) && length(val) == 1L && !is.na(val)) {
+			last_source("geodist")
+		}
+	})
+
+	shiny::observe({
+		val <- uploaded_value()
+		if (has_value(val)) {
+			last_source("uploaded")
+		}
+	})
+
+	shiny::observe({
 		input[["ui_rendered"]]
+		geodist_sel()
+		uploaded_value()
 
 		id <- element_id()
 		if (is.null(id)) {
 			return(invisible(NULL))
 		}
 
-		selected_val <- resolve_design_value(uploaded_value(), geodist_sel())
+		selected_val <- resolve_design_value(
+			uploaded_value = uploaded_value(),
+			derived_value = geodist_sel(),
+			prefer_uploaded = last_source() == "uploaded"
+		)
+
 		if (is.null(selected_val)) {
+			previous <- last_pushed()
+			if (!is.null(previous) && nzchar(previous)) {
+				shinyjs::delay(100, {
+					shiny::updateSelectInput(session, inputId = id, selected = "")
+				})
+				last_pushed("")
+			}
 			return(invisible(NULL))
 		}
 
 		shinyjs::delay(100, {
 			shiny::updateSelectInput(session, inputId = id, selected = selected_val)
 		})
+		last_pushed(selected_val)
 	})
 }
 

@@ -210,23 +210,29 @@ get_value <- function(uploaded_value, fallback_fn) {
 	}
 }
 
-#' Resolve the sampling design value to apply to the select input
+#' Resolve the value for a sampling-design select input
 #'
-#' Precedence: uploaded protocol value, then the automatically derived value.
-#' Returns NULL when neither is available, which refers to the current selection.
-#'
-#' @param uploaded_value Value from an uploaded protocol CSV, or NULL
-#' @param derived_value Value from calculate_geodist_classification(), or NULL
-#' @return A character scalar, or NULL
+#' @param uploaded_value Value from an uploaded protocol; wins when present.
+#' @param derived_value Value derived from the geodist classification.
+#'   `NULL` means nothing was computed (leave the field untouched); `""` means
+#'   computed without a verdict (clear the field, so a value derived from an
+#'   earlier dataset cannot survive).
+#' @return The value to select, or `NULL` to skip the update.
 #' @noRd
-resolve_design_value <- function(uploaded_value, derived_value) {
-	if (has_value(uploaded_value)) {
-		return(uploaded_value)
+resolve_design_value <- function(uploaded_value, derived_value, prefer_uploaded = FALSE) {
+	has_derived <- !is.null(derived_value) && length(derived_value) == 1L && !is.na(derived_value)
+	has_uploaded <- has_value(uploaded_value)
+
+	if (has_derived && has_uploaded) {
+		return(if (isTRUE(prefer_uploaded)) uploaded_value else derived_value)
 	}
-	if (has_value(derived_value)) {
+	if (has_derived) {
 		return(derived_value)
 	}
-	NULL
+	if (has_uploaded) {
+		return(uploaded_value)
+	}
+	return(NULL)
 }
 
 #' Element IDs that must not count toward the progress bars
@@ -243,4 +249,25 @@ non_progress_ids <- function(protocol_dict) {
 		return(character(0))
 	}
 	unique(protocol_dict$element_id[protocol_dict$element_type %in% c("figure_caption", "radio")])
+}
+
+#' Run an expression under a fixed RNG seed without leaking state
+#'
+#' Restores `.Random.seed` afterwards so seeding CAST's internal
+#' prediction-point sampling doesn't perturb the global RNG stream.
+#' @noRd
+with_stable_seed <- function(seed, expr) {
+	if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+		old <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+		on.exit(assign(".Random.seed", old, envir = .GlobalEnv), add = TRUE)
+	} else {
+		on.exit(
+			if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+				rm(".Random.seed", envir = .GlobalEnv)
+			},
+			add = TRUE
+		)
+	}
+	set.seed(seed)
+	expr
 }

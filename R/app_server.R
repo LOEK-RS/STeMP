@@ -37,58 +37,50 @@ app_server <- function(input, output, session) {
 		prediction_area = upload_mod$prediction_area
 	)
 
+	# forward references: sidebar, protocol and the HTML renderer are mutually dependent.
+	# These wrappers defer each lookup until the reactive is read,
+	# by which point all three are bound in this environment.
+	protocol_updated <- shiny::reactive(protocol$protocol_updated())
+	o_objective_1_val <- shiny::reactive(protocol$o_objective_1())
+	hide_optional <- shiny::reactive(sidebar$hide_optional())
+	show_warnings <- shiny::reactive(sidebar$show_warnings())
+	uploaded_csv <- shiny::reactive(sidebar$csv())
+	uploaded_zip <- shiny::reactive(sidebar$zip())
+	csv_deleted <- shiny::reactive(is.null(sidebar$csv()))
+
 	# Render HTML used for downloading a PDF and for previewing the protocol
 	render_protocol_html <- make_protocol_html(
-		protocol_data = protocol$protocol_updated,
+		protocol_data = protocol_updated,
 		protocol_dict = protocol_data,
-		o_objective_1_val = protocol$o_objective_1,
+		o_objective_1_val = o_objective_1_val,
 		output_dir = temp_dir,
 		session_token = session$token,
-		hide_optional = sidebar$hide_optional
+		hide_optional = hide_optional
 	)
 
 	# Initialize sidebar module with updated protocol data
 	sidebar <- mod_sidebar_server(
 		"sidebar",
-		protocol_data = protocol$protocol_updated,
+		protocol_data = protocol_updated,
 		protocol_dict = protocol_data,
-		o_objective_1_val = protocol$o_objective_1,
+		o_objective_1_val = o_objective_1_val,
 		output_dir = temp_dir,
 		generate_html = render_protocol_html
-	)
-
-	csv_deleted <- shiny::reactive({
-		is.null(sidebar$csv())
-	})
-
-	# Initialize protocol creation module
-	protocol <- mod_create_protocol_server(
-		"protocol",
-		protocol_data = protocol_data,
-		uploaded_csv = sidebar$csv,
-		uploaded_zip = sidebar$zip,
-		model_metadata = model_metadata,
-		geo_metadata = geo_metadata,
-		output_dir = temp_dir,
-		model_deleted = model_deleted,
-		csv_deleted = csv_deleted,
-		show_warnings = shiny::reactive(FALSE),
-		hide_optional = shiny::reactive(FALSE)
 	)
 
 	# Initialize protocol creation module and give it the hide_optional reactive so submodules can toggle visibility
 	protocol <- mod_create_protocol_server(
 		"protocol",
 		protocol_data = protocol_data,
-		uploaded_csv = sidebar$csv,
-		uploaded_zip = sidebar$zip,
+		uploaded_csv = uploaded_csv,
+		uploaded_zip = uploaded_zip,
 		model_metadata = model_metadata,
 		geo_metadata = geo_metadata,
 		output_dir = temp_dir,
 		model_deleted = model_deleted,
 		csv_deleted = csv_deleted,
-		show_warnings = sidebar$show_warnings,
-		hide_optional = sidebar$hide_optional
+		show_warnings = show_warnings,
+		hide_optional = hide_optional
 	)
 
 	# Render viewer from the updated protocol

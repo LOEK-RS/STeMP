@@ -31,20 +31,37 @@ geodist_plot <- function(
 		}
 
 		geod_geo <- geodist_geographic_data(samples_data, area_data)
-		p_geo <- add_log_scale_if_needed(plot(geod_geo), geod_geo)
+		geod_time <- if (temporal) geodist_temporal_data(samples_data, area_data) else NULL
 
-		if (!temporal) {
+		has_geo <- inherits(geod_geo, "data.frame")
+		has_time <- inherits(geod_time, "data.frame")
+
+		# Only a refusal on every requested dimension removes the figure
+		if (!has_geo && !has_time) {
+			clear_figure(element_id, output_dir)
+			set_plot_visible(element_id, FALSE)
+			return(NULL)
+		}
+
+		set_plot_visible(element_id, TRUE)
+
+		p_geo <- if (has_geo) add_log_scale_if_needed(plot(geod_geo), geod_geo) else NULL
+		p_time <- if (has_time) add_log_scale_if_needed(plot(geod_time), geod_time) else NULL
+
+		# Single panel: whichever dimension was computed
+		if (!has_time) {
 			p <- p_geo + ggplot2::theme(aspect.ratio = 0.8)
+			if (temporal) {
+				p <- p + ggplot2::ggtitle("Geographic space")
+			}
 			save_figure(p, element_id, output_dir)
 			return(p)
 		}
 
-		geod_time <- geodist_temporal_data(samples_data, area_data)
-
-		if (is.null(geod_time)) {
-			p <- p_geo +
-				ggplot2::theme(aspect.ratio = 0.8) +
-				ggplot2::labs(caption = "No usable 'time' column found, temporal panel omitted.")
+		if (!has_geo) {
+			p <- p_time +
+				ggplot2::ggtitle("Temporal space") +
+				ggplot2::theme(aspect.ratio = 0.8)
 			save_figure(p, element_id, output_dir)
 			return(p)
 		}
@@ -82,16 +99,31 @@ geodist_plot <- function(
 #' Geometries are deduplicated first: with repeated observations at the same
 #' location the sample-to-sample distribution would otherwise collapse onto zero.
 #' @noRd
-geodist_geographic_data <- function(samples_sf, area_sf) {
-	samples_sf <- sf::st_transform(samples_sf, sf::st_crs(area_sf))
-
+geodist_geographic_data <- function(samples_sf, area_sf, max_n = geodist_max_n()) {
 	samples_geo <- unique_geometries(samples_sf)
 	area_geo <- unique_geometries(area_sf)
 
-	CAST::geodist(
-		samples_geo,
-		modeldomain = area_geo,
-		dist_fun = infer_distfun(samples_geo)
+	if (nrow(samples_geo) < 2 || nrow(area_geo) < 1) {
+		# one polygon area is valid
+		return("Not enough distinct locations to compute distance distributions.")
+	}
+
+	reason <- geodist_size_reason(samples_geo, max_n, "sample locations")
+	if (is.null(reason) && all(sf::st_geometry_type(area_geo) %in% c("POINT", "MULTIPOINT"))) {
+		reason <- geodist_size_reason(area_geo, max_n, "prediction locations")
+	}
+	if (!is.null(reason)) {
+		return(reason)
+	}
+
+	samples_geo <- sf::st_transform(samples_geo, sf::st_crs(area_geo))
+	with_stable_seed(
+		100,
+		CAST::geodist(
+			samples_geo,
+			modeldomain = area_geo,
+			dist_fun = infer_distfun(samples_geo)
+		)
 	)
 }
 
@@ -99,20 +131,124 @@ geodist_geographic_data <- function(samples_sf, area_sf) {
 #'
 #' Returns NULL when either side lacks at least two parseable timestamps.
 #' @noRd
-geodist_temporal_data <- function(samples_sf, area_sf) {
+geodist_temporal_data <- function(samples_sf, area_sf, max_n = geodist_max_n()) {
 	samples_time <- coerce_time_column(samples_sf)
 	area_time <- coerce_time_column(area_sf)
 
 	if (is.null(samples_time) || is.null(area_time)) {
+		return("No usable 'time' column found.")
+	}
+
+	samples_time <- unique_times(samples_time)
+	area_time <- unique_times(area_time)
+
+	if (nrow(samples_time) < 2 || nrow(area_time) < 2) {
+		return("Not enough distinct timestamps to compute distance distributions.")
+	}
+
+	reason <- geodist_size_reason(samples_time, max_n, "sample timestamps")
+	if (is.null(reason)) {
+		reason <- geodist_size_reason(area_time, max_n, "prediction timestamps")
+	}
+	if (!is.null(reason)) {
+		return(reason)
+	}
+
+	with_stable_seed(
+		100,
+		CAST::geodist(
+			samples_time,
+			preddata = area_time,
+			dist_space = "time",
+			time_var = stemp_time_column()
+		)
+	)
+}
+
+#' Maximum feature count CAST::geodist can handle
+#'
+#' CAST computes nearest-neighbour distances from a full N x N matrix, so
+#' memory grows as N^2: 10,000 features need ~800 MB, 419,000 need ~1.3 TB.
+#' @noRd
+geodist_max_n <- function() {
+	n <- tryCatch(get_golem_config("max_geodist_n"), error = function(e) NULL)
+	if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 2) 10000L else as.integer(n)
+}
+
+#' Refuse a geodist calculation that would exhaust memory
+#'
+#' Returns NULL when the layer fits, or a reason string when it does not.
+#' @noRd
+geodist_size_reason <- function(x, max_n, what) {
+	if (is.null(x) || nrow(x) <= max_n) {
+		return(NULL)
+	}
+	sprintf(
+		"Too many %s (%s distinct, limit %s) to compute distance distributions.",
+		what,
+		format(nrow(x), big.mark = ","),
+		format(max_n, big.mark = ",")
+	)
+}
+
+#' Compose the refusal notice for one or both dimensions
+#'
+#' @param geo_reason,time_reason Reason strings, or NULL when that dimension
+#'   was computed successfully.
+#' @return An HTML string, or NULL when nothing was refused.
+#' @noRd
+geodist_refusal_message <- function(geo_reason = NULL, time_reason = NULL) {
+	parts <- c(
+		if (!is.null(geo_reason)) paste0("<b>Geographic dimension</b>: ", geo_reason),
+		if (!is.null(time_reason)) paste0("<b>Temporal dimension</b>: ", time_reason)
+	)
+	if (length(parts) == 0) {
 		return(NULL)
 	}
 
-	CAST::geodist(
-		samples_time,
-		preddata = area_time,
-		dist_space = "time",
-		time_var = stemp_time_column()
+	fields <- c(
+		if (!is.null(geo_reason)) "<b>geographic sampling pattern</b>",
+		if (!is.null(time_reason)) "<b>temporal sampling pattern</b>"
 	)
+
+	paste0(
+		paste(parts, collapse = "<br/>"),
+		"<br/>Please select the ",
+		paste(fields, collapse = " and the "),
+		" manually."
+	)
+}
+
+#' Remove a previously written figure
+#'
+#' A refused calculation must not leave the PNG from an earlier upload on
+#' disk: the report and ZIP pipelines pick up whatever file is there.
+#' @noRd
+clear_figure <- function(element_id, output_dir) {
+	f <- file.path(output_dir, paste0(element_id, ".png"))
+	if (file.exists(f)) {
+		unlink(f)
+	}
+	invisible(NULL)
+}
+
+#' Show or hide a plot's container
+#'
+#' renderPlot() returning NULL still leaves an empty panel, so the wrapper
+#' created by render_plot() is hidden outright.
+#' @noRd
+set_plot_visible <- function(element_id, visible) {
+	domain <- shiny::getDefaultReactiveDomain()
+	if (is.null(domain)) {
+		return(invisible(NULL))
+	}
+	sel <- paste0("#", domain$ns(paste0(element_id, "_field")))
+	if (isTRUE(visible)) {
+		shinyjs::removeClass(selector = sel, class = "hide_plot_field")
+	} else {
+		shinyjs::addClass(selector = sel, class = "hide_plot_field")
+	}
+	invisible(NULL)
 }
 
 #' Apply a log x-scale when the two distributions are orders of magnitude apart

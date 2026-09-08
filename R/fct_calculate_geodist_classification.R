@@ -1,32 +1,11 @@
-#' Calculate Geodistance Classification
+#' Classify a geodist result as "random" or "clustered"
 #'
-#' @param samples_sf sf object of sample locations.
-#' @param area_sf sf object of spatial area.
-#' @return Character classification "random" or "clustered".
+#' @param geod A CAST::geodist data frame, or a reason string when the
+#'   distances could not be computed.
+#' @return "random", "clustered", or NULL.
 #' @noRd
-calculate_geodist_classification <- function(samples_sf, area_sf) {
-	samples_sf <- sf::st_transform(samples_sf, sf::st_crs(area_sf))
-
-	dist_fun <- infer_distfun(samples_sf)
-	geod <- CAST::geodist(samples_sf, modeldomain = area_sf, dist_fun = dist_fun)
-
-	Gj <- geod[geod$what == "sample-to-sample", ]$dist
-	Gij <- geod[geod$what == "prediction-to-sample", ]$dist
-
-	testks <- suppressWarnings(stats::ks.test(Gj, Gij, alternative = "greater"))
-	if (testks$p.value >= 0.05) "random" else "clustered"
-}
-
-#' Calculate Temporal Geodistance Classification
-#'
-#' Temporal counterpart of calculate_geodist_classification(). Returns NULL
-#' when either side lacks a usable time column.
-#'
-#' @return "random", "clustered", or NULL
-#' @noRd
-calculate_temporal_geodist_classification <- function(samples_sf, area_sf) {
-	geod <- geodist_temporal_data(samples_sf, area_sf)
-	if (is.null(geod)) {
+classify_geodist <- function(geod) {
+	if (!inherits(geod, "data.frame")) {
 		return(NULL)
 	}
 
@@ -41,6 +20,13 @@ calculate_temporal_geodist_classification <- function(samples_sf, area_sf) {
 	if (testks$p.value >= 0.05) "random" else "clustered"
 }
 
+calculate_geodist_classification <- function(samples_sf, area_sf) {
+	classify_geodist(geodist_geographic_data(samples_sf, area_sf))
+}
+
+calculate_temporal_geodist_classification <- function(samples_sf, area_sf) {
+	classify_geodist(geodist_temporal_data(samples_sf, area_sf))
+}
 
 #' Infer distance function from input.
 #' Can be removed when PR #167 is merged in CAST

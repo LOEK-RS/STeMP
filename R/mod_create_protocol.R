@@ -129,55 +129,99 @@ mod_create_protocol_server <- function(
 			)
 		})
 
-		# 3) Reactive selection classification based on geographic metadata and modeling objective
-		geodist_sel <- shiny::reactive({
+		# 3) Distance distributions, and the classification derived from them.
+		# Held as reactives so the refusal reason can be reported without recomputing
+		geo_distances <- shiny::reactive({
 			shiny::req(overview$o_objective_1())
-
 			obj <- overview$o_objective_1()
 
-			# Gate first
-			if (!geo_metadata$has_samples()) {
+			if (!isTRUE(geo_metadata$has_samples())) {
 				return(NULL)
 			}
 
-			if (obj == "Model only") {
-				if (!geo_metadata$has_training_area()) {
+			area_sf <- if (obj == "Model only") {
+				if (!isTRUE(geo_metadata$has_training_area())) {
 					return(NULL)
 				}
-				samples_sf <- geo_metadata$samples_sf()
-				area_sf <- geo_metadata$training_area_sf()
+				geo_metadata$training_area_sf()
 			} else if (obj == "Model and prediction") {
-				if (!geo_metadata$has_prediction_area()) {
+				if (!isTRUE(geo_metadata$has_prediction_area())) {
 					return(NULL)
 				}
-				samples_sf <- geo_metadata$samples_sf()
-				area_sf <- geo_metadata$prediction_area_sf()
+				geo_metadata$prediction_area_sf()
 			} else {
-				stop("Unsupported objective for geodist calculation")
+				return(NULL)
 			}
 
-			calculate_geodist_classification(samples_sf, area_sf)
+			tryCatch(
+				geodist_geographic_data(geo_metadata$samples_sf(), area_sf),
+				error = function(e) paste("Geographical distance calculation failed:", conditionMessage(e))
+			)
 		})
 
-		temporal_geodist_sel <- shiny::reactive({
+		time_distances <- shiny::reactive({
 			shiny::req(overview$o_objective_1())
-			if (!isTRUE(overview$is_temporal()) || !geo_metadata$has_samples()) {
+			if (!isTRUE(overview$is_temporal()) || !isTRUE(geo_metadata$has_samples())) {
 				return(NULL)
 			}
 
 			area_sf <- if (overview$o_objective_1() == "Model only") {
-				if (!geo_metadata$has_training_area()) {
+				if (!isTRUE(geo_metadata$has_training_area())) {
 					return(NULL)
 				}
 				geo_metadata$training_area_sf()
 			} else {
-				if (!geo_metadata$has_prediction_area()) {
+				if (!isTRUE(geo_metadata$has_prediction_area())) {
 					return(NULL)
 				}
 				geo_metadata$prediction_area_sf()
 			}
 
-			calculate_temporal_geodist_classification(geo_metadata$samples_sf(), area_sf)
+			tryCatch(
+				geodist_temporal_data(geo_metadata$samples_sf(), area_sf),
+				error = function(e) paste("Temporal distance calculation failed:", conditionMessage(e))
+			)
+		})
+
+		# NULL = nothing was computed (no upload yet, no matching area) -> leave the field as the user left it
+		# "" = computed, but no verdict (refused, or too few distances) -> actively clear, so a value derived from an earlier dataset is removed
+		geodist_sel <- shiny::reactive({
+			d <- geo_distances()
+			if (is.null(d)) {
+				return(NULL)
+			}
+			classify_geodist(d) %||% ""
+		})
+
+		temporal_geodist_sel <- shiny::reactive({
+			d <- time_distances()
+			if (is.null(d)) {
+				return(NULL)
+			}
+			classify_geodist(d) %||% ""
+		})
+
+		# Warning message if the uploaded dataset was too large
+		shiny::observe({
+			geo <- geo_distances()
+			tim <- time_distances()
+
+			geo_reason <- if (is.character(geo)) geo else NULL
+			time_reason <- if (is.character(tim) && !startsWith(tim, "No usable")) tim else NULL
+
+			msg <- geodist_refusal_message(geo_reason, time_reason)
+
+			if (is.null(msg)) {
+				shiny::removeNotification("geodist_refused")
+				return(NULL)
+			}
+
+			shiny::showNotification(
+				ui = shiny::HTML(msg),
+				type = "warning",
+				duration = NULL,
+				id = "geodist_refused"
+			)
 		})
 
 		# 4) Initialize Prediction panel submodule
@@ -241,7 +285,7 @@ mod_create_protocol_server <- function(
 			}
 
 			model_type <- model_df[model_df$element_id == "model_type", "value"]
-			if (is.null(model_type) || model_type == "" || is.na(model_type)) {
+			if (length(model_type) != 1 || is.na(model_type) || model_type == "") {
 				# Do nothing
 			} else if (model_type == "Classification") {
 				protocol_data_df <- protocol_data()

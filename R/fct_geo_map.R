@@ -25,6 +25,11 @@ geo_map <- function(
 			return(NULL)
 		}
 
+		# Remove duplicated geometries
+		if (all(sf::st_geometry_type(samples_data) == "POINT")) {
+			samples_data <- unique_geometries(samples_data)
+		}
+
 		p <- ggplot2::ggplot() +
 			ggplot2::geom_sf(data = samples_data) +
 			map_axis_style(1)
@@ -106,15 +111,16 @@ geo_map_timesteps <- function(output, element_id, geo_metadata = NULL, output_di
 		}
 
 		all_steps <- sort(unique(times))
-		area_data$time_step <- factor(format(times), levels = format(all_steps))
 
 		subtitle <- NULL
+		keep_steps <- all_steps
 		if (length(all_steps) > max_facets) {
-			kept <- format(all_steps[round(seq(1, length(all_steps), length.out = max_facets))])
-			area_data <- area_data[as.character(area_data$time_step) %in% kept, , drop = FALSE]
-			area_data$time_step <- droplevels(area_data$time_step)
+			keep_steps <- all_steps[round(seq(1, length(all_steps), length.out = max_facets))]
 			subtitle <- sprintf("Showing %d of %d time steps", max_facets, length(all_steps))
 		}
+
+		area_data <- area_data[times %in% keep_steps, , drop = FALSE]
+		area_data$time_step <- factor(format(times[times %in% keep_steps]), levels = format(keep_steps))
 
 		n_facets <- nlevels(area_data$time_step)
 		n_col <- min(3L, ceiling(sqrt(n_facets)))
