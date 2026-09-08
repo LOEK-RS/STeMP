@@ -219,14 +219,20 @@ get_value <- function(uploaded_value, fallback_fn) {
 #'   earlier dataset cannot survive).
 #' @return The value to select, or `NULL` to skip the update.
 #' @noRd
-resolve_design_value <- function(uploaded_value, derived_value) {
-	if (has_value(uploaded_value)) {
+resolve_design_value <- function(uploaded_value, derived_value, prefer_uploaded = FALSE) {
+	has_derived <- !is.null(derived_value) && length(derived_value) == 1L && !is.na(derived_value)
+	has_uploaded <- has_value(uploaded_value)
+
+	if (has_derived && has_uploaded) {
+		return(if (isTRUE(prefer_uploaded)) uploaded_value else derived_value)
+	}
+	if (has_derived) {
+		return(derived_value)
+	}
+	if (has_uploaded) {
 		return(uploaded_value)
 	}
-	if (is.null(derived_value) || length(derived_value) != 1L || is.na(derived_value)) {
-		return(NULL)
-	}
-	derived_value
+	return(NULL)
 }
 
 #' Element IDs that must not count toward the progress bars
