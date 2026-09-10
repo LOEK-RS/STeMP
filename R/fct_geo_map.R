@@ -1,3 +1,18 @@
+#' Build the overview map for one sf layer
+#' @noRd
+geo_map_plot <- function(x) {
+	# Repeated observations at one location would otherwise overplot
+	if (all(sf::st_geometry_type(x) == "POINT")) {
+		x <- unique_geometries(x)
+	}
+
+	ctx <- context_layer(x)
+	ggplot2::ggplot() +
+		ctx +
+		sf_overlay(x) +
+		map_axis_style(1, limits = if (is.null(ctx)) NULL else context_limits(x))
+}
+
 #' Render a geographical map plot to Output
 #'
 #' @param output Shiny output object.
@@ -15,25 +30,12 @@ geo_map <- function(
 	what <- match.arg(what)
 
 	output[[element_id]] <- shiny::renderPlot({
-		samples_data <- tryCatch(
-			geo_metadata[[what]](),
-			error = function(e) NULL
-		)
-
-		# Skip plot if no data
-		if (is.null(samples_data) || !inherits(samples_data, "sf") || nrow(samples_data) == 0) {
+		d <- tryCatch(geo_metadata[[what]](), error = function(e) NULL)
+		if (is.null(d) || !inherits(d, "sf") || nrow(d) == 0) {
 			return(NULL)
 		}
 
-		# Remove duplicated geometries
-		if (all(sf::st_geometry_type(samples_data) == "POINT")) {
-			samples_data <- unique_geometries(samples_data)
-		}
-
-		p <- ggplot2::ggplot() +
-			ggplot2::geom_sf(data = samples_data) +
-			map_axis_style(1)
-
+		p <- geo_map_plot(d)
 		save_figure(p, element_id, output_dir)
 		p
 	})
@@ -42,9 +44,7 @@ geo_map <- function(
 #' Map of Distinct Locations Coloured by Observation Count
 #'
 #' Few distinct counts become discrete classes, a heavily skewed range a log
-#' scale, anything else a linear scale with integer breaks. The legend is
-#' horizontal and below the panel, because it is the only legend in the
-#' composed figure and sits under the map it belongs to.
+#' scale, anything else a linear scale with integer breaks.
 #'
 #' @param counts sf object as returned by `count_sample_repetitions()`.
 #' @noRd
@@ -65,11 +65,12 @@ location_repetition_plot <- function(counts) {
 		colour_scale <- ggplot2::scale_colour_viridis_c(name = legend_name, breaks = integer_breaks())
 	}
 
+	ctx <- context_layer(counts)
 	ggplot2::ggplot() +
-		ggplot2::geom_sf(data = counts, ggplot2::aes(colour = colour_value)) +
+		ctx +
+		ggplot2::geom_sf(data = counts, ggplot2::aes(colour = colour_value), size = 1.6) +
 		colour_scale +
-		map_axis_style(1) +
-		# ggplot2 switches the guide to horizontal on its own for a bottom legend
+		map_axis_style(1, limits = if (is.null(ctx)) NULL else context_limits(counts)) +
 		ggplot2::theme(
 			legend.position = "bottom",
 			legend.title.position = "top",
@@ -80,18 +81,13 @@ location_repetition_plot <- function(counts) {
 #' Frequency of Observations over Time
 #'
 #' Temporal counterpart of `location_repetition_plot()`: bar height is the
-#' number of observations at a time stamp. Deliberately unmapped -- a location
-#' contributes at most one record per time stamp in all but malformed data, so
-#' any count-based colour would merely restate the bar height.
+#' number of observations at a time stamp.
 #'
 #' @param counts Data frame as returned by `count_time_repetitions()`.
 #' @noRd
 time_frequency_plot <- function(counts) {
 	time <- n_obs <- NULL # silence R CMD check on the aes() NSE
 
-	# geom_col() derives its width from the data resolution, which on a POSIXct
-	# axis is one second and therefore invisible. The median spacing is used
-	# instead; a single time stamp falls back to a nominal day.
 	step <- if (nrow(counts) > 1) stats::median(diff(as.numeric(counts$time))) else 86400
 	bar_width <- max(step * 0.8, 1)
 
@@ -155,8 +151,6 @@ geo_map_repetitions <- function(
 			return(p_map)
 		}
 
-		# coord_sf() pins the map panel's shape, so the bar chart is given the
-		# same ratio rather than the map being distorted to match it.
 		aspect <- map_panel_aspect(counts) %||% 0.8
 
 		p_freq <- time_frequency_plot(time_counts) +
@@ -174,9 +168,6 @@ geo_map_repetitions <- function(
 		p <- if (is.null(legend)) {
 			panels
 		} else {
-			# The legend gets its own row and only the left cell, so the two
-			# panel cells keep equal widths -- and, with a respected aspect,
-			# equal heights.
 			cowplot::plot_grid(
 				panels,
 				cowplot::plot_grid(legend, NULL, ncol = 2),
@@ -185,8 +176,6 @@ geo_map_repetitions <- function(
 			)
 		}
 
-		# A respected panel does not fill surplus height, so the canvas has to
-		# follow the aspect or the figure gains a band of white space.
 		fig_width <- 9
 		panel_width <- fig_width / 2 - 0.9
 		fig_height <- min(max(panel_width * aspect + 1.9, 3.4), 8)
@@ -196,11 +185,58 @@ geo_map_repetitions <- function(
 	})
 }
 
-#' Render the Prediction Domain, One Facet per Time Step
+#' Build the faceted prediction-domain map
 #'
+#' @param area_data sf object of the prediction domain, one set of features per
+#'   time step.
+#' @param times POSIXct vector as returned by `parse_time_column(area_data)`,
+#'   aligned row-for-row with `area_data`.
 #' @param max_facets Facets beyond this are dropped, keeping an evenly spaced
 #'   subset. Long daily series would otherwise produce an unreadable grid and a
 #'   very large PNG.
+#' @return A list of the plot and the canvas size it needs.
+#' @noRd
+geo_map_timesteps_plot <- function(area_data, times, max_facets = 9) {
+	all_steps <- sort(unique(times))
+
+	subtitle <- NULL
+	keep_steps <- all_steps
+	if (length(all_steps) > max_facets) {
+		keep_steps <- all_steps[round(seq(1, length(all_steps), length.out = max_facets))]
+		subtitle <- sprintf("Showing %d of %d time steps", max_facets, length(all_steps))
+	}
+
+	keep <- times %in% keep_steps
+	area_data <- area_data[keep, , drop = FALSE]
+	area_data$time_step <- factor(format(times[keep]), levels = format(keep_steps))
+
+	n_facets <- nlevels(area_data$time_step)
+	n_col <- min(3L, ceiling(sqrt(n_facets)))
+	n_row <- ceiling(n_facets / n_col)
+
+	ctx <- context_layer(area_data)
+	p <- ggplot2::ggplot() +
+		ctx +
+		sf_overlay(area_data) +
+		ggplot2::facet_wrap(~time_step, ncol = n_col) +
+		ggplot2::labs(subtitle = subtitle) +
+		map_axis_style(n_col, limits = if (is.null(ctx)) NULL else context_limits(area_data))
+
+	width <- 7
+	list(
+		plot = p,
+		width = width,
+		height = min(width * (n_row / n_col) + 0.6, 1.25 * width)
+	)
+}
+
+#' Render the Prediction Domain, One Facet per Time Step
+#'
+#' @param output Shiny output object.
+#' @param element_id Output ID for the plot (also the PNG stem).
+#' @param geo_metadata Reactive list containing spatial data.
+#' @param output_dir Temporary output directory.
+#' @param max_facets Passed to `geo_map_timesteps_plot()`.
 #' @noRd
 geo_map_timesteps <- function(output, element_id, geo_metadata = NULL, output_dir, max_facets = 9) {
 	output[[element_id]] <- shiny::renderPlot({
@@ -215,33 +251,10 @@ geo_map_timesteps <- function(output, element_id, geo_metadata = NULL, output_di
 			return(NULL)
 		}
 
-		all_steps <- sort(unique(times))
+		res <- geo_map_timesteps_plot(area_data, times, max_facets = max_facets)
 
-		subtitle <- NULL
-		keep_steps <- all_steps
-		if (length(all_steps) > max_facets) {
-			keep_steps <- all_steps[round(seq(1, length(all_steps), length.out = max_facets))]
-			subtitle <- sprintf("Showing %d of %d time steps", max_facets, length(all_steps))
-		}
-
-		area_data <- area_data[times %in% keep_steps, , drop = FALSE]
-		area_data$time_step <- factor(format(times[times %in% keep_steps]), levels = format(keep_steps))
-
-		n_facets <- nlevels(area_data$time_step)
-		n_col <- min(3L, ceiling(sqrt(n_facets)))
-		n_row <- ceiling(n_facets / n_col)
-
-		fig_width <- 7
-		fig_height <- min(fig_width * (n_row / n_col) + 0.6, 1.25 * fig_width)
-
-		p <- ggplot2::ggplot(area_data) +
-			ggplot2::geom_sf() +
-			ggplot2::facet_wrap(~time_step, ncol = n_col) +
-			ggplot2::labs(subtitle = subtitle) +
-			map_axis_style(n_col)
-
-		save_figure(p, element_id, output_dir, width = fig_width, height = fig_height)
-		p
+		save_figure(res$plot, element_id, output_dir, width = res$width, height = res$height)
+		res$plot
 	})
 }
 
@@ -312,17 +325,25 @@ map_axis_theme <- function() {
 #' @param datum CRS for the graticule. Omit to label in degrees regardless of
 #'   the data CRS; pass `sf::st_crs(data)` to label in the data's own units.
 #' @noRd
-map_axis_style <- function(n_col = 1, datum = NULL) {
+#' @param limits Optional bbox in the data CRS. Context layers train the scales
+#'   like any other layer, so a backdrop cropped wider than the data would
+#'   widen the panel unless the frame is pinned here. `expand = FALSE` because
+#'   the padding is already in the bbox.
+map_axis_style <- function(n_col = 1, datum = NULL, limits = NULL) {
 	n <- if (n_col > 1) 2 else 3
 
-	coord <- if (is.null(datum)) {
-		ggplot2::coord_sf(label_graticule = "SW")
-	} else {
-		ggplot2::coord_sf(label_graticule = "SW", datum = datum)
+	coord_args <- list(label_graticule = "SW")
+	if (!is.null(datum)) {
+		coord_args$datum <- datum
+	}
+	if (!is.null(limits)) {
+		coord_args$xlim <- c(limits[["xmin"]], limits[["xmax"]])
+		coord_args$ylim <- c(limits[["ymin"]], limits[["ymax"]])
+		coord_args$expand <- FALSE
 	}
 
 	list(
-		coord,
+		do.call(ggplot2::coord_sf, coord_args),
 		ggplot2::scale_x_continuous(breaks = interior_breaks(n), labels = map_axis_labels),
 		ggplot2::scale_y_continuous(breaks = interior_breaks(n), labels = map_axis_labels),
 		ggplot2::theme_minimal(),

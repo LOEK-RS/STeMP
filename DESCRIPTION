@@ -12,12 +12,10 @@ BugReports: https://github.com/LOEK-RS/STeMP/issues
 Imports: 
     CAST,
     config,
-    data.table,
     dplyr,
     ggplot2,
     golem,
     htmltools,
-    purrr,
     quarto,
     sf,
     shiny,
@@ -31,7 +29,9 @@ Imports:
     pagedown,
     png,
     jpeg,
-    cowplot
+    cowplot,
+    rnaturalearth,
+    rnaturalearthdata
 Suggests: 
     knitr,
     pkgload,
@@ -40,7 +40,9 @@ Suggests:
     kableExtra,
     stringr,
     DT,
-    readr
+    readr,
+    withr,
+    data.table
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
