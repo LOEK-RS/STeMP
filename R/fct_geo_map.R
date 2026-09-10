@@ -217,7 +217,7 @@ geo_map_timesteps_plot <- function(area_data, times, max_facets = 9) {
 	ctx <- context_layer(area_data)
 	p <- ggplot2::ggplot() +
 		ctx +
-		ggplot2::geom_sf(data = area_data) +
+		sf_overlay(area_data) +
 		ggplot2::facet_wrap(~time_step, ncol = n_col) +
 		ggplot2::labs(subtitle = subtitle) +
 		map_axis_style(n_col, limits = if (is.null(ctx)) NULL else context_limits(area_data))
