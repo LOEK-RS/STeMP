@@ -238,7 +238,7 @@ sample_locations_leaflet <- function(samples_sf, temporal = FALSE) {
 					"<div class='stemp-times'>",
 					paste(shown, collapse = "<br/>"),
 					"</div>",
-					if (length(tt) > 25) sprintf("<em>… and %d more</em>", length(tt) - 25)
+					if (length(tt) > 25) sprintf("<em>\u2026 and %d more</em>", length(tt) - 25)
 				)
 			},
 			character(1)
@@ -333,7 +333,7 @@ prediction_domain_leaflet <- function(area_sf, max_listed = 25) {
 				"<div class='stemp-times'>",
 				paste(shown, collapse = "<br/>"),
 				"</div>",
-				if (length(tt) > max_listed) sprintf("<em>… and %d more</em>", length(tt) - max_listed)
+				if (length(tt) > max_listed) sprintf("<em>\u2026 and %d more</em>", length(tt) - max_listed)
 			)
 		},
 		character(1)
