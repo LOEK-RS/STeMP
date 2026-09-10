@@ -361,7 +361,7 @@ ne_offline_polygons <- function(x) {
 		return(NULL)
 	}
 	tryCatch(
-		with_planar_s2(suppressWarnings(sf::st_crop(ne$land, pad_bbox(bb, 0.10)))),
+		suppressMessages(with_planar_s2(suppressWarnings(sf::st_crop(ne$land, pad_bbox(bb, 0.10))))),
 		error = function(e) NULL
 	)
 }
