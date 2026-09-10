@@ -271,3 +271,14 @@ with_stable_seed <- function(seed, expr) {
 	set.seed(seed)
 	expr
 }
+
+#' @noRd
+is_interactive_mode <- function(mode) {
+	identical(mode, "Interactive")
+}
+
+#' Whether interactive figures can be produced at all
+#' @noRd
+interactive_supported <- function() {
+	requireNamespace("leaflet", quietly = TRUE)
+}

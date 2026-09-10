@@ -14,10 +14,12 @@ make_protocol_html <- function(
 	o_objective_1_val,
 	output_dir,
 	session_token,
-	hide_optional = shiny::reactive(FALSE)
+	hide_optional = shiny::reactive(FALSE),
+	display_mode = shiny::reactive("Static")
 ) {
-	function(layout = c("sections", "table")) {
+	function(layout = c("sections", "table"), embed = c("data-uri", "link", "none")) {
 		layout <- match.arg(layout)
+		embed <- match.arg(embed)
 		shiny::req(protocol_data())
 
 		subdir_preview <- "figures_preview"
@@ -30,6 +32,16 @@ make_protocol_html <- function(
 				hide_optional = hide_optional()
 			)
 		)
+
+		interactive <- is_interactive_mode(display_mode())
+
+		widget_for <- function(element_id) {
+			if (!interactive) {
+				return("")
+			}
+			p <- file.path(output_dir, paste0(element_id, ".rds"))
+			if (file.exists(p)) normalizePath(p, winslash = "/") else ""
+		}
 
 		plot_files_rel <- get_selected_plot_files(
 			output_dir = output_dir,
@@ -51,10 +63,13 @@ make_protocol_html <- function(
 			protocol_values = protocol_data()
 		)
 
+		figure_ids <- tools::file_path_sans_ext(basename(plot_files_abs))
+
 		figures_df <- data.frame(
-			element_id = tools::file_path_sans_ext(basename(plot_files_abs)),
+			element_id = figure_ids,
 			path = plot_files_abs,
 			caption = plot_captions,
+			widget = vapply(figure_ids, widget_for, character(1), USE.NAMES = FALSE),
 			stringsAsFactors = FALSE
 		)
 
@@ -93,6 +108,7 @@ make_protocol_html <- function(
 			output_file = html_filename,
 			execute_params = list(
 				layout = layout,
+				embed = embed,
 				structure = structure_df,
 				data = df_sanitized,
 				plot_files = plot_files_abs,
@@ -175,7 +191,7 @@ report_figure_types <- function() {
 #'
 #' @param protocol_values The filled protocol (needs section, element_id, value)
 #' @param protocol_dict The dictionary data frame
-#' @param figures_df Data frame with element_id, path, caption
+#' @param figures_df Data frame with element_id, path, caption, widget
 #' @param hide_empty Drop fields with no value
 #' @return Data frame: section, subsection, element, element_id, kind,
 #'   value, path, caption
@@ -197,7 +213,11 @@ build_report_structure <- function(protocol_values, protocol_dict, figures_df, h
 
 	items <- merge(dict, values, by = c("section", "element_id"), all.x = TRUE)
 
-	figures_df <- figures_df[, c("element_id", "path", "caption"), drop = FALSE]
+	if (!"widget" %in% names(figures_df)) {
+		figures_df$widget <- ""
+	}
+
+	figures_df <- figures_df[, c("element_id", "path", "caption", "widget"), drop = FALSE]
 	items <- merge(items, figures_df, by = "element_id", all.x = TRUE)
 
 	items <- items[order(items$order), , drop = FALSE]
@@ -210,7 +230,17 @@ build_report_structure <- function(protocol_values, protocol_dict, figures_df, h
 
 	items <- items[keep_field | keep_figure, , drop = FALSE]
 
-	report_columns <- c("section", "subsection", "element", "element_id", "kind", "value", "path", "caption")
+	report_columns <- c(
+		"section",
+		"subsection",
+		"element",
+		"element_id",
+		"kind",
+		"value",
+		"path",
+		"caption",
+		"widget"
+	)
 
 	if (nrow(items) == 0) {
 		return(items[, report_columns, drop = FALSE])
@@ -223,7 +253,7 @@ build_report_structure <- function(protocol_values, protocol_dict, figures_df, h
 
 	# Quarto's YAML serialiser rejects NA, and merge() leaves NA in path/caption
 	# for field rows
-	for (column in c("element_id", "kind", "path", "caption")) {
+	for (column in c("element_id", "kind", "path", "caption", "widget")) {
 		items[[column]] <- as.character(items[[column]])
 		items[[column]][is.na(items[[column]])] <- ""
 	}
@@ -239,6 +269,7 @@ build_report_structure <- function(protocol_values, protocol_dict, figures_df, h
 		"value",
 		"path",
 		"caption",
+		"widget",
 		"show_subsection"
 	)
 
@@ -256,4 +287,17 @@ report_excluded_element_ids <- function(protocol_dict) {
 		return(character(0))
 	}
 	protocol_dict$element_id[protocol_dict$element_type == "figure_caption"]
+}
+
+#' Inline an HTML file as a data URI for embedding in a self-contained report
+#'
+#' Pandoc's `--embed-resources` leaves `data:` URIs alone, so an iframe pointing
+#' at one survives into the single-file HTML. Kept for callers outside the
+#' Quarto template; the template inlines `base64enc` directly.
+#'
+#' @param path Path to a self-contained HTML file.
+#' @return A character string usable as an iframe `src` attribute.
+#' @noRd
+widget_data_uri <- function(path) {
+	paste0("data:text/html;base64,", base64enc::base64encode(path))
 }

@@ -49,6 +49,7 @@ mod_model_panel_server <- function(
 	output_dir = NULL,
 	model_deleted = shiny::reactive(FALSE),
 	hide_optional = shiny::reactive(FALSE),
+	display_mode = shiny::reactive("Static"),
 	uploaded_zip = NULL,
 	is_temporal = shiny::reactive(FALSE),
 	temporal_geodist_sel = shiny::reactive(NULL)
@@ -182,7 +183,9 @@ mod_model_panel_server <- function(
 							output = output,
 							element_id = "training_locations",
 							geo_metadata = meta %||% list(),
-							output_dir = output_dir
+							output_dir = output_dir,
+							interactive = is_interactive_mode(display_mode()),
+							ns = ns
 						)
 					} else {
 						geo_map(
@@ -190,7 +193,9 @@ mod_model_panel_server <- function(
 							element_id = "training_locations",
 							geo_metadata = meta %||% list(),
 							what = "samples_sf",
-							output_dir = output_dir
+							output_dir = output_dir,
+							interactive = is_interactive_mode(display_mode()),
+							ns = ns
 						)
 					}
 				}
@@ -216,7 +221,9 @@ mod_model_panel_server <- function(
 						element_id = "training_area",
 						geo_metadata = meta %||% list(),
 						what = "training_area_sf",
-						output_dir = output_dir
+						output_dir = output_dir,
+						interactive = is_interactive_mode(display_mode()),
+						ns = ns
 					)
 				}
 			)
@@ -274,7 +281,9 @@ mod_model_panel_server <- function(
 						geo_metadata = meta %||% list(),
 						objective = "Model only",
 						output_dir = output_dir,
-						temporal = temporal
+						temporal = temporal,
+						interactive = is_interactive_mode(display_mode()),
+						ns = ns
 					)
 				}
 			)

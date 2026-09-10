@@ -26,6 +26,13 @@ mod_sidebar_ui <- function(id) {
 			value = TRUE
 		),
 
+		shiny::h5("Interactive figures", style = "font-weight: bold"),
+		shinyWidgets::materialSwitch(
+			ns("display_mode"),
+			label = NULL,
+			status = "info"
+		),
+
 		# upload existing protocol
 		mod_csv_zip_upload_ui(ns("protocol_csv"), "csv", "Upload protocol (.csv)"),
 
@@ -86,6 +93,21 @@ mod_sidebar_server <- function(
 			df$visible[df$element_id %in% non_progress_ids(dict)] <- FALSE
 
 			df
+		})
+
+		# Interactive figures need leaflet plus pandoc; without them the toggle
+		# would silently do nothing, so it is disabled instead.
+		shiny::observe({
+			if (!interactive_supported()) {
+				shinyjs::disable("display_mode")
+			}
+		})
+
+		display_mode <- shiny::reactive({
+			if (!interactive_supported()) {
+				return("Static")
+			}
+			if (isTRUE(input$display_mode)) "Interactive" else "Static"
 		})
 
 		## Progress bar (reactive to filtered data)
@@ -212,7 +234,7 @@ mod_sidebar_server <- function(
 			if (dir.exists(output_dir)) {
 				files <- list.files(
 					output_dir,
-					pattern = "\\.(png|Rmd)$",
+					pattern = "\\.(png|html|rds|Rmd|qmd)$",
 					full.names = TRUE
 				)
 				if (length(files) > 0) file.remove(files)
@@ -241,8 +263,10 @@ mod_sidebar_server <- function(
 				} else if (input$document_format == "html") {
 					file.copy(generate_html("sections"), file, overwrite = TRUE)
 				} else if (input$document_format == "pdf") {
-					# Always generate fresh HTML, independent of viewer
-					html_file <- generate_html()
+					# Interactive widgets cannot be printed reproducibly: an iframe
+					# captures only its viewport, at whatever zoom and with whatever
+					# tiles happened to load. The PNG exists in both modes.
+					html_file <- generate_html(embed = "none")
 					html_file <- normalizePath(html_file)
 
 					pagedown::chrome_print(
@@ -267,11 +291,43 @@ mod_sidebar_server <- function(
 						return_relative = FALSE
 					)
 
+					# Staged flat, so a re-uploaded ZIP still finds <id>.png at the
+					# top level exactly as before.
+					stage <- file.path(output_dir, "zip_stage")
+					unlink(stage, recursive = TRUE)
+					dir.create(stage, recursive = TRUE)
+					file.copy(figures_to_zip, stage, overwrite = TRUE)
+
+					# Interactive widgets, if any were produced for a visible figure.
+					# The standalone HTML is generated here rather than on every
+					# re-render, because each one costs a pandoc call.
+					widget_files <- vapply(
+						allowed_ids,
+						function(id) export_widget_html(id, output_dir) %||% "",
+						character(1)
+					)
+					widget_files <- widget_files[nzchar(widget_files)]
+
+					if (length(widget_files) > 0) {
+						dir.create(file.path(stage, "interactive"), showWarnings = FALSE)
+						file.copy(widget_files, file.path(stage, "interactive"), overwrite = TRUE)
+
+						# Linked mode keeps the report an order of magnitude smaller
+						# than the data-URI single file, and browsable after extraction
+						report <- generate_html(embed = "link")
+						file.copy(report, file.path(stage, "report.html"), overwrite = TRUE)
+					}
+
 					zipfile <- file.path(output_dir, "figures.zip")
-					utils::zip(zipfile = zipfile, files = figures_to_zip, flags = "-j")
+					unlink(zipfile)
+
+					withr::with_dir(stage, {
+						utils::zip(zipfile = zipfile, files = list.files(".", recursive = TRUE))
+					})
 
 					file.copy(zipfile, file)
 					unlink(file.path(output_dir, subdir_zip), recursive = TRUE)
+					unlink(stage, recursive = TRUE)
 					unlink(zipfile)
 				}
 			}
@@ -283,7 +339,8 @@ mod_sidebar_server <- function(
 			zip = zip_handlers$data,
 			filtered_protocol_data = filtered_protocol_data,
 			hide_optional = shiny::reactive(input$hide_optional),
-			show_warnings = shiny::reactive(input$show_warnings)
+			show_warnings = shiny::reactive(input$show_warnings),
+			display_mode = display_mode
 		)
 	})
 }

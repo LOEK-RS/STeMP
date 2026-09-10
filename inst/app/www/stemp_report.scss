@@ -147,6 +147,23 @@ h3 {
   }
 }
 
+.protocol-figure .leaflet,
+.protocol-figure .plotly {
+  margin: 0 auto;
+  border: 1px solid $report-border;
+  border-radius: 4px;
+}
+
+.protocol-widget {
+  width: 100%;
+  height: 520px;
+  border: 1px solid $report-border;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.stemp-popup th { text-align: left; padding-right: 0.6em; font-weight: 600; }
+.stemp-times   { max-height: 9em; overflow-y: auto; margin-top: 0.4em; }
 
 /* -------------------------
    Links
@@ -200,29 +217,5 @@ th {
    ------------------------- */
 
 @media print {
-
-  #quarto-document-content,
-  main.content,
-  #quarto-content {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-  }
-
-  h1 {
-    break-before: page;
-  }
-
-  h1:first-of-type {
-    break-before: avoid;
-  }
-
-  .protocol-figure {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .protocol-figure img {
-    max-width: 100%;
-  }
+  .protocol-widget { height: 420px; break-inside: avoid; }
 }

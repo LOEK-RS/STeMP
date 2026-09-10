@@ -45,6 +45,7 @@ mod_prediction_panel_server <- function(
 	uploaded_values = shiny::reactive(NULL),
 	output_dir = NULL,
 	hide_optional = shiny::reactive(FALSE),
+	display_mode = shiny::reactive("Static"),
 	uploaded_zip = NULL,
 	is_temporal = shiny::reactive(FALSE)
 ) {
@@ -165,7 +166,9 @@ mod_prediction_panel_server <- function(
 							output = output,
 							element_id = "prediction_area",
 							geo_metadata = meta %||% list(),
-							output_dir = output_dir
+							output_dir = output_dir,
+							interactive = is_interactive_mode(display_mode()),
+							ns = ns
 						)
 					} else {
 						geo_map(
@@ -173,7 +176,9 @@ mod_prediction_panel_server <- function(
 							element_id = "prediction_area",
 							geo_metadata = meta %||% list(),
 							what = "prediction_area_sf",
-							output_dir = output_dir
+							output_dir = output_dir,
+							interactive = is_interactive_mode(display_mode()),
+							ns = ns
 						)
 					}
 				}
@@ -202,7 +207,9 @@ mod_prediction_panel_server <- function(
 						geo_metadata = meta %||% list(),
 						objective = "Model and prediction",
 						output_dir = output_dir,
-						temporal = temporal
+						temporal = temporal,
+						interactive = is_interactive_mode(display_mode()),
+						ns = ns
 					)
 				}
 			)

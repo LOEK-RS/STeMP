@@ -435,12 +435,9 @@ render_plot_server <- function(
 		# Remove image UI
 		output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
 
-		# Render fresh plot from geo data upload
-		output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI({
-			shiny::plotOutput(outputId = ns(element_id), height = "300px")
-		})
-
-		output[[element_id]] <- plot_fn()
+		# The figure function owns both `element_id` and `<element_id>_plot_ui`;
+		# it decides between a plotOutput shell and an embedded widget.
+		plot_fn()
 	} else {
 		# Hide plot field
 		shinyjs::addClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")

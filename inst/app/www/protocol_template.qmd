@@ -14,10 +14,37 @@ params:
   data: null
   plot_files: null
   plot_captions: null
+  embed: data-uri
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+# readRDS() restores the widget's class attributes but loads nothing, so the
+# S3 methods that render it have to be brought in explicitly. leaflet and
+# plotly register the dependency-collecting methods on load.
+for (pkg in c("htmlwidgets", "leaflet", "plotly")) {
+	if (requireNamespace(pkg, quietly = TRUE)) {
+		loadNamespace(pkg)
+	}
+}
+
+# Defined locally rather than exported from STeMP: the Quarto child process
+# loads whichever namespace is installed, which is not necessarily the one
+# being developed against.
+widget_report_tags <- function(w, height = "520px") {
+	size <- function(el) {
+		if (!inherits(el, "htmlwidget")) {
+			return(el)
+		}
+		el$width <- "100%"
+		el$height <- height
+		# as.tags() is htmltools'; htmlwidgets only registers the method for it
+		htmltools::as.tags(el, standalone = FALSE)
+	}
+
+	if (inherits(w, "htmlwidget")) size(w) else htmltools::tagList(lapply(w, size))
+}
 ```
 
 ```{r sections-layout, output='asis'}
@@ -60,17 +87,59 @@ if (is.data.frame(items) && nrow(items) > 0) {
 						sep = ""
 					)
 				} else {
-					cat(
-						"<figure class='protocol-figure'>\n",
-						"<img src='",
-						item$path,
-						"' />\n",
-						"<figcaption>",
-						item$caption,
-						"</figcaption>\n",
-						"</figure>\n\n",
-						sep = ""
-					)
+					widget <- if (!is.null(item$widget)) as.character(item$widget) else ""
+					caption <- item$caption
+
+					if (identical(params$embed, "none") && nzchar(widget)) {
+						caption <- paste0(
+							caption,
+							" <em>(an interactive version is included in the HTML report.)</em>"
+						)
+					}
+
+					if (identical(params$embed, "link") && nzchar(widget)) {
+						# ZIP: the widget ships as a sibling file, so an iframe is
+						# both smaller and browsable after extraction
+						src <- file.path("interactive", paste0(tools::file_path_sans_ext(basename(widget)), ".html"))
+						cat(
+							"<figure class='protocol-figure'>\n",
+							"<iframe class='protocol-widget' src='",
+							src,
+							"' loading='lazy' title='",
+							item$element,
+							"'></iframe>\n",
+							"<figcaption>",
+							caption,
+							"</figcaption>\n",
+							"</figure>\n\n",
+							sep = ""
+						)
+					} else if (!identical(params$embed, "none") && nzchar(widget) && file.exists(widget)) {
+						# Inlined rather than embedded in a data: URI iframe: Chrome
+						# caps a URL at ~2 MB, which a single leaflet map exceeds, and
+						# knitr deduplicates the JS and CSS across every figure.
+						rt <- htmltools::renderTags(widget_report_tags(readRDS(widget)))
+						knitr::knit_meta_add(rt$dependencies)
+
+						cat("<figure class='protocol-figure'>\n")
+						if (length(rt$head) > 0) {
+							cat(as.character(rt$head), "\n")
+						}
+						cat(rt$html)
+						cat("\n<figcaption>", caption, "</figcaption>\n</figure>\n\n", sep = "")
+					} else {
+						cat(
+							"<figure class='protocol-figure'>\n",
+							"<img src='",
+							item$path,
+							"' />\n",
+							"<figcaption>",
+							caption,
+							"</figcaption>\n",
+							"</figure>\n\n",
+							sep = ""
+						)
+					}
 				}
 			}
 		}

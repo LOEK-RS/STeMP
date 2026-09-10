@@ -31,7 +31,11 @@ Imports:
     jpeg,
     cowplot,
     rnaturalearth,
-    rnaturalearthdata
+    rnaturalearthdata,
+    base64enc,
+    leaflet,
+    withr,
+    rmarkdown
 Suggests: 
     knitr,
     pkgload,
@@ -41,8 +45,9 @@ Suggests:
     stringr,
     DT,
     readr,
-    withr,
-    data.table
+    data.table,
+    plotly,
+    webshot2
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US

@@ -16,15 +16,18 @@ geodist_plot <- function(
 	geo_metadata = NULL,
 	objective = c("Model and prediction", "Model only"),
 	output_dir,
-	temporal = FALSE
+	temporal = FALSE,
+	interactive = FALSE,
+	ns = identity
 ) {
 	objective <- match.arg(objective)
 	temporal <- isTRUE(temporal)
+	interactive <- isTRUE(interactive)
 	what <- if (objective == "Model and prediction") "prediction_area_sf" else "training_area_sf"
 
-	output[[element_id]] <- shiny::renderPlot({
-		samples_data <- tryCatch(geo_metadata$samples_sf(), error = function(e) NULL)
-		area_data <- tryCatch(geo_metadata[[what]](), error = function(e) NULL)
+	emit_figure(output, element_id, output_dir, ns, interactive, build = function() {
+		samples_data <- geo_sf(geo_metadata, "samples_sf")
+		area_data <- geo_sf(geo_metadata, what)
 
 		if (is.null(samples_data) || is.null(area_data) || !inherits(samples_data, "sf") || !inherits(area_data, "sf")) {
 			return(NULL)
@@ -36,44 +39,36 @@ geodist_plot <- function(
 		has_geo <- inherits(geod_geo, "data.frame")
 		has_time <- inherits(geod_time, "data.frame")
 
-		# Only a refusal on every requested dimension removes the figure
 		if (!has_geo && !has_time) {
-			clear_figure(element_id, output_dir)
 			set_plot_visible(element_id, FALSE)
 			return(NULL)
 		}
-
 		set_plot_visible(element_id, TRUE)
 
 		p_geo <- if (has_geo) add_log_scale_if_needed(plot(geod_geo), geod_geo) else NULL
 		p_time <- if (has_time) add_log_scale_if_needed(plot(geod_time), geod_time) else NULL
 
-		# Single panel: whichever dimension was computed
+		widget <- if (isTRUE(interactive)) geodist_widget(p_geo, p_time) else NULL
+
 		if (!has_time) {
 			p <- p_geo + ggplot2::theme(aspect.ratio = 0.8)
 			if (temporal) {
 				p <- p + ggplot2::ggtitle("Geographic space")
 			}
-			save_figure(p, element_id, output_dir)
-			return(p)
+			return(list(static = p, widget = widget))
 		}
 
 		if (!has_geo) {
 			p <- p_time +
 				ggplot2::ggtitle("Temporal space") +
 				ggplot2::theme(aspect.ratio = 0.8)
-			save_figure(p, element_id, output_dir)
-			return(p)
+			return(list(static = p, widget = widget))
 		}
-
-		p_time <- add_log_scale_if_needed(plot(geod_time), geod_time)
 
 		legend <- cowplot::get_legend(p_time)
 
 		body <- cowplot::plot_grid(
-			p_geo +
-				ggplot2::ggtitle("Geographic space") +
-				ggplot2::theme(legend.position = "none"),
+			p_geo + ggplot2::ggtitle("Geographic space") + ggplot2::theme(legend.position = "none"),
 			p_time +
 				ggplot2::ggtitle("Temporal space") +
 				ggplot2::theme(legend.position = "none", axis.title.y = ggplot2::element_blank()),
@@ -85,11 +80,10 @@ geodist_plot <- function(
 		p <- if (is.null(legend)) {
 			body
 		} else {
-			cowplot::plot_grid(body, legend, ncol = 1, rel_heights = c(1, NULL, 0.2))
+			cowplot::plot_grid(body, legend, ncol = 1, rel_heights = c(1, 0.2))
 		}
 
-		save_figure(p, element_id, output_dir, width = 8, height = 4)
-		p
+		list(static = p, widget = widget, width = 8, height = 4)
 	})
 }
 

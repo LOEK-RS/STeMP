@@ -25,19 +25,23 @@ geo_map <- function(
 	element_id,
 	geo_metadata = NULL,
 	what = c("samples_sf", "training_area_sf", "prediction_area_sf"),
-	output_dir
+	output_dir,
+	interactive = FALSE,
+	ns = identity
 ) {
 	what <- match.arg(what)
+	interactive <- isTRUE(interactive)
 
-	output[[element_id]] <- shiny::renderPlot({
-		d <- tryCatch(geo_metadata[[what]](), error = function(e) NULL)
+	emit_figure(output, element_id, output_dir, ns, interactive, build = function() {
+		d <- geo_sf(geo_metadata, what)
 		if (is.null(d) || !inherits(d, "sf") || nrow(d) == 0) {
 			return(NULL)
 		}
 
-		p <- geo_map_plot(d)
-		save_figure(p, element_id, output_dir)
-		p
+		list(
+			static = geo_map_plot(d),
+			widget = if (isTRUE(interactive)) geo_map_leaflet(d) else NULL
+		)
 	})
 }
 
@@ -126,11 +130,13 @@ geo_map_repetitions <- function(
 	element_id,
 	geo_metadata = NULL,
 	output_dir,
-	temporal = TRUE
+	temporal = TRUE,
+	interactive = FALSE,
+	ns = identity
 ) {
-	output[[element_id]] <- shiny::renderPlot({
-		samples_data <- tryCatch(geo_metadata$samples_sf(), error = function(e) NULL)
-
+	interactive <- isTRUE(interactive)
+	emit_figure(output, element_id, output_dir, ns, interactive, build = function() {
+		samples_data <- geo_sf(geo_metadata, "samples_sf")
 		if (is.null(samples_data) || !inherits(samples_data, "sf") || nrow(samples_data) == 0) {
 			return(NULL)
 		}
@@ -140,15 +146,17 @@ geo_map_repetitions <- function(
 			return(NULL)
 		}
 
+		widget <- if (isTRUE(interactive)) {
+			sample_repetitions_widget(samples_data, temporal = temporal)
+		}
+
 		p_map <- location_repetition_plot(counts) +
 			ggplot2::ggtitle("Sampling locations")
 
 		time_counts <- if (isTRUE(temporal)) count_time_repetitions(samples_data) else NULL
 
-		# No parseable timestamps: keep the map alone, as in spatial mode
 		if (is.null(time_counts)) {
-			save_figure(p_map, element_id, output_dir)
-			return(p_map)
+			return(list(static = p_map, widget = widget))
 		}
 
 		aspect <- map_panel_aspect(counts) %||% 0.8
@@ -178,10 +186,13 @@ geo_map_repetitions <- function(
 
 		fig_width <- 9
 		panel_width <- fig_width / 2 - 0.9
-		fig_height <- min(max(panel_width * aspect + 1.9, 3.4), 8)
 
-		save_figure(p, element_id, output_dir, width = fig_width, height = fig_height)
-		p
+		list(
+			static = p,
+			widget = widget,
+			width = fig_width,
+			height = min(max(panel_width * aspect + 1.9, 3.4), 8)
+		)
 	})
 }
 
@@ -238,10 +249,18 @@ geo_map_timesteps_plot <- function(area_data, times, max_facets = 9) {
 #' @param output_dir Temporary output directory.
 #' @param max_facets Passed to `geo_map_timesteps_plot()`.
 #' @noRd
-geo_map_timesteps <- function(output, element_id, geo_metadata = NULL, output_dir, max_facets = 9) {
-	output[[element_id]] <- shiny::renderPlot({
-		area_data <- tryCatch(geo_metadata$prediction_area_sf(), error = function(e) NULL)
-
+geo_map_timesteps <- function(
+	output,
+	element_id,
+	geo_metadata = NULL,
+	output_dir,
+	max_facets = 9,
+	interactive = FALSE,
+	ns = identity
+) {
+	interactive <- isTRUE(interactive)
+	emit_figure(output, element_id, output_dir, ns, interactive, build = function() {
+		area_data <- geo_sf(geo_metadata, "prediction_area_sf")
 		if (is.null(area_data) || !inherits(area_data, "sf") || nrow(area_data) == 0) {
 			return(NULL)
 		}
@@ -251,10 +270,16 @@ geo_map_timesteps <- function(output, element_id, geo_metadata = NULL, output_di
 			return(NULL)
 		}
 
+		# The static artefact keeps the facet grid: it is the better
+		# representation on paper, and PDF/ZIP are unchanged by this feature.
 		res <- geo_map_timesteps_plot(area_data, times, max_facets = max_facets)
 
-		save_figure(res$plot, element_id, output_dir, width = res$width, height = res$height)
-		res$plot
+		list(
+			static = res$plot,
+			widget = if (isTRUE(interactive)) prediction_domain_leaflet(area_data) else NULL,
+			width = res$width,
+			height = res$height
+		)
 	})
 }
 
