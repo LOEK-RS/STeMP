@@ -147,7 +147,8 @@ mod_model_metadata_server <- function(id, input_model_object) {
 						try(
 							{
 								# Attempt to extract metrics (currently may not work)
-								metrics_tbl <- model |> workflows::extract_fit_engine() |> purrr::pluck(".metrics")
+								fit <- workflows::extract_fit_engine(model)
+								metrics_tbl <- if (is.list(fit)) fit[[".metrics"]] else NULL
 								if (!is.null(metrics_tbl)) {
 									acc <- metrics_tbl |> dplyr::filter(.metric == "accuracy") |> dplyr::pull(.estimate)
 									kap <- metrics_tbl |> dplyr::filter(.metric == "kap") |> dplyr::pull(.estimate)
@@ -162,7 +163,8 @@ mod_model_metadata_server <- function(id, input_model_object) {
 						interpolation_range(paste(round(range(response), 3), collapse = " to "))
 						try(
 							{
-								metrics_tbl <- model |> workflows::extract_fit_engine() |> purrr::pluck(".metrics")
+								fit <- workflows::extract_fit_engine(model)
+								metrics_tbl <- if (is.list(fit)) fit[[".metrics"]] else NULL
 								if (!is.null(metrics_tbl)) {
 									rmse_val <- metrics_tbl |> dplyr::filter(.metric == "rmse") |> dplyr::pull(.estimate)
 									r2_val <- metrics_tbl |> dplyr::filter(.metric == "rsq") |> dplyr::pull(.estimate)
@@ -201,9 +203,9 @@ mod_model_metadata_server <- function(id, input_model_object) {
 				if (!is.null(task) && inherits(task, "Task")) {
 					try(
 						{
-							task_data <- data.table::as.data.table(task, target = TRUE)
+							task_data <- as.data.frame(task$data())
 							response <- task_data[[task$target_names]]
-							predictors <- task_data[, setdiff(names(task_data), task$target_names), with = FALSE]
+							predictors <- task_data[, setdiff(names(task_data), task$target_names), drop = FALSE]
 						},
 						silent = TRUE
 					)
