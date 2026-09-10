@@ -101,12 +101,15 @@ format_time_extent <- function(times) {
 }
 
 #' Number of distinct time stamps
+#'
+#' NA entries survive `parse_time_column()` when only some values parse, and
+#' are excluded here so the count matches the bars in `time_frequency_plot()`.
 #' @noRd
 count_timesteps <- function(times) {
 	if (is.null(times)) {
 		return(NULL)
 	}
-	length(unique(times))
+	length(unique(times[!is.na(times)]))
 }
 
 #' Median spacing between distinct time stamps, as a readable string
@@ -144,11 +147,7 @@ unique_geometries <- function(x) {
 		return(x)
 	}
 
-	key <- if (all(sf::st_geometry_type(x) == "POINT")) {
-		do.call(paste, c(as.data.frame(sf::st_coordinates(x)), sep = "\r"))
-	} else {
-		sf::st_as_text(sf::st_geometry(x))
-	}
+	key <- sf::st_as_binary(sf::st_geometry(x), hex = TRUE)
 
 	x[!duplicated(key), , drop = FALSE]
 }
@@ -171,6 +170,41 @@ count_sample_repetitions <- function(samples_sf) {
 	sf::st_sf(
 		n = as.integer(counts[geom_key[keep]]),
 		geometry = geom[keep]
+	)
+}
+
+#' Count Observations per Distinct Time Stamp
+#'
+#' Temporal counterpart of `count_sample_repetitions()`: one row per distinct
+#' time stamp, carrying the number of observations recorded at that instant.
+#'
+#' @param samples_sf sf object of sample locations, possibly with repeated
+#'   observations at the same location and/or the same time
+#' @return A data frame with columns `time` (POSIXct) and `n_obs`, or NULL when
+#'   no usable time information exists
+#' @noRd
+count_time_repetitions <- function(samples_sf) {
+	if (!inherits(samples_sf, "sf") || nrow(samples_sf) == 0) {
+		return(NULL)
+	}
+
+	times <- parse_time_column(samples_sf)
+	if (is.null(times)) {
+		return(NULL)
+	}
+
+	times <- times[!is.na(times)]
+	if (length(times) == 0) {
+		return(NULL)
+	}
+
+	# match() against the sorted unique stamps rather than split(), which would
+	# coerce the POSIXct to character factor levels and lose the class.
+	steps <- sort(unique(times))
+
+	data.frame(
+		time = steps,
+		n_obs = tabulate(match(times, steps), nbins = length(steps))
 	)
 }
 

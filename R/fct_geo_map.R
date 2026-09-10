@@ -39,20 +39,99 @@ geo_map <- function(
 	})
 }
 
-
-#' Render a Map of Sample Locations Coloured by Repetition Count
+#' Map of Distinct Locations Coloured by Observation Count
 #'
-#' Spatio-Temporal counterpart of geo_map(): distinct locations, coloured by how many
-#' observations they carry.
+#' Few distinct counts become discrete classes, a heavily skewed range a log
+#' scale, anything else a linear scale with integer breaks. The legend is
+#' horizontal and below the panel, because it is the only legend in the
+#' composed figure and sits under the map it belongs to.
+#'
+#' @param counts sf object as returned by `count_sample_repetitions()`.
+#' @noRd
+location_repetition_plot <- function(counts) {
+	colour_value <- NULL # silence R CMD check on the aes() NSE
+
+	legend_name <- "Observations per location"
+	observed <- sort(unique(counts$n))
+
+	if (length(observed) <= 8) {
+		counts$colour_value <- factor(counts$n, levels = observed)
+		colour_scale <- ggplot2::scale_colour_viridis_d(name = legend_name)
+	} else if (max(observed) / min(observed) > 50) {
+		counts$colour_value <- counts$n
+		colour_scale <- ggplot2::scale_colour_viridis_c(name = legend_name, trans = "log10")
+	} else {
+		counts$colour_value <- counts$n
+		colour_scale <- ggplot2::scale_colour_viridis_c(name = legend_name, breaks = integer_breaks())
+	}
+
+	ggplot2::ggplot() +
+		ggplot2::geom_sf(data = counts, ggplot2::aes(colour = colour_value)) +
+		colour_scale +
+		map_axis_style(1) +
+		# ggplot2 switches the guide to horizontal on its own for a bottom legend
+		ggplot2::theme(
+			legend.position = "bottom",
+			legend.title.position = "top",
+			legend.key.height = ggplot2::unit(2, "mm")
+		)
+}
+
+#' Frequency of Observations over Time
+#'
+#' Temporal counterpart of `location_repetition_plot()`: bar height is the
+#' number of observations at a time stamp. Deliberately unmapped -- a location
+#' contributes at most one record per time stamp in all but malformed data, so
+#' any count-based colour would merely restate the bar height.
+#'
+#' @param counts Data frame as returned by `count_time_repetitions()`.
+#' @noRd
+time_frequency_plot <- function(counts) {
+	time <- n_obs <- NULL # silence R CMD check on the aes() NSE
+
+	# geom_col() derives its width from the data resolution, which on a POSIXct
+	# axis is one second and therefore invisible. The median spacing is used
+	# instead; a single time stamp falls back to a nominal day.
+	step <- if (nrow(counts) > 1) stats::median(diff(as.numeric(counts$time))) else 86400
+	bar_width <- max(step * 0.8, 1)
+
+	ggplot2::ggplot(counts, ggplot2::aes(x = time, y = n_obs)) +
+		# mid-viridis, so the bars share the map's palette family
+		ggplot2::geom_col(width = bar_width, fill = "#2C728E") +
+		ggplot2::scale_y_continuous(breaks = integer_breaks()) +
+		ggplot2::labs(x = NULL, y = "Observations") +
+		ggplot2::theme_minimal() +
+		ggplot2::theme(
+			axis.text = ggplot2::element_text(size = 8),
+			axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+			panel.grid.major.x = ggplot2::element_line(linewidth = 0.2),
+			plot.margin = ggplot2::margin(5.5, 5.5, 5.5, 12)
+		)
+}
+
+#' Render Sampling Locations and their Temporal Frequency
+#'
+#' Spatio-Temporal counterpart of `geo_map()`. The map shows distinct locations
+#' coloured by how many observations they carry; the companion panel shows how
+#' many observations fall on each time stamp. The two are combined into a single
+#' image so that the preview, report and ZIP pipelines still see one PNG per
+#' element ID.
 #'
 #' @param output Shiny output object.
 #' @param element_id Output ID for the plot (also the PNG stem).
 #' @param geo_metadata Reactive list containing spatial data.
-#' @param output_dir temporary output directory
+#' @param output_dir Temporary output directory.
+#' @param temporal Logical; render the frequency panel alongside the map. The
+#'   caller only reaches this renderer in Spatio-Temporal mode, so the panel is
+#'   dropped only when the samples carry no usable `time` column.
 #' @noRd
-geo_map_repetitions <- function(output, element_id, geo_metadata = NULL, output_dir) {
-	n <- n_class <- NULL # silence R CMD check on the aes() NSE
-
+geo_map_repetitions <- function(
+	output,
+	element_id,
+	geo_metadata = NULL,
+	output_dir,
+	temporal = TRUE
+) {
 	output[[element_id]] <- shiny::renderPlot({
 		samples_data <- tryCatch(geo_metadata$samples_sf(), error = function(e) NULL)
 
@@ -65,31 +144,57 @@ geo_map_repetitions <- function(output, element_id, geo_metadata = NULL, output_
 			return(NULL)
 		}
 
-		observed <- sort(unique(counts$n))
-		legend_name <- "Observations\nper location"
+		p_map <- location_repetition_plot(counts) +
+			ggplot2::ggtitle("Sampling locations")
 
-		if (length(observed) <= 8) {
-			counts$n_class <- factor(counts$n, levels = observed)
-			mapping <- ggplot2::aes(colour = n_class)
-			scale <- ggplot2::scale_colour_viridis_d(name = legend_name)
-		} else if (max(observed) / min(observed) > 50) {
-			mapping <- ggplot2::aes(colour = n)
-			scale <- ggplot2::scale_colour_viridis_c(name = legend_name, trans = "log10")
-		} else {
-			mapping <- ggplot2::aes(colour = n)
-			scale <- ggplot2::scale_colour_viridis_c(name = legend_name, breaks = integer_breaks())
+		time_counts <- if (isTRUE(temporal)) count_time_repetitions(samples_data) else NULL
+
+		# No parseable timestamps: keep the map alone, as in spatial mode
+		if (is.null(time_counts)) {
+			save_figure(p_map, element_id, output_dir)
+			return(p_map)
 		}
 
-		p <- ggplot2::ggplot() +
-			ggplot2::geom_sf(data = counts, mapping) +
-			scale +
-			map_axis_style(1)
+		# coord_sf() pins the map panel's shape, so the bar chart is given the
+		# same ratio rather than the map being distorted to match it.
+		aspect <- map_panel_aspect(counts) %||% 0.8
 
-		save_figure(p, element_id, output_dir)
+		p_freq <- time_frequency_plot(time_counts) +
+			ggplot2::ggtitle("Observations over time") +
+			ggplot2::theme(aspect.ratio = aspect)
+
+		legend <- cowplot::get_legend(p_map)
+
+		panels <- cowplot::plot_grid(
+			p_map + ggplot2::theme(legend.position = "none"),
+			p_freq,
+			ncol = 2
+		)
+
+		p <- if (is.null(legend)) {
+			panels
+		} else {
+			# The legend gets its own row and only the left cell, so the two
+			# panel cells keep equal widths -- and, with a respected aspect,
+			# equal heights.
+			cowplot::plot_grid(
+				panels,
+				cowplot::plot_grid(legend, NULL, ncol = 2),
+				ncol = 1,
+				rel_heights = c(1, 0.14)
+			)
+		}
+
+		# A respected panel does not fill surplus height, so the canvas has to
+		# follow the aspect or the figure gains a band of white space.
+		fig_width <- 9
+		panel_width <- fig_width / 2 - 0.9
+		fig_height <- min(max(panel_width * aspect + 1.9, 3.4), 8)
+
+		save_figure(p, element_id, output_dir, width = fig_width, height = fig_height)
 		p
 	})
 }
-
 
 #' Render the Prediction Domain, One Facet per Time Step
 #'
@@ -231,4 +336,39 @@ integer_breaks <- function(n = 5) {
 		brk <- pretty(limits, n = n)
 		brk[brk == as.integer(brk) & brk >= 1]
 	}
+}
+
+#' Aspect Ratio of a Map Panel, as Height / Width
+#'
+#' `coord_sf()` pins the map panel's shape to the data extent, so the panel
+#' cannot be stretched to match a neighbour. Rather than distort the map, the
+#' companion panel is given the same ratio; equal panel widths then produce
+#' equal panel heights.
+#'
+#' @param x An sf object.
+#' @param limits Clamp, so that a very elongated extent does not force an
+#'   unreadable bar chart.
+#' @return A ratio, or NULL for a degenerate extent.
+#' @noRd
+map_panel_aspect <- function(x, limits = c(0.45, 1.6)) {
+	bb <- tryCatch(sf::st_bbox(x), error = function(e) NULL)
+	if (is.null(bb)) {
+		return(NULL)
+	}
+
+	# Both scales are expanded by 5% per side, which cancels in the ratio,
+	# so only the raw extent matters.
+	dx <- as.numeric(bb["xmax"] - bb["xmin"])
+	dy <- as.numeric(bb["ymax"] - bb["ymin"])
+
+	# coord_sf() scales longitude by the cosine of the mid-latitude
+	if (isTRUE(sf::st_is_longlat(x))) {
+		dx <- dx * cos(mean(c(bb["ymin"], bb["ymax"])) * pi / 180)
+	}
+
+	if (!is.finite(dx) || !is.finite(dy) || dx <= 0 || dy <= 0) {
+		return(NULL)
+	}
+
+	max(limits[1], min(limits[2], dy / dx))
 }
