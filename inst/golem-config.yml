@@ -1,6 +1,6 @@
 default:
   golem_name: STeMP
-  golem_version: '0.9'
+  golem_version: '2026.07.00'
   app_prod: no
   max_upload_mb: 100
   max_geodist_n: 10000

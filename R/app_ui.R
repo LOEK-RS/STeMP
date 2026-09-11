@@ -15,7 +15,7 @@ app_ui <- function(request) {
 		# now your UI
 		navbarPage(
 			id = "navbar",
-			windowTitle = "STeMP v0.9",
+			windowTitle = "STeMP v2026.07.00",
 			title = div(
 				div(
 					id = "github_logo",
@@ -25,7 +25,7 @@ app_ui <- function(request) {
 						target = "_blank"
 					)
 				),
-				"STeMP v0.9"
+				"STeMP v2026.07.00"
 			),
 			position = "fixed-top",
 			theme = shinythemes::shinytheme("united"),
