@@ -57,6 +57,19 @@ mod_prediction_panel_server <- function(
 		valid_geo_prediction_area_metadata <- validate_geo_metadata(geo_metadata, "has_prediction_area")
 		valid_geo_all_metadata <- validate_geo_metadata(geo_metadata, c("has_samples", "has_prediction_area"))
 
+		prediction_area_source <- track_last_source(
+			a = valid_geo_prediction_area_metadata,
+			b = uploaded_zip,
+			label_a = "geo",
+			label_b = "zip"
+		)
+		geodist_prediction_area_source <- track_last_source(
+			a = valid_geo_all_metadata,
+			b = uploaded_zip,
+			label_a = "geo",
+			label_b = "zip"
+		)
+
 		# Reactive filtered protocol data for Prediction section
 		prediction_data <- shiny::reactive({
 			shiny::req(protocol_data())
@@ -160,6 +173,7 @@ mod_prediction_panel_server <- function(
 				output_dir = output_dir,
 				ns = ns,
 				output = output,
+				prefer_uploaded = prediction_area_source() == "zip",
 				plot_fn = function() {
 					if (temporal) {
 						geo_map_timesteps(
@@ -200,6 +214,7 @@ mod_prediction_panel_server <- function(
 				output_dir = output_dir,
 				ns = ns,
 				output = output,
+				prefer_uploaded = prediction_area_source() == "zip",
 				plot_fn = function() {
 					geodist_plot(
 						output = output,

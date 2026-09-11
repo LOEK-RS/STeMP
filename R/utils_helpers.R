@@ -282,3 +282,42 @@ is_interactive_mode <- function(mode) {
 interactive_supported <- function() {
 	requireNamespace("leaflet", quietly = TRUE)
 }
+
+#' Track which of two reactive sources most recently produced a usable value
+#'
+#' Some elements can be populated from two independent sources that can each
+#' arrive, be replaced, or disappear at any time, in either order, and neither
+#' carries a timestamp. Precedence is tracked explicitly: whichever side's
+#' observer last saw a usable value wins the tie when both are present.
+#'
+#' Must be called once per element, from the module's top level — never from
+#' inside a `shiny::observe()`. Each call registers two observers; creating
+#' them on every re-render would register duplicates on top of the existing
+#' ones each time the enclosing observe fires.
+#'
+#' @param a,b Reactives for the two sources.
+#' @param usable_a,usable_b Functions; TRUE if a value from that source counts
+#'   as present. `usable_b` defaults to `usable_a`.
+#' @param label_a,label_b Values returned to identify each source.
+#' @return A zero-argument function returning `label_a`, `label_b`, or `"neither"`.
+#' @noRd
+track_last_source <- function(
+	a,
+	b,
+	usable_a = Negate(is.null),
+	usable_b = usable_a,
+	label_a = "a",
+	label_b = "b"
+) {
+	last_source <- shiny::reactiveVal("neither")
+
+	shiny::observe({
+		if (usable_a(a())) last_source(label_a)
+	})
+
+	shiny::observe({
+		if (usable_b(b())) last_source(label_b)
+	})
+
+	last_source
+}
