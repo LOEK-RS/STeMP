@@ -288,16 +288,3 @@ report_excluded_element_ids <- function(protocol_dict) {
 	}
 	protocol_dict$element_id[protocol_dict$element_type == "figure_caption"]
 }
-
-#' Inline an HTML file as a data URI for embedding in a self-contained report
-#'
-#' Pandoc's `--embed-resources` leaves `data:` URIs alone, so an iframe pointing
-#' at one survives into the single-file HTML. Kept for callers outside the
-#' Quarto template; the template inlines `base64enc` directly.
-#'
-#' @param path Path to a self-contained HTML file.
-#' @return A character string usable as an iframe `src` attribute.
-#' @noRd
-widget_data_uri <- function(path) {
-	paste0("data:text/html;base64,", base64enc::base64encode(path))
-}

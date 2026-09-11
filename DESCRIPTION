@@ -9,6 +9,7 @@ Description: PKG_DESC.
 License: GPL (>= 3)
 URL: https://github.com/LOEK-RS/STeMP
 BugReports: https://github.com/LOEK-RS/STeMP/issues
+Depends: R (>= 4.1.0)
 Imports: 
     CAST,
     config,
@@ -32,10 +33,7 @@ Imports:
     cowplot,
     rnaturalearth,
     rnaturalearthdata,
-    base64enc,
-    leaflet,
-    withr,
-    rmarkdown
+    withr
 Suggests: 
     knitr,
     pkgload,
@@ -47,7 +45,9 @@ Suggests:
     readr,
     data.table,
     plotly,
-    webshot2
+    leaflet,
+    rmarkdown,
+    htmlwidgets
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US

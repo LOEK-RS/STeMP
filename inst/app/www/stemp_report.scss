@@ -217,5 +217,31 @@ th {
    ------------------------- */
 
 @media print {
+
+  #quarto-document-content,
+  main.content,
+  #quarto-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  h1 {
+    break-before: page;
+  }
+
+  h1:first-of-type {
+    break-before: avoid;
+  }
+
+  .protocol-figure {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .protocol-figure img {
+    max-width: 100%;
+  }
+
   .protocol-widget { height: 420px; break-inside: avoid; }
 }
