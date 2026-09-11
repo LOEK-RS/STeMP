@@ -422,9 +422,12 @@ emit_figure <- function(output, element_id, output_dir, ns, interactive, build) 
 			height = res$height %||% 5
 		)
 
-		if (isTRUE(interactive) && !is.null(res$widget)) {
-			save_widget(res$widget, element_id, output_dir)
-			return(htmltools::tagList(res$widget))
+		if (interactive && !is.null(res$widget)) {
+			if (widget_renderable(res$widget)) {
+				save_widget(res$widget, element_id, output_dir)
+				return(htmltools::tagList(res$widget))
+			}
+			notify_static_fallback()
 		}
 
 		clear_widget(element_id, output_dir)
@@ -432,4 +435,76 @@ emit_figure <- function(output, element_id, output_dir, ns, interactive, build) 
 	})
 
 	invisible(NULL)
+}
+
+#' Can this widget's assets actually be served?
+#'
+#' Shiny registers a widget's JS/CSS when it renders the UI — after our
+#' renderUI expression has already returned — so a failure there (e.g. a
+#' partially installed or removed package) surfaces as an error the user sees
+#' instead of a fallback we control. Resolving dependencies here moves that
+#' failure inside our own tryCatch.
+#'
+#' `createWebDependency()` is idempotent, so doing it early costs nothing.
+#' @noRd
+widget_renderable <- function(w) {
+	if (is.null(w)) {
+		return(FALSE)
+	}
+	tryCatch(
+		{
+			deps <- htmltools::renderTags(w)$dependencies
+			lapply(deps, shiny::createWebDependency)
+			TRUE
+		},
+		error = function(e) FALSE
+	)
+}
+
+#' @noRd
+notify_static_fallback <- function() {
+	if (is.null(shiny::getDefaultReactiveDomain())) {
+		return(invisible(NULL))
+	}
+	shiny::showNotification(
+		"Interactive figures are unavailable right now. Showing static figures instead.",
+		type = "warning",
+		duration = 10,
+		id = "interactive_unavailable"
+	)
+}
+
+#' Whether interactive figures can be produced at all
+#'
+#' requireNamespace() alone is not enough: a namespace loaded before the
+#' package was removed still reports success, and a partial install passes it
+#' while the widget's JS/CSS assets are missing on disk. Building a trivial
+#' widget and resolving its dependencies is the check that catches both.
+#'
+#' Returns a list so the UI can show *why*, not just disable the toggle.
+#' Memoised: the answer cannot change within a running R process.
+#' @noRd
+interactive_support_status <- local({
+	cached <- NULL
+	function() {
+		if (!is.null(cached)) {
+			return(cached)
+		}
+		if (!requireNamespace("leaflet", quietly = TRUE)) {
+			cached <<- list(ok = FALSE, reason = "the 'leaflet' package is not installed")
+			return(cached)
+		}
+		ok <- tryCatch(widget_renderable(leaflet::leaflet()), error = function(e) FALSE)
+		cached <<- if (ok) {
+			list(ok = TRUE, reason = NULL)
+		} else {
+			list(ok = FALSE, reason = "the 'leaflet' package is installed but its files could not be loaded")
+		}
+		cached
+	}
+})
+
+#' @noRd
+interactive_supported <- function() {
+	isTRUE(interactive_support_status()$ok)
 }

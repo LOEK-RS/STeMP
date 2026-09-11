@@ -27,11 +27,28 @@ mod_sidebar_ui <- function(id) {
 		),
 
 		shiny::h5("Interactive figures", style = "font-weight: bold"),
-		shinyWidgets::materialSwitch(
-			ns("display_mode"),
-			label = NULL,
-			status = "info"
-		),
+		{
+			status <- interactive_support_status()
+			switch_tag <- shinyWidgets::materialSwitch(
+				ns("display_mode"),
+				label = NULL,
+				status = "info"
+			)
+
+			if (status$ok) {
+				switch_tag
+			} else {
+				shiny::div(
+					style = "display: inline-block; opacity: 0.45;",
+					title = paste0(
+						"Interactive figures are unavailable because ",
+						status$reason,
+						". Static figures will be used instead."
+					),
+					shiny::div(style = "pointer-events: none;", switch_tag)
+				)
+			}
+		},
 
 		# upload existing protocol
 		mod_csv_zip_upload_ui(ns("protocol_csv"), "csv", "Upload protocol (.csv)"),
