@@ -277,12 +277,6 @@ is_interactive_mode <- function(mode) {
 	identical(mode, "Interactive")
 }
 
-#' Whether interactive figures can be produced at all
-#' @noRd
-interactive_supported <- function() {
-	requireNamespace("leaflet", quietly = TRUE)
-}
-
 #' Track which of two reactive sources most recently produced a usable value
 #'
 #' Some elements can be populated from two independent sources that can each

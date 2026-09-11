@@ -92,8 +92,6 @@ interactive_max_n <- function() {
 }
 
 #' @noRd
-#' @noRd
-#' @noRd
 leaflet_base <- function(offline_context = NULL) {
 	# Provider choice is constrained by the exported report, not by the app:
 	# OSM's volunteer servers reject requests without a Referer, and CARTO now

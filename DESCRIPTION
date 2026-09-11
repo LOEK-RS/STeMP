@@ -1,6 +1,6 @@
 Package: STeMP
 Title: STeMP: Spatio-Temporal Modelling Protocol
-Version: 0.1
+Version: 2026.07.00
 Authors@R: 
     c(person("Jan", "Linnenbrink", , "jan.linnenbrink@uni-muenster.de", role = c("aut", "cre")),
       person("Frederike", "Jablotschkin", role = c("ctb")),
