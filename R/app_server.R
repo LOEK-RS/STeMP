@@ -44,6 +44,7 @@ app_server <- function(input, output, session) {
 	o_objective_1_val <- shiny::reactive(protocol$o_objective_1())
 	hide_optional <- shiny::reactive(sidebar$hide_optional())
 	show_warnings <- shiny::reactive(sidebar$show_warnings())
+	display_mode <- shiny::reactive(sidebar$display_mode())
 	uploaded_csv <- shiny::reactive(sidebar$csv())
 	uploaded_zip <- shiny::reactive(sidebar$zip())
 	csv_deleted <- shiny::reactive(is.null(sidebar$csv()))
@@ -55,7 +56,8 @@ app_server <- function(input, output, session) {
 		o_objective_1_val = o_objective_1_val,
 		output_dir = temp_dir,
 		session_token = session$token,
-		hide_optional = hide_optional
+		hide_optional = hide_optional,
+		display_mode = display_mode
 	)
 
 	# Initialize sidebar module with updated protocol data
@@ -80,7 +82,8 @@ app_server <- function(input, output, session) {
 		model_deleted = model_deleted,
 		csv_deleted = csv_deleted,
 		show_warnings = show_warnings,
-		hide_optional = hide_optional
+		hide_optional = hide_optional,
+		display_mode = display_mode
 	)
 
 	# Render viewer from the updated protocol

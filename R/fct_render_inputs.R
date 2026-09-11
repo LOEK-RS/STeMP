@@ -304,23 +304,16 @@ render_select_input_design_server <- function(
 ) {
 	last_pushed <- shiny::reactiveVal(NULL)
 
-	## "geodist" | "uploaded" | "neither" — whichever source most recently
-	## provided a valid value determines the winner when both are present.
-	last_source <- shiny::reactiveVal("neither")
-
-	shiny::observe({
-		val <- geodist_sel()
-		if (!is.null(val) && length(val) == 1L && !is.na(val)) {
-			last_source("geodist")
-		}
-	})
-
-	shiny::observe({
-		val <- uploaded_value()
-		if (has_value(val)) {
-			last_source("uploaded")
-		}
-	})
+	# Whichever source most recently provided a valid value wins the tie when
+	# both are present.
+	last_source <- track_last_source(
+		a = geodist_sel,
+		b = uploaded_value,
+		usable_a = function(val) !is.null(val) && length(val) == 1L && !is.na(val),
+		usable_b = has_value,
+		label_a = "geodist",
+		label_b = "uploaded"
+	)
 
 	shiny::observe({
 		input[["ui_rendered"]]
@@ -403,53 +396,68 @@ render_plot_server <- function(
 	output_dir,
 	ns = identity,
 	output,
-	plot_fn
+	plot_fn,
+	prefer_uploaded = FALSE
 ) {
 	valid_objective_plot_combination <- !isTRUE(
 		(identical(element_id, "geodist_training_area") && identical(objective, "Model and prediction")) ||
 			(identical(element_id, "geodist_prediction_area") && identical(objective, "Model only"))
 	)
 
-	if (valid_objective_plot_combination && !is.null(uploaded_zip) && file.exists(file.path(output_dir, file))) {
-		# Show plot field
-		shinyjs::removeClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
+	if (!valid_objective_plot_combination) {
+		shinyjs::addClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
+		output[[element_id]] <- shiny::renderPlot(NULL)
+		output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
+		output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI(NULL)
+		return(invisible(NULL))
+	}
 
-		# Remove plot UI
+	zip_available <- !is.null(uploaded_zip) && file.exists(file.path(output_dir, file))
+	geo_available <- !is.null(valid_geo_metadata)
+
+	# Whichever source most recently produced a value wins when both are
+	# available; either source alone wins by default.
+	use_zip <- zip_available && (isTRUE(prefer_uploaded) || !geo_available)
+
+	show_field <- function() {
+		shinyjs::removeClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
+	}
+
+	if (use_zip) {
+		show_field()
 		output[[element_id]] <- shiny::renderPlot(NULL)
 		output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI(NULL)
 
-		# Render PNG from ZIP upload
+		# renderUI(NULL) above tears down emit_figure's renderer before it can
+		# run its own cleanup, so a widget from a prior geodata upload would
+		# otherwise be left on disk and inlined into the report.
+		clear_widget(element_id, output_dir)
+
+		stamp <- as.integer(file.mtime(file.path(output_dir, file)))
 		output[[paste0(element_id, "_img")]] <- shiny::renderUI({
 			shiny::tags$div(
 				style = "display: flex; justify-content: center;",
 				shiny::tags$img(
-					src = paste0("/temp_stemp/", file),
+					src = paste0("/temp_stemp/", file, "?v=", stamp),
 					style = "height: 500px"
 				)
 			)
 		})
-	} else if (valid_objective_plot_combination && !is.null(valid_geo_metadata)) {
-		# Show plot field
-		shinyjs::removeClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
-
-		# Remove image UI
-		output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
-
-		# Render fresh plot from geo data upload
-		output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI({
-			shiny::plotOutput(outputId = ns(element_id), height = "300px")
-		})
-
-		output[[element_id]] <- plot_fn()
-	} else {
-		# Hide plot field
-		shinyjs::addClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
-
-		# Remove everything
-		output[[element_id]] <- shiny::renderPlot(NULL)
-		output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
-		output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI(NULL)
+		return(invisible(NULL))
 	}
+
+	if (geo_available) {
+		show_field()
+		output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
+		plot_fn()
+		return(invisible(NULL))
+	}
+
+	shinyjs::addClass(selector = paste0("#", ns(element_id), "_field"), class = "hide_plot_field")
+	output[[element_id]] <- shiny::renderPlot(NULL)
+	output[[paste0(element_id, "_img")]] <- shiny::renderUI(NULL)
+	output[[paste0(element_id, "_plot_ui")]] <- shiny::renderUI(NULL)
+	invisible(NULL)
 }
 
 # --- Master input renderer ---
@@ -757,7 +765,7 @@ render_input_field_server <- function(
 			element_type = element_type,
 			geo_metadata = geo_metadata,
 			uploaded_value = uploaded_value
-		),
+		)
 	)
 
 	return(update_input_tag)

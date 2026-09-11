@@ -45,6 +45,7 @@ mod_prediction_panel_server <- function(
 	uploaded_values = shiny::reactive(NULL),
 	output_dir = NULL,
 	hide_optional = shiny::reactive(FALSE),
+	display_mode = shiny::reactive("Static"),
 	uploaded_zip = NULL,
 	is_temporal = shiny::reactive(FALSE)
 ) {
@@ -55,6 +56,19 @@ mod_prediction_panel_server <- function(
 		valid_geo_samples_metadata <- validate_geo_metadata(geo_metadata, "has_samples")
 		valid_geo_prediction_area_metadata <- validate_geo_metadata(geo_metadata, "has_prediction_area")
 		valid_geo_all_metadata <- validate_geo_metadata(geo_metadata, c("has_samples", "has_prediction_area"))
+
+		prediction_area_source <- track_last_source(
+			a = valid_geo_prediction_area_metadata,
+			b = uploaded_zip,
+			label_a = "geo",
+			label_b = "zip"
+		)
+		geodist_prediction_area_source <- track_last_source(
+			a = valid_geo_all_metadata,
+			b = uploaded_zip,
+			label_a = "geo",
+			label_b = "zip"
+		)
 
 		# Reactive filtered protocol data for Prediction section
 		prediction_data <- shiny::reactive({
@@ -159,13 +173,16 @@ mod_prediction_panel_server <- function(
 				output_dir = output_dir,
 				ns = ns,
 				output = output,
+				prefer_uploaded = prediction_area_source() == "zip",
 				plot_fn = function() {
 					if (temporal) {
 						geo_map_timesteps(
 							output = output,
 							element_id = "prediction_area",
 							geo_metadata = meta %||% list(),
-							output_dir = output_dir
+							output_dir = output_dir,
+							interactive = is_interactive_mode(display_mode()),
+							ns = ns
 						)
 					} else {
 						geo_map(
@@ -173,7 +190,9 @@ mod_prediction_panel_server <- function(
 							element_id = "prediction_area",
 							geo_metadata = meta %||% list(),
 							what = "prediction_area_sf",
-							output_dir = output_dir
+							output_dir = output_dir,
+							interactive = is_interactive_mode(display_mode()),
+							ns = ns
 						)
 					}
 				}
@@ -195,6 +214,7 @@ mod_prediction_panel_server <- function(
 				output_dir = output_dir,
 				ns = ns,
 				output = output,
+				prefer_uploaded = prediction_area_source() == "zip",
 				plot_fn = function() {
 					geodist_plot(
 						output = output,
@@ -202,7 +222,9 @@ mod_prediction_panel_server <- function(
 						geo_metadata = meta %||% list(),
 						objective = "Model and prediction",
 						output_dir = output_dir,
-						temporal = temporal
+						temporal = temporal,
+						interactive = is_interactive_mode(display_mode()),
+						ns = ns
 					)
 				}
 			)

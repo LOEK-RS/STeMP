@@ -50,7 +50,8 @@ mod_create_protocol_server <- function(
 	model_deleted,
 	csv_deleted,
 	show_warnings,
-	hide_optional = shiny::reactive(FALSE)
+	hide_optional = shiny::reactive(FALSE),
+	display_mode = shiny::reactive("Static")
 ) {
 	shiny::moduleServer(id, function(input, output, session) {
 		# 1) Extract uploaded CSV values separated by sections Overview, Model, Prediction
@@ -235,6 +236,7 @@ mod_create_protocol_server <- function(
 			}),
 			output_dir = output_dir,
 			hide_optional = hide_optional,
+			display_mode = display_mode,
 			uploaded_zip = uploaded_zip,
 			is_temporal = overview$is_temporal
 		)
@@ -253,6 +255,7 @@ mod_create_protocol_server <- function(
 			output_dir = output_dir,
 			model_deleted = model_deleted,
 			hide_optional = hide_optional,
+			display_mode = display_mode,
 			uploaded_zip = uploaded_zip,
 			is_temporal = overview$is_temporal,
 			temporal_geodist_sel = temporal_geodist_sel

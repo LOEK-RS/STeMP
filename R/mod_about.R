@@ -48,8 +48,6 @@ mod_about_ui <- function(id) {
 					style = "font-size: 18px;"
 				),
 
-				shiny::p("This Shiny web application helps to implement ", style = "font-size: 18px;"),
-
 				shiny::em(
 					shiny::p("Please cite as follows:", style = "font-size: 18px;")
 				),

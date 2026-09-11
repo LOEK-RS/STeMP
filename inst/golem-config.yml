@@ -1,12 +1,14 @@
 default:
   golem_name: STeMP
-  golem_version: '0.9'
+  golem_version: '2026.07.00'
   app_prod: no
   max_upload_mb: 100
   max_geodist_n: 10000
+  max_interactive_features: 5000
 production:
   app_prod: yes
 dev:
   golem_wd: !expr golem::pkg_path()
   max_upload_mb: 500
   max_geodist_n: 20000
+  max_interactive_features: 20000

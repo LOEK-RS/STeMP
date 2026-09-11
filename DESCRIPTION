@@ -1,6 +1,6 @@
 Package: STeMP
 Title: STeMP: Spatio-Temporal Modelling Protocol
-Version: 0.1
+Version: 2026.07.00
 Authors@R: 
     c(person("Jan", "Linnenbrink", , "jan.linnenbrink@uni-muenster.de", role = c("aut", "cre")),
       person("Frederike", "Jablotschkin", role = c("ctb")),
@@ -9,6 +9,7 @@ Description: PKG_DESC.
 License: GPL (>= 3)
 URL: https://github.com/LOEK-RS/STeMP
 BugReports: https://github.com/LOEK-RS/STeMP/issues
+Depends: R (>= 4.1.0)
 Imports: 
     CAST,
     config,
@@ -31,7 +32,8 @@ Imports:
     jpeg,
     cowplot,
     rnaturalearth,
-    rnaturalearthdata
+    rnaturalearthdata,
+    withr
 Suggests: 
     knitr,
     pkgload,
@@ -41,8 +43,11 @@ Suggests:
     stringr,
     DT,
     readr,
-    withr,
-    data.table
+    data.table,
+    plotly,
+    leaflet,
+    rmarkdown,
+    htmlwidgets
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
