@@ -74,12 +74,12 @@ mod_upload_server <- function(id, output_dir) {
 					model_object(obj)
 					model_deleted(FALSE) # model now exists
 					output$model_status <- shiny::renderUI({
-						shiny::tags$p("Model loaded successfully", style = "color: blue;")
+						shiny::tags$p("Model loaded successfully.", style = "color: blue;")
 					})
 				},
 				error = function(e) {
 					output$model_status <- shiny::renderUI({
-						shiny::tags$p("Error loading RDS file", style = "color: red;")
+						shiny::tags$p("Error loading RDS file.", style = "color: red;")
 					})
 				}
 			)
