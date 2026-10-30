@@ -22,7 +22,7 @@ mod_upload_ui <- function(id) {
 
 				shiny::p(shiny::tags$b("Upload geospatial data (.gpkg)")),
 				mod_spatialdata_upload_ui(ns("samples"), label = "Upload training locations"),
-				shiny::uiOutput(ns("sample_status")),
+				shiny::uiOutput(ns("samples_status")),
 				shiny::actionButton(ns("delete_samples"), "Delete uploaded samples", style = "margin-bottom: 15px;"),
 				mod_spatialdata_upload_ui(ns("training_area"), label = "Upload training area"),
 				shiny::uiOutput(ns("training_area_status")),
@@ -74,12 +74,12 @@ mod_upload_server <- function(id, output_dir) {
 					model_object(obj)
 					model_deleted(FALSE) # model now exists
 					output$model_status <- shiny::renderUI({
-						shiny::tags$p("Model loaded successfully", style = "color: blue;")
+						shiny::tags$p("Model loaded successfully.", style = "color: blue;")
 					})
 				},
 				error = function(e) {
 					output$model_status <- shiny::renderUI({
-						shiny::tags$p("Error loading RDS file", style = "color: red;")
+						shiny::tags$p("Error loading RDS file.", style = "color: red;")
 					})
 				}
 			)
@@ -104,6 +104,13 @@ mod_upload_server <- function(id, output_dir) {
 			geom_types_expected = c("POLYGON", "MULTIPOLYGON")
 		)
 
+		# Status messages for geospatial uploads
+		shiny::observe({
+			spatialdata_status(output, samples, "samples_status", "samples")
+			spatialdata_status(output, training_area, "training_area_status", "training area")
+			spatialdata_status(output, prediction_area, "prediction_area_status", "prediction area")
+		})
+
 		# Delete buttons to clear geospatial uploads and reset UI
 		shiny::observeEvent(input$delete_samples, {
 			samples$data(NULL)
@@ -111,7 +118,7 @@ mod_upload_server <- function(id, output_dir) {
 			delete_plot_png("training_locations", output_dir)
 			delete_plot_png("geodist_training_area", output_dir)
 			delete_plot_png("geodist_prediction_area", output_dir)
-			output$sample_status <- shiny::renderUI({
+			output$samples_status <- shiny::renderUI({
 				shiny::tags$p("Sample upload deleted.", style = "color: orange;")
 			})
 		})

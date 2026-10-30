@@ -34,10 +34,14 @@ mod_spatialdata_upload_server <- function(id, geom_types_expected = c("POINT", "
 	shiny::moduleServer(id, function(input, output, session) {
 		uploaded_data <- shiny::reactiveVal(NULL)
 		valid <- shiny::reactiveVal(FALSE)
+		upload_error <- shiny::reactiveVal(FALSE)
+		geom_types_msg <- shiny::reactiveVal(NULL)
 
 		shiny::observeEvent(input$upload, {
 			shiny::req(input$upload)
 			valid(FALSE)
+			upload_error(FALSE)
+			geom_types_msg(NULL)
 			uploaded_data(NULL)
 
 			# Attempt to read the uploaded GeoPackage file quietly
@@ -46,7 +50,7 @@ mod_spatialdata_upload_server <- function(id, geom_types_expected = c("POINT", "
 					sf::st_read(input$upload$datapath, quiet = TRUE)
 				},
 				error = function(e) {
-					shiny::showNotification("Could not read .gpkg file.", type = "error")
+					upload_error(TRUE)
 					NULL
 				}
 			)
@@ -55,10 +59,7 @@ mod_spatialdata_upload_server <- function(id, geom_types_expected = c("POINT", "
 			if (!is.null(sp_data)) {
 				geom_type <- unique(sf::st_geometry_type(sp_data))
 				if (!all(geom_type %in% geom_types_expected)) {
-					shiny::showNotification(
-						paste0("Geometry must be one of: ", paste(geom_types_expected, collapse = ", ")),
-						type = "error"
-					)
+					geom_types_msg(paste0("Geometry must be one of: ", paste(geom_types_expected, collapse = ", "), "."))
 					valid(FALSE)
 				} else {
 					uploaded_data(sp_data)
@@ -69,7 +70,9 @@ mod_spatialdata_upload_server <- function(id, geom_types_expected = c("POINT", "
 
 		return(list(
 			data = uploaded_data,
-			valid = valid
+			valid = valid,
+			upload_error = upload_error,
+			geom_types_msg = geom_types_msg
 		))
 	})
 }

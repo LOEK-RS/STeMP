@@ -154,6 +154,7 @@ geodist_temporal_data <- function(samples_sf, area_sf, max_n = geodist_max_n()) 
 			samples_time,
 			preddata = area_time,
 			dist_space = "time",
+			dist_fun = "abs_time",
 			time_var = stemp_time_column()
 		)
 	)
