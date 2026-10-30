@@ -59,7 +59,11 @@ mod_spatialdata_upload_server <- function(id, geom_types_expected = c("POINT", "
 			if (!is.null(sp_data)) {
 				geom_type <- unique(sf::st_geometry_type(sp_data))
 				if (!all(geom_type %in% geom_types_expected)) {
-					geom_types_msg(paste0("Geometry must be one of: ", paste(geom_types_expected, collapse = ", "), "."))
+					geom_types_msg(paste0(
+						"Error: Geometry must be ",
+						paste(geom_types_expected, collapse = " or "),
+						"."
+					))
 					valid(FALSE)
 				} else {
 					uploaded_data(sp_data)
