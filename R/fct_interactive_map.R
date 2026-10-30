@@ -340,7 +340,7 @@ prediction_domain_leaflet <- function(area_sf, max_listed = 25) {
 	leaflet_base(ne_offline_polygons(feat)) |>
 		add_sf_layer(feat, popup = popup, group = "Prediction domain") |>
 		leaflet::addLabelOnlyMarkers(
-			data = sf::st_point_on_surface(sf::st_geometry(feat)),
+			data = suppressWarnings(sf::st_point_on_surface(sf::st_geometry(feat))),
 			label = paste0(feat$n_timesteps, " time steps"),
 			labelOptions = leaflet::labelOptions(noHide = FALSE, direction = "auto")
 		)
