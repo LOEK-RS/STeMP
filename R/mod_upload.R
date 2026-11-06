@@ -66,6 +66,10 @@ mod_upload_server <- function(id, output_dir) {
 		model_object <- shiny::reactiveVal(NULL)
 		model_deleted <- shiny::reactiveVal(FALSE)
 
+		# Disable "Delete" button for model RDS object as long as no file is uploaded
+		toggle_delete_button(model_object, "delete_model")
+
+		# Load the uploaded RDS model and update the model status
 		shiny::observeEvent(input$model_upload, {
 			shiny::req(input$model_upload)
 			tryCatch(
@@ -110,6 +114,11 @@ mod_upload_server <- function(id, output_dir) {
 			spatialdata_status(output, training_area, "training_area_status", "training area")
 			spatialdata_status(output, prediction_area, "prediction_area_status", "prediction area")
 		})
+
+		# Disable "Delete" button for geospatial data as long as no file is uploaded
+		toggle_delete_button(samples$data, "delete_samples")
+		toggle_delete_button(training_area$data, "delete_training_area")
+		toggle_delete_button(prediction_area$data, "delete_prediction_area")
 
 		# Delete buttons to clear geospatial uploads and reset UI
 		shiny::observeEvent(input$delete_samples, {
