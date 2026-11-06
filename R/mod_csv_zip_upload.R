@@ -84,13 +84,7 @@ mod_csv_zip_upload_server <- function(id, filetype, read_fn, delete_fn, ...) {
 		status_output <- paste0(filetype, "_status")
 
 		# Disable "Delete" button as long as no file is uploaded
-		shiny::observe({
-			if (is.null(data_rv())) {
-				shinyjs::disable(paste0("delete_", filetype))
-			} else {
-				shinyjs::enable(paste0("delete_", filetype))
-			}
-		})
+		toggle_delete_button(data_rv, paste0("delete_", filetype))
 
 		# Trigger hidden file input when custom upload button is clicked
 		shiny::observeEvent(

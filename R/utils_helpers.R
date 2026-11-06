@@ -315,3 +315,21 @@ track_last_source <- function(
 
 	last_source
 }
+
+#' Toggle a delete button based on whether data is available
+#'
+#' Enables the button when data is available and disables it otherwise.
+#'
+#' @param data A reactive expression that returns the data, or `NULL` if no
+#'   data is available.
+#' @param button_id The ID of the delete button.
+#' @noRd
+toggle_delete_button <- function(data, button_id) {
+	shiny::observe({
+		if (is.null(data())) {
+			shinyjs::disable(button_id)
+		} else {
+			shinyjs::enable(button_id)
+		}
+	})
+}
